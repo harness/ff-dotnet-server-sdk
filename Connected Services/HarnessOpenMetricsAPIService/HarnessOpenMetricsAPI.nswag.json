@@ -1,0 +1,223 @@
+﻿{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Harness feature flag analytics service",
+    "contact": {
+      "name": "Feature Flag - developers",
+      "url": "https://www.harness.io",
+      "email": "cf@harness.io"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api/1.0",
+      "description": "no host specified"
+    },
+    {
+      "url": "http://localhost:3000/api/1.0",
+      "description": "CfClient description"
+    }
+  ],
+  "paths": {
+    "/metrics/{environment}": {
+      "post": {
+        "summary": "Send metrics to the Analytics server.",
+        "description": "Send metrics to Analytics server",
+        "operationId": "postMetrics",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/environmentPathParam/schema"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Metrics"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated",
+            "description": ""
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized",
+            "description": ""
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError",
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "KeyValue": {
+        "type": "object",
+        "required": [
+          "key",
+          "value"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "TargetData": {
+        "type": "object",
+        "required": [
+          "name",
+          "identifier",
+          "attributes"
+        ],
+        "properties": {
+          "identifier": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KeyValue"
+            }
+          }
+        }
+      },
+      "MetricsData": {
+        "type": "object",
+        "required": [
+          "attributes",
+          "count",
+          "timestamp",
+          "metricsType"
+        ],
+        "properties": {
+          "timestamp": {
+            "type": "integer",
+            "description": "time at when this data was recorded",
+            "format": "int64",
+            "example": "1608175465"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "metricsType": {
+            "type": "string",
+            "description": "This can be of type FeatureMetrics",
+            "enum": [
+              "FFMETRICS"
+            ]
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KeyValue"
+            }
+          }
+        }
+      },
+      "Metrics": {
+        "type": "object",
+        "properties": {
+          "targetData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TargetData"
+            }
+          },
+          "metricsData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetricsData"
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "responses": {
+      "Unauthenticated": {
+        "description": "Unauthenticated",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "environmentPathParam": {
+        "name": "environment",
+        "in": "path",
+        "required": true,
+        "description": "environment parameter in query.",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
