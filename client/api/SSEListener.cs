@@ -43,7 +43,7 @@ namespace io.harness.cfsdk.client.api
             }
             else if (domain.Equals("target-segment"))
             {
-                //processSegment(jsonObject);
+                processSegment(jsommessage);
             }
         }
 
