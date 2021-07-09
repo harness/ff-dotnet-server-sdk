@@ -18,7 +18,7 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "13.11.2.0 (NJsonSchema v10.4.4.0 (Newtonsoft.Json v12.0.0.2))")]
     public partial class Client 
     {
-        private string _baseUrl = "https://config.feature-flags.uat.harness.io/api/1.0";
+        private string _baseUrl = "https://config.ff.harness.io/api/1.0";
         private System.Net.Http.HttpClient _httpClient;
         private System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings;
     
