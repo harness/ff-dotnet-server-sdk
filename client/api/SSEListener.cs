@@ -13,16 +13,16 @@ namespace io.harness.cfsdk.client.api
         private FeatureConfigCache featureCache;
         private SegmentCache segmentCache;
         private string environmentID;
-        private string clusterIdentifier;
+        private string cluster;
         private CfClient cfClient;
 
-        public SSEListener(DefaultApi defaultApi, FeatureConfigCache featureCache, SegmentCache segmentCache, string environmentID, string clusterIdentifier, CfClient cfClient)
+        public SSEListener(DefaultApi defaultApi, FeatureConfigCache featureCache, SegmentCache segmentCache, string environmentID, string cluster, CfClient cfClient)
         {
             this.defaultApi = defaultApi;
             this.featureCache = featureCache;
             this.segmentCache = segmentCache;
             this.environmentID = environmentID;
-            this.clusterIdentifier = clusterIdentifier;
+            this.cluster = cluster;
             this.cfClient = cfClient;
         }
 
@@ -69,7 +69,7 @@ namespace io.harness.cfsdk.client.api
                 {
                     Client client = new Client(defaultApi.httpClient);
                     FeatureConfig featureConfig =
-                          await client.ClientEnvFeatureConfigsGetAsync(identifier, environmentID, clusterIdentifier);
+                          await client.ClientEnvFeatureConfigsGetAsync(identifier, environmentID, cluster);
                     if (version.Equals(featureConfig.Version))
                     {
                         featureCache.Put(featureConfig.Feature, featureConfig);
@@ -91,7 +91,7 @@ namespace io.harness.cfsdk.client.api
             try
             {
                 Client client = new Client(defaultApi.httpClient);
-                IEnumerable<Segment> segments = await client.ClientEnvTargetSegmentsGetAsync(environmentID, clusterIdentifier);
+                IEnumerable<Segment> segments = await client.ClientEnvTargetSegmentsGetAsync(environmentID, cluster);
           
                 if (segments != null)
                 {
