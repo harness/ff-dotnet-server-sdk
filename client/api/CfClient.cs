@@ -163,13 +163,13 @@ namespace io.harness.cfsdk.client.api
             {
                 listener = new SSEListener(defaultApi, featureCache, segmentCache, environmentID, cluster, this);
             }
-            Task.Run(() => initStreamingMode(jwtToken));
+            Task.Run(() => initStreamingMode(jwtToken, cluster));
 
             // startSSE();
             Log.Information("Start Running in SSE mode.\n\n");
         }
 
-        private async Task   initStreamingMode( string jwttoken)
+        private async Task   initStreamingMode(string jwttoken, string cluster)
         {
 
             try 
@@ -188,7 +188,7 @@ namespace io.harness.cfsdk.client.api
                     try
                     {
                         Log.Information("SSE --> Establishing connection");
-                        using (streamReader = new StreamReader(await SSEHttpclient.GetStreamAsync(this.defaultApi.getBasePath()+"/stream")))
+                        using (streamReader = new StreamReader(await SSEHttpclient.GetStreamAsync(this.defaultApi.getBasePath()+"/stream?cluster=" + cluster)))
                         {
                             while (!streamReader.EndOfStream)
                             {
