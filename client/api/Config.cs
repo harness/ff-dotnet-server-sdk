@@ -7,9 +7,9 @@ namespace io.harness.cfsdk.client.api
         public static int MIN_FREQUENCY = 60;
 
         public string ConfigUrl { get => configUrl;  } 
-        internal string configUrl  = "https://config.feature-flags.uat.harness.io/api/1.0";
+        internal string configUrl  = "https://config.ff.harness.io/api/1.0";
         public string EventUrl { get => eventUrl; } 
-        internal string eventUrl = "https://event.feature-flags.uat.harness.io/api/1.0";
+        internal string eventUrl = "https://events.ff.harness.io/api/1.0";
         public bool StreamEnabled { get => streamEnabled; }
         internal bool streamEnabled = true;
 

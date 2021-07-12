@@ -18,7 +18,7 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "13.11.2.0 (NJsonSchema v10.4.4.0 (Newtonsoft.Json v12.0.0.2))")]
     public partial class Client 
     {
-        private string _baseUrl = "https://config.feature-flags.uat.harness.io/api/1.0";
+        private string _baseUrl = "https://config.ff.harness.io/api/1.0";
         private System.Net.Http.HttpClient _httpClient;
         private System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings;
     
@@ -51,21 +51,21 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         partial void ProcessResponse(System.Net.Http.HttpClient client, System.Net.Http.HttpResponseMessage response);
         /// <summary>Get all feature flags activations</summary>
         /// <param name="environmentUUID">Unique identifier for the environment object in the API.</param>
-        /// <param name="clusterIdentifier">Unique identifier for the cluster for the account</param>
+        /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public System.Threading.Tasks.Task<System.Collections.Generic.ICollection<FeatureConfig>> ClientEnvFeatureConfigsGetAsync(string environmentUUID, string clusterIdentifier)
+        public System.Threading.Tasks.Task<System.Collections.Generic.ICollection<FeatureConfig>> ClientEnvFeatureConfigsGetAsync(string environmentUUID, string cluster)
         {
-            return ClientEnvFeatureConfigsGetAsync(environmentUUID, clusterIdentifier, System.Threading.CancellationToken.None);
+            return ClientEnvFeatureConfigsGetAsync(environmentUUID, cluster, System.Threading.CancellationToken.None);
         }
     
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>Get all feature flags activations</summary>
         /// <param name="environmentUUID">Unique identifier for the environment object in the API.</param>
-        /// <param name="clusterIdentifier">Unique identifier for the cluster for the account</param>
+        /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<FeatureConfig>> ClientEnvFeatureConfigsGetAsync(string environmentUUID, string clusterIdentifier, System.Threading.CancellationToken cancellationToken)
+        public async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<FeatureConfig>> ClientEnvFeatureConfigsGetAsync(string environmentUUID, string cluster, System.Threading.CancellationToken cancellationToken)
         {
             if (environmentUUID == null)
                 throw new System.ArgumentNullException("environmentUUID");
@@ -73,9 +73,9 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
             var urlBuilder_ = new System.Text.StringBuilder();
             urlBuilder_.Append(BaseUrl != null ? BaseUrl.TrimEnd('/') : "").Append("/client/env/{environmentUUID}/feature-configs?");
             urlBuilder_.Replace("{environmentUUID}", System.Uri.EscapeDataString(ConvertToString(environmentUUID, System.Globalization.CultureInfo.InvariantCulture)));
-            if (clusterIdentifier != null)
+            if (cluster != null)
             {
-                urlBuilder_.Append(System.Uri.EscapeDataString("clusterIdentifier") + "=").Append(System.Uri.EscapeDataString(ConvertToString(clusterIdentifier, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
+                urlBuilder_.Append(System.Uri.EscapeDataString("cluster") + "=").Append(System.Uri.EscapeDataString(ConvertToString(cluster, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
             }
             urlBuilder_.Length--;
     
@@ -141,22 +141,22 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         /// <summary>Get feature config</summary>
         /// <param name="identifier">Unique identifier for the flag object in the API.</param>
         /// <param name="environmentUUID">Unique identifier for the environment object in the API.</param>
-        /// <param name="clusterIdentifier">Unique identifier for the cluster for the account</param>
+        /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public System.Threading.Tasks.Task<FeatureConfig> ClientEnvFeatureConfigsGetAsync(string identifier, string environmentUUID, string clusterIdentifier)
+        public System.Threading.Tasks.Task<FeatureConfig> ClientEnvFeatureConfigsGetAsync(string identifier, string environmentUUID, string cluster)
         {
-            return ClientEnvFeatureConfigsGetAsync(identifier, environmentUUID, clusterIdentifier, System.Threading.CancellationToken.None);
+            return ClientEnvFeatureConfigsGetAsync(identifier, environmentUUID, cluster, System.Threading.CancellationToken.None);
         }
     
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>Get feature config</summary>
         /// <param name="identifier">Unique identifier for the flag object in the API.</param>
         /// <param name="environmentUUID">Unique identifier for the environment object in the API.</param>
-        /// <param name="clusterIdentifier">Unique identifier for the cluster for the account</param>
+        /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public async System.Threading.Tasks.Task<FeatureConfig> ClientEnvFeatureConfigsGetAsync(string identifier, string environmentUUID, string clusterIdentifier, System.Threading.CancellationToken cancellationToken)
+        public async System.Threading.Tasks.Task<FeatureConfig> ClientEnvFeatureConfigsGetAsync(string identifier, string environmentUUID, string cluster, System.Threading.CancellationToken cancellationToken)
         {
             if (identifier == null)
                 throw new System.ArgumentNullException("identifier");
@@ -168,9 +168,9 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
             urlBuilder_.Append(BaseUrl != null ? BaseUrl.TrimEnd('/') : "").Append("/client/env/{environmentUUID}/feature-configs/{identifier}?");
             urlBuilder_.Replace("{identifier}", System.Uri.EscapeDataString(ConvertToString(identifier, System.Globalization.CultureInfo.InvariantCulture)));
             urlBuilder_.Replace("{environmentUUID}", System.Uri.EscapeDataString(ConvertToString(environmentUUID, System.Globalization.CultureInfo.InvariantCulture)));
-            if (clusterIdentifier != null)
+            if (cluster != null)
             {
-                urlBuilder_.Append(System.Uri.EscapeDataString("clusterIdentifier") + "=").Append(System.Uri.EscapeDataString(ConvertToString(clusterIdentifier, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
+                urlBuilder_.Append(System.Uri.EscapeDataString("cluster") + "=").Append(System.Uri.EscapeDataString(ConvertToString(cluster, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
             }
             urlBuilder_.Length--;
     
@@ -235,21 +235,21 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
     
         /// <summary>Retrieve all segments.</summary>
         /// <param name="environmentUUID">Unique identifier for the environment object in the API.</param>
-        /// <param name="clusterIdentifier">Unique identifier for the cluster for the account</param>
+        /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public System.Threading.Tasks.Task<System.Collections.Generic.ICollection<Segment>> ClientEnvTargetSegmentsGetAsync(string environmentUUID, string clusterIdentifier)
+        public System.Threading.Tasks.Task<System.Collections.Generic.ICollection<Segment>> ClientEnvTargetSegmentsGetAsync(string environmentUUID, string cluster)
         {
-            return ClientEnvTargetSegmentsGetAsync(environmentUUID, clusterIdentifier, System.Threading.CancellationToken.None);
+            return ClientEnvTargetSegmentsGetAsync(environmentUUID, cluster, System.Threading.CancellationToken.None);
         }
     
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>Retrieve all segments.</summary>
         /// <param name="environmentUUID">Unique identifier for the environment object in the API.</param>
-        /// <param name="clusterIdentifier">Unique identifier for the cluster for the account</param>
+        /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<Segment>> ClientEnvTargetSegmentsGetAsync(string environmentUUID, string clusterIdentifier, System.Threading.CancellationToken cancellationToken)
+        public async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<Segment>> ClientEnvTargetSegmentsGetAsync(string environmentUUID, string cluster, System.Threading.CancellationToken cancellationToken)
         {
             if (environmentUUID == null)
                 throw new System.ArgumentNullException("environmentUUID");
@@ -257,9 +257,9 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
             var urlBuilder_ = new System.Text.StringBuilder();
             urlBuilder_.Append(BaseUrl != null ? BaseUrl.TrimEnd('/') : "").Append("/client/env/{environmentUUID}/target-segments?");
             urlBuilder_.Replace("{environmentUUID}", System.Uri.EscapeDataString(ConvertToString(environmentUUID, System.Globalization.CultureInfo.InvariantCulture)));
-            if (clusterIdentifier != null)
+            if (cluster != null)
             {
-                urlBuilder_.Append(System.Uri.EscapeDataString("clusterIdentifier") + "=").Append(System.Uri.EscapeDataString(ConvertToString(clusterIdentifier, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
+                urlBuilder_.Append(System.Uri.EscapeDataString("cluster") + "=").Append(System.Uri.EscapeDataString(ConvertToString(cluster, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
             }
             urlBuilder_.Length--;
     
@@ -365,22 +365,22 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         /// <summary>Retrieve a segment by identifier</summary>
         /// <param name="identifier">Unique identifier for the segment object in the API</param>
         /// <param name="environmentUUID">Unique identifier for the environment object in the API</param>
-        /// <param name="clusterIdentifier">Unique identifier for the cluster for the account</param>
+        /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public System.Threading.Tasks.Task<Segment> ClientEnvTargetSegmentsGetAsync(string identifier, string environmentUUID, string clusterIdentifier)
+        public System.Threading.Tasks.Task<Segment> ClientEnvTargetSegmentsGetAsync(string identifier, string environmentUUID, string cluster)
         {
-            return ClientEnvTargetSegmentsGetAsync(identifier, environmentUUID, clusterIdentifier, System.Threading.CancellationToken.None);
+            return ClientEnvTargetSegmentsGetAsync(identifier, environmentUUID, cluster, System.Threading.CancellationToken.None);
         }
     
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>Retrieve a segment by identifier</summary>
         /// <param name="identifier">Unique identifier for the segment object in the API</param>
         /// <param name="environmentUUID">Unique identifier for the environment object in the API</param>
-        /// <param name="clusterIdentifier">Unique identifier for the cluster for the account</param>
+        /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public async System.Threading.Tasks.Task<Segment> ClientEnvTargetSegmentsGetAsync(string identifier, string environmentUUID, string clusterIdentifier, System.Threading.CancellationToken cancellationToken)
+        public async System.Threading.Tasks.Task<Segment> ClientEnvTargetSegmentsGetAsync(string identifier, string environmentUUID, string cluster, System.Threading.CancellationToken cancellationToken)
         {
             if (identifier == null)
                 throw new System.ArgumentNullException("identifier");
@@ -392,9 +392,9 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
             urlBuilder_.Append(BaseUrl != null ? BaseUrl.TrimEnd('/') : "").Append("/client/env/{environmentUUID}/target-segments/{identifier}?");
             urlBuilder_.Replace("{identifier}", System.Uri.EscapeDataString(ConvertToString(identifier, System.Globalization.CultureInfo.InvariantCulture)));
             urlBuilder_.Replace("{environmentUUID}", System.Uri.EscapeDataString(ConvertToString(environmentUUID, System.Globalization.CultureInfo.InvariantCulture)));
-            if (clusterIdentifier != null)
+            if (cluster != null)
             {
-                urlBuilder_.Append(System.Uri.EscapeDataString("clusterIdentifier") + "=").Append(System.Uri.EscapeDataString(ConvertToString(clusterIdentifier, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
+                urlBuilder_.Append(System.Uri.EscapeDataString("cluster") + "=").Append(System.Uri.EscapeDataString(ConvertToString(cluster, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
             }
             urlBuilder_.Length--;
     
@@ -619,22 +619,22 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         /// <summary>Get feature evaluations for target</summary>
         /// <param name="environmentUUID">Unique identifier for the environment object in the API.</param>
         /// <param name="target">Unique identifier for the target object in the API.</param>
-        /// <param name="clusterIdentifier">Unique identifier for the cluster for the account</param>
+        /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public System.Threading.Tasks.Task<System.Collections.Generic.ICollection<Evaluation>> ClientEnvTargetEvaluationsGetAsync(string environmentUUID, string target, string clusterIdentifier)
+        public System.Threading.Tasks.Task<System.Collections.Generic.ICollection<Evaluation>> ClientEnvTargetEvaluationsGetAsync(string environmentUUID, string target, string cluster)
         {
-            return ClientEnvTargetEvaluationsGetAsync(environmentUUID, target, clusterIdentifier, System.Threading.CancellationToken.None);
+            return ClientEnvTargetEvaluationsGetAsync(environmentUUID, target, cluster, System.Threading.CancellationToken.None);
         }
     
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>Get feature evaluations for target</summary>
         /// <param name="environmentUUID">Unique identifier for the environment object in the API.</param>
         /// <param name="target">Unique identifier for the target object in the API.</param>
-        /// <param name="clusterIdentifier">Unique identifier for the cluster for the account</param>
+        /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<Evaluation>> ClientEnvTargetEvaluationsGetAsync(string environmentUUID, string target, string clusterIdentifier, System.Threading.CancellationToken cancellationToken)
+        public async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<Evaluation>> ClientEnvTargetEvaluationsGetAsync(string environmentUUID, string target, string cluster, System.Threading.CancellationToken cancellationToken)
         {
             if (environmentUUID == null)
                 throw new System.ArgumentNullException("environmentUUID");
@@ -646,9 +646,9 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
             urlBuilder_.Append(BaseUrl != null ? BaseUrl.TrimEnd('/') : "").Append("/client/env/{environmentUUID}/target/{target}/evaluations?");
             urlBuilder_.Replace("{environmentUUID}", System.Uri.EscapeDataString(ConvertToString(environmentUUID, System.Globalization.CultureInfo.InvariantCulture)));
             urlBuilder_.Replace("{target}", System.Uri.EscapeDataString(ConvertToString(target, System.Globalization.CultureInfo.InvariantCulture)));
-            if (clusterIdentifier != null)
+            if (cluster != null)
             {
-                urlBuilder_.Append(System.Uri.EscapeDataString("clusterIdentifier") + "=").Append(System.Uri.EscapeDataString(ConvertToString(clusterIdentifier, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
+                urlBuilder_.Append(System.Uri.EscapeDataString("cluster") + "=").Append(System.Uri.EscapeDataString(ConvertToString(cluster, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
             }
             urlBuilder_.Length--;
     
@@ -715,12 +715,12 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         /// <param name="environmentUUID">Unique identifier for the environment object in the API.</param>
         /// <param name="feature">Unique identifier for the flag object in the API.</param>
         /// <param name="target">Unique identifier for the target object in the API.</param>
-        /// <param name="clusterIdentifier">Unique identifier for the cluster for the account</param>
+        /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public System.Threading.Tasks.Task<Evaluation> ClientEnvTargetEvaluationsGetAsync(string environmentUUID, string feature, string target, string clusterIdentifier)
+        public System.Threading.Tasks.Task<Evaluation> ClientEnvTargetEvaluationsGetAsync(string environmentUUID, string feature, string target, string cluster)
         {
-            return ClientEnvTargetEvaluationsGetAsync(environmentUUID, feature, target, clusterIdentifier, System.Threading.CancellationToken.None);
+            return ClientEnvTargetEvaluationsGetAsync(environmentUUID, feature, target, cluster, System.Threading.CancellationToken.None);
         }
     
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -728,10 +728,10 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         /// <param name="environmentUUID">Unique identifier for the environment object in the API.</param>
         /// <param name="feature">Unique identifier for the flag object in the API.</param>
         /// <param name="target">Unique identifier for the target object in the API.</param>
-        /// <param name="clusterIdentifier">Unique identifier for the cluster for the account</param>
+        /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public async System.Threading.Tasks.Task<Evaluation> ClientEnvTargetEvaluationsGetAsync(string environmentUUID, string feature, string target, string clusterIdentifier, System.Threading.CancellationToken cancellationToken)
+        public async System.Threading.Tasks.Task<Evaluation> ClientEnvTargetEvaluationsGetAsync(string environmentUUID, string feature, string target, string cluster, System.Threading.CancellationToken cancellationToken)
         {
             if (environmentUUID == null)
                 throw new System.ArgumentNullException("environmentUUID");
@@ -747,9 +747,9 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
             urlBuilder_.Replace("{environmentUUID}", System.Uri.EscapeDataString(ConvertToString(environmentUUID, System.Globalization.CultureInfo.InvariantCulture)));
             urlBuilder_.Replace("{feature}", System.Uri.EscapeDataString(ConvertToString(feature, System.Globalization.CultureInfo.InvariantCulture)));
             urlBuilder_.Replace("{target}", System.Uri.EscapeDataString(ConvertToString(target, System.Globalization.CultureInfo.InvariantCulture)));
-            if (clusterIdentifier != null)
+            if (cluster != null)
             {
-                urlBuilder_.Append(System.Uri.EscapeDataString("clusterIdentifier") + "=").Append(System.Uri.EscapeDataString(ConvertToString(clusterIdentifier, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
+                urlBuilder_.Append(System.Uri.EscapeDataString("cluster") + "=").Append(System.Uri.EscapeDataString(ConvertToString(cluster, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
             }
             urlBuilder_.Length--;
     
@@ -813,26 +813,26 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         }
     
         /// <summary>Stream endpoint.</summary>
-        /// <param name="clusterIdentifier">Unique identifier for the cluster for the account</param>
+        /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public System.Threading.Tasks.Task StreamAsync(string aPI_Key, string clusterIdentifier)
+        public System.Threading.Tasks.Task StreamAsync(string aPI_Key, string cluster)
         {
-            return StreamAsync(aPI_Key, clusterIdentifier, System.Threading.CancellationToken.None);
+            return StreamAsync(aPI_Key, cluster, System.Threading.CancellationToken.None);
         }
     
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>Stream endpoint.</summary>
-        /// <param name="clusterIdentifier">Unique identifier for the cluster for the account</param>
+        /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public async System.Threading.Tasks.Task StreamAsync(string aPI_Key, string clusterIdentifier, System.Threading.CancellationToken cancellationToken)
+        public async System.Threading.Tasks.Task StreamAsync(string aPI_Key, string cluster, System.Threading.CancellationToken cancellationToken)
         {
             var urlBuilder_ = new System.Text.StringBuilder();
             urlBuilder_.Append(BaseUrl != null ? BaseUrl.TrimEnd('/') : "").Append("/stream?");
-            if (clusterIdentifier != null)
+            if (cluster != null)
             {
-                urlBuilder_.Append(System.Uri.EscapeDataString("clusterIdentifier") + "=").Append(System.Uri.EscapeDataString(ConvertToString(clusterIdentifier, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
+                urlBuilder_.Append(System.Uri.EscapeDataString("cluster") + "=").Append(System.Uri.EscapeDataString(ConvertToString(cluster, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
             }
             urlBuilder_.Length--;
     

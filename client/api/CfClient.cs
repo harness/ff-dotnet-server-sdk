@@ -24,7 +24,7 @@ namespace io.harness.cfsdk.client.api
         private  bool isAnalyticsEnabled;
         private string jwtToken; 
         private string environmentID;
-        private string clusterIdentifier;
+        private string cluster;
 
         private FeatureConfigCache featureCache;
         private SegmentCache segmentCache;
@@ -131,7 +131,7 @@ namespace io.harness.cfsdk.client.api
             Log.Information("JWT Payload is --> {j}\n\n", JWTToken.Payload);
 
             environmentID = JWTToken.Payload["environment"].ToString();
-            clusterIdentifier = JWTToken.Payload["clusterIdentifier"].ToString();
+            cluster = JWTToken.Payload["clusterIdentifier"].ToString();
 
             evaluator = new Evaluator(segmentCache);
 
@@ -161,15 +161,15 @@ namespace io.harness.cfsdk.client.api
             config.streamEnabled = true;
             if (listener == null)
             {
-                listener = new SSEListener(defaultApi, featureCache, segmentCache, environmentID, clusterIdentifier, this);
+                listener = new SSEListener(defaultApi, featureCache, segmentCache, environmentID, cluster, this);
             }
-            Task.Run(() => initStreamingMode(jwtToken));
+            Task.Run(() => initStreamingMode(jwtToken, cluster));
 
             // startSSE();
             Log.Information("Start Running in SSE mode.\n\n");
         }
 
-        private async Task   initStreamingMode( string jwttoken)
+        private async Task   initStreamingMode(string jwttoken, string cluster)
         {
 
             try 
@@ -188,7 +188,7 @@ namespace io.harness.cfsdk.client.api
                     try
                     {
                         Log.Information("SSE --> Establishing connection");
-                        using (streamReader = new StreamReader(await SSEHttpclient.GetStreamAsync(this.defaultApi.getBasePath()+"/stream")))
+                        using (streamReader = new StreamReader(await SSEHttpclient.GetStreamAsync(this.defaultApi.getBasePath()+"/stream?cluster=" + cluster)))
                         {
                             while (!streamReader.EndOfStream)
                             {
@@ -236,7 +236,7 @@ namespace io.harness.cfsdk.client.api
             {
                 Client client = new Client(defaultApi.httpClient);
 
-                IEnumerable<FeatureConfig> respF = await client.ClientEnvFeatureConfigsGetAsync(environmentID, clusterIdentifier);
+                IEnumerable<FeatureConfig> respF = await client.ClientEnvFeatureConfigsGetAsync(environmentID, cluster);
                 Log.Information("Cache INIT with FeatureConfig's");
                 foreach (FeatureConfig item in respF)
                 {
@@ -244,7 +244,7 @@ namespace io.harness.cfsdk.client.api
                     featureCache.Put(item.Feature, item);
                 }
 
-                IEnumerable<Segment> respS = await client.ClientEnvTargetSegmentsGetAsync(environmentID, clusterIdentifier);
+                IEnumerable<Segment> respS = await client.ClientEnvTargetSegmentsGetAsync(environmentID, cluster);
                 Log.Information("Cache INIT with Segments's\n\n");
                 foreach (Segment item in respS)
                 {
@@ -281,14 +281,14 @@ namespace io.harness.cfsdk.client.api
         {
             Client client = new Client(defaultApi.httpClient);
             Log.Information("POLLING Started - one iteration");
-            IEnumerable<FeatureConfig> respF = await client.ClientEnvFeatureConfigsGetAsync(environmentID, clusterIdentifier);
+            IEnumerable<FeatureConfig> respF = await client.ClientEnvFeatureConfigsGetAsync(environmentID, cluster);
             foreach (FeatureConfig item in respF)
             {
                 featureCache.Put(item.Feature, item);
             }
             Log.Information("Cache Updated with FeatureConfig's");
 
-            IEnumerable<Segment> respS = await client.ClientEnvTargetSegmentsGetAsync(environmentID, clusterIdentifier);
+            IEnumerable<Segment> respS = await client.ClientEnvTargetSegmentsGetAsync(environmentID, cluster);
             foreach (Segment item in respS)
             {
                 segmentCache.Put(item.Identifier, item);
