@@ -28,7 +28,7 @@ After dependency has been added, the SDK elements, primarily `CfClient` should b
 String API_KEY = "YOUR_API_KEY";
 
 config = Config.Builder()
-                .SetPollingInterval(10000)
+                .SetPollingInterval(60000)
                 .SetAnalyticsEnabled()
                 .SetStreamEnabled(true)
                 .Build();
