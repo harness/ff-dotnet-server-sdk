@@ -166,7 +166,7 @@ namespace io.harness.cfsdk.client.api
             Task.Run(() => initStreamingMode(jwtToken, cluster));
 
             // startSSE();
-            Log.Information("Start Running in SSE mode.\n\n");
+            Log.Information("Start Running in SSE mode, cluster:" + cluster + "\n\n");
         }
 
         private async Task   initStreamingMode(string jwttoken, string cluster)
