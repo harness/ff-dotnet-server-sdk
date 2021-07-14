@@ -14,6 +14,7 @@
 namespace io.harness.cfsdk.HarnessOpenMetricsAPIService
 {
     using System = global::System;
+    using Serilog;
 
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "13.11.3.0 (NJsonSchema v10.4.4.0 (Newtonsoft.Json v12.0.0.2))")]
     public partial class Client 
@@ -106,6 +107,10 @@ namespace io.harness.cfsdk.HarnessOpenMetricsAPIService
                         ProcessResponse(client_, response_);
     
                         var status_ = (int)response_.StatusCode;
+
+                        Log.Debug("API call, url: " + url_);
+                        Log.Debug("API call, status: " + status_);
+
                         if (status_ == 200)
                         {
                             return;
