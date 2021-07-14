@@ -32,14 +32,16 @@ namespace io.harness.cfsdk.client.api.analytics
         private DefaultApi metricsAPI;
         private AnalyticsCache analyticsCache;
         private string environmentID;
+        private string cluster;
         private Config config;
 
-        public AnalyticsPublisherService(string jwtToken, Config config, string environmentID, AnalyticsCache analyticsCache)
+        public AnalyticsPublisherService(string jwtToken, Config config, string environmentID, string cluster, AnalyticsCache analyticsCache)
         {
 
             metricsAPI = MetricsApiFactory.create(jwtToken, config);
             this.analyticsCache = analyticsCache;
             this.environmentID = environmentID;
+            this.cluster = cluster;
             this.config = config;
         }
 
@@ -59,7 +61,7 @@ namespace io.harness.cfsdk.client.api.analytics
                     {
                         DateTime startTime = DateTime.Now;
                         HarnessOpenMetricsAPIService.Client client = new HarnessOpenMetricsAPIService.Client(metricsAPI.httpClient);
-                        await client.MetricsAsync(environmentID, metrics);
+                        await client.MetricsAsync(environmentID, cluster, metrics);
                         Log.Information("Trying to send --->  {Eid} ----- {@mb}", environmentID, metrics);
                         DateTime endTime = DateTime.Now;
                         if ((endTime - startTime).TotalMilliseconds > config.MetricsServiceAcceptableDuration)

@@ -150,7 +150,7 @@ namespace io.harness.cfsdk.client.api
             }
 
             analyticsManager =
-                config.AnalyticsEnabled ? new AnalyticsManager(environmentID, jwtToken, config) : null;
+                config.AnalyticsEnabled ? new AnalyticsManager(environmentID, cluster, jwtToken, config) : null;
             isInitialized = true;
         }
 

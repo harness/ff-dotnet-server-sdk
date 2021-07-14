@@ -20,12 +20,12 @@ namespace io.harness.cfsdk.client.api.analytics
         private RingBuffer<Analytics> ringBuffer;
         private Timer timer;
 
-        public AnalyticsManager(String environmentID, String jwtToken, Config config)
+        public AnalyticsManager(String environmentID, String cluster, String jwtToken, Config config)
         {
             this.analyticsCache = new AnalyticsCache();
 
             AnalyticsPublisherService analyticsPublisherService =
-                 new AnalyticsPublisherService(jwtToken, config, environmentID, analyticsCache);
+                 new AnalyticsPublisherService(jwtToken, config, environmentID, cluster, analyticsCache);
             ringBuffer = createRingBuffer(config.getBufferSize(), analyticsPublisherService);
 
             timer = new Timer((long)config.Frequency * 1000);
