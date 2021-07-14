@@ -47,7 +47,7 @@ namespace io.harness.cfsdk.client.api.analytics
 
         public async Task sendDataAndResetCache()
         {
-            Log.Information("Reading from queue and building cache");
+            Log.Information("Reading from queue and building cache, SDL version: " + sdkVerion);
 
             Dictionary<Analytics, int> all = analyticsCache.GetAllElements();
 
