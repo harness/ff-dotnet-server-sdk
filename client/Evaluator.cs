@@ -4,9 +4,11 @@ using io.harness.cfsdk.client.cache;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Microsoft.VisualBasic;
 
 namespace io.harness.cfsdk.client
 {
@@ -175,7 +177,7 @@ namespace io.harness.cfsdk.client
         private bool process(Clause clause, dto.Target target)
         {
             bool result = compare(clause.Values.ToList(), target, clause);
-            return result != clause.Negate != null;
+            return result;
         }
 
         private bool compare(List<string> value, dto.Target target, Clause clause)
@@ -222,6 +224,17 @@ namespace io.harness.cfsdk.client
                         Segment segment = segmentCache.getIfPresent(segmentIdentifier);
                         if (segment != null)
                         {
+                            List<HarnessOpenAPIService.Target> excludedTargets = segment.Excluded.ToList();
+                            if (excludedTargets != null)
+                            {
+                                foreach (HarnessOpenAPIService.Target excludeTarget in excludedTargets)
+                                {
+                                    if (excludeTarget.Identifier.Contains(target.Identifier))
+                                    {
+                                        return false;
+                                    }
+                                }
+                            }
                             List<HarnessOpenAPIService.Target> includedTargets = segment.Included.ToList();
                             if (includedTargets != null)
                             {
@@ -237,23 +250,9 @@ namespace io.harness.cfsdk.client
                             {
                                 foreach (Clause rule in segment.Rules)
                                 {
-                                    try
+                                    if (compare(rule.Values.ToList(), target, rule) == true)
                                     {
-                                        Object = (string)getAttrValue(target, rule.Attribute);
-                                    }
-                                    catch (CfClientException e)
-                                    {
-                                        Object = "";
-                                    }
-                                    if (Object != null)
-                                    {
-                                        List<string> values = new List<string>();
-                                        values.Add(Object);
-                                        bool returnValue = compare(values, target, rule);
-                                        if (returnValue)
-                                        {
-                                            return returnValue;
-                                        }
+                                        return true;
                                     }
                                 }
                             }
@@ -267,24 +266,20 @@ namespace io.harness.cfsdk.client
 
         public static object getAttrValue(dto.Target target, string attribute)
         {
-            Type t = target.GetType();
-            PropertyInfo[] props = t.GetProperties();
-
-            var field = props.FirstOrDefault(f => f.Name == attribute);
-
-            if (field != null)
+            switch (attribute)
             {
-                return field;
-            }
-            else
-            {
-                if (target.Attributes != null & target.Attributes.ContainsKey(attribute))
-                {
-                    return target.Attributes[attribute];
-                }
+                case "identifier":
+                    return target.Identifier;
+                case "name":
+                    return target.Name;
+                default:
+                    if (target.Attributes != null & target.Attributes.ContainsKey(attribute))
+                    {
+                        return target.Attributes[attribute];
+                    }
+                    throw new CfClientException("The attribute" + attribute + " does not exist");
             }
 
-            throw new CfClientException("The attribute"+ attribute+" does not exist");
         }
 
     }
