@@ -19,10 +19,10 @@ namespace io.harness.cfsdk.client.api
 {
     public class CfClient
     {
-        private  string apiKey;
-        private  Config config;
-        private  bool isAnalyticsEnabled;
-        private string jwtToken; 
+        private string apiKey;
+        private Config config;
+        private bool isAnalyticsEnabled;
+        private string jwtToken;
         private string environmentID;
         private string cluster;
 
@@ -38,34 +38,40 @@ namespace io.harness.cfsdk.client.api
         public StreamReader streamReader { get; set; }
         //private ServerSentEvent sse;
         private AnalyticsManager analyticsManager;
-        
+
         public bool isInitialized { get; set; }
         internal static CfClient instance;
+        private static readonly object padlock = new object();
 
-        public static async  Task<CfClient> getInstance(string apiKey, Config config)
+        public static async Task<CfClient> getInstance(string apiKey, Config config)
         {
-            if (instance == null)
+            lock (padlock)
             {
-                Log.Information("\n\nSTARTING NEW INSTANCE");
-                instance = new CfClient(apiKey,config);
-                await instance.Authenticate();
-                await instance.init();
+                if (instance == null)
+                {
+                    Log.Information("\n\nSTARTING NEW INSTANCE");
+                    instance = new CfClient(apiKey, config);
+
+                }
             }
+
+            await instance.Authenticate();
+            await instance.init();
 
             if (instance.apiKey != apiKey)
             {
                 Log.Error("Client with different ApiKey exist");
-                throw new ApiException("Client with different ApiKey exist",0,null,null,null);
+                throw new ApiException("Client with different ApiKey exist", 0, null, null, null);
             };
 
             return instance;
         }
 
-       
 
-        public static async Task<CfClient> getInstance()
+
+        public static CfClient getInstance()
         {
-           
+
             if (instance == null)
             {
                 Log.Error("Client not created yet");
@@ -84,7 +90,7 @@ namespace io.harness.cfsdk.client.api
             jwtToken = jwt;
         }
 
-        public CfClient(string apiKey): this(apiKey, Config.Builder().Build()) { }
+        public CfClient(string apiKey) : this(apiKey, Config.Builder().Build()) { }
 
         public CfClient(string apiKey, Config config)
         {
@@ -109,7 +115,7 @@ namespace io.harness.cfsdk.client.api
 
         private async Task Authenticate()
         {
-            if(instance == null)
+            if (instance == null)
             {
                 throw new Exception("Client not created");
             }
@@ -118,7 +124,7 @@ namespace io.harness.cfsdk.client.api
             AuthService authService =
                     new AuthService(defaultApi, apiKey, this, config.PollIntervalInSeconds);
             await authService.Authenticate();
-           
+
         }
 
         private async Task init()
@@ -141,7 +147,7 @@ namespace io.harness.cfsdk.client.api
             if (!config.StreamEnabled)
             {
                 startPollingMode(config.pollIntervalInSeconds);
-                
+
                 Log.Information("Start Running in POLLING mode on {p} sec - SSE disabled.\n\n", config.pollIntervalInSeconds);
             }
             else
@@ -169,10 +175,10 @@ namespace io.harness.cfsdk.client.api
             Log.Information("Start Running in SSE mode, cluster:" + cluster + "\n\n");
         }
 
-        private async Task   initStreamingMode(string jwttoken, string cluster)
+        private async Task initStreamingMode(string jwttoken, string cluster)
         {
 
-            try 
+            try
             {
                 SSEHttpclient = new HttpClient();
                 SSEHttpclient.DefaultRequestHeaders.Authorization
@@ -188,7 +194,7 @@ namespace io.harness.cfsdk.client.api
                     try
                     {
                         Log.Information("SSE --> Establishing connection");
-                        using (streamReader = new StreamReader(await SSEHttpclient.GetStreamAsync(this.defaultApi.getBasePath()+"/stream?cluster=" + cluster)))
+                        using (streamReader = new StreamReader(await SSEHttpclient.GetStreamAsync(this.defaultApi.getBasePath() + "/stream?cluster=" + cluster)))
                         {
                             while (!streamReader.EndOfStream)
                             {
@@ -222,7 +228,7 @@ namespace io.harness.cfsdk.client.api
                     Log.Information("SSE --> STOP-ed");
                 }
             }
-            catch (Exception e )
+            catch (Exception e)
             {
                 Log.Error("SSE --> Failed to establish connection {@e}", e);
                 await ReschedulePooling();
@@ -299,7 +305,7 @@ namespace io.harness.cfsdk.client.api
 
             if (config.StreamEnabled)
             {
-                if(poller !=null) poller.stop();
+                if (poller != null) poller.stop();
 
                 StartSSE();
             }
@@ -318,7 +324,7 @@ namespace io.harness.cfsdk.client.api
                 }
 
                 // If pre requisite exists, go ahead till the last dependency else return
-                if (!(featureConfig.Prerequisites == null || featureConfig.Prerequisites.Count ==0))
+                if (!(featureConfig.Prerequisites == null || featureConfig.Prerequisites.Count == 0))
                 {
                     bool result = checkPreRequisite(featureConfig, target);
                     if (!result)
@@ -368,7 +374,7 @@ namespace io.harness.cfsdk.client.api
                     bool result = checkPreRequisite(featureConfig, target);
                     if (!result)
                     {
-                        stringVariation = featureConfig.Variations.FirstOrDefault(f=>f.Identifier==  featureConfig.OffVariation).Value;
+                        stringVariation = featureConfig.Variations.FirstOrDefault(f => f.Identifier == featureConfig.OffVariation).Value;
                         return stringVariation;
                     }
                 }
@@ -463,7 +469,7 @@ namespace io.harness.cfsdk.client.api
                     {
                         jsonObject = JObject.Parse(featureConfig.Variations.FirstOrDefault(f => f.Identifier == featureConfig.OffVariation).Value);
 
-                       // jsonObject = JObject.Parse(featureConfig.OffVariation);
+                        // jsonObject = JObject.Parse(featureConfig.OffVariation);
                         return jsonObject;
                     }
                 }
@@ -495,16 +501,18 @@ namespace io.harness.cfsdk.client.api
         {
             bool result = true;
             List<Prerequisite> prerequisites = parentFeatureConfig.Prerequisites.ToList();
-            if (!(prerequisites == null || prerequisites.Count==0)) 
+            if (!(prerequisites == null || prerequisites.Count == 0))
             {
                 Log.Information(
                     "Checking pre requisites {@p} of parent feature {@f}",
                     prerequisites,
                     parentFeatureConfig);
-                foreach (Prerequisite pqs in prerequisites) {
+                foreach (Prerequisite pqs in prerequisites)
+                {
                     string preReqFeature = pqs.Feature;
                     FeatureConfig preReqFeatureConfig = featureCache.getIfPresent(preReqFeature);
-                    if (preReqFeatureConfig == null) {
+                    if (preReqFeatureConfig == null)
+                    {
                         Log.Error(
                             "Could not retrieve the pre requisite details of feature flag :{f}",
                             preReqFeatureConfig.Feature);
@@ -526,9 +534,11 @@ namespace io.harness.cfsdk.client.api
                             "Pre requisite flag {f} should have the variations {@v}",
                             preReqFeatureConfig.Feature,
                             validPreReqVariations);
-                    if (!validPreReqVariations.Contains(preReqEvaluatedVariation.ToString())) {
+                    if (!validPreReqVariations.Contains(preReqEvaluatedVariation.ToString()))
+                    {
                         return false;
-                    } else
+                    }
+                    else
                     {
                         result = checkPreRequisite(preReqFeatureConfig, target);
                     }
@@ -538,7 +548,7 @@ namespace io.harness.cfsdk.client.api
         }
 
 
-        public async Task  StopSSE(bool streamenabled = false)
+        public async Task StopSSE(bool streamenabled = false)
         {
             this.config.streamEnabled = streamenabled;
             streamReader.Close();
