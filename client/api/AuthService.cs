@@ -4,22 +4,20 @@ using System.Threading.Tasks;
 
 namespace io.harness.cfsdk.client.api
 {
-    public class AuthService
+    internal class AuthService
     {
         private DefaultApi defaultApi;
         private string apiKey;
-        private CfClient cfClient;
         private int pollIntervalInSec;
 
-        public AuthService( DefaultApi defaultApi, string apiKey,  CfClient cfClient, int pollIntervalInSec)
+        public AuthService( DefaultApi defaultApi, string apiKey, int pollIntervalInSec)
         {
             this.defaultApi = defaultApi;
             this.apiKey = apiKey;
-            this.cfClient = cfClient;
             this.pollIntervalInSec = pollIntervalInSec;
         }
 
-        public  async Task Authenticate()
+        public async Task Authenticate()
         {
             if (string.IsNullOrEmpty(apiKey))
             {

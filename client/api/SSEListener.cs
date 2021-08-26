@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace io.harness.cfsdk.client.api
 {
-    public class SSEListener
+    internal class SSEListener
     {
         private DefaultApi defaultApi;
         private FeatureConfigCache featureCache;
