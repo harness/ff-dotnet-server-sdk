@@ -122,7 +122,7 @@ namespace io.harness.cfsdk.client.api
 
             // try to authenticate
             AuthService authService =
-                    new AuthService(defaultApi, apiKey, this, config.PollIntervalInSeconds);
+                    new AuthService(defaultApi, apiKey, config.PollIntervalInMiliSeconds);
             await authService.Authenticate();
 
         }
@@ -146,7 +146,7 @@ namespace io.harness.cfsdk.client.api
 
             if (!config.StreamEnabled)
             {
-                startPollingMode(config.pollIntervalInSeconds);
+                startPollingMode(config.PollIntervalInMiliSeconds);
 
                 Log.Information("Start Running in POLLING mode on {p} sec - SSE disabled.\n\n", config.pollIntervalInSeconds);
             }
@@ -169,7 +169,7 @@ namespace io.harness.cfsdk.client.api
             {
                 listener = new SSEListener(defaultApi, featureCache, segmentCache, environmentID, cluster, this);
             }
-            Task.Run(() => initStreamingMode(jwtToken, cluster));
+            Task.Run(() =>initStreamingMode(jwtToken, cluster));
 
             // startSSE();
             Log.Information("Start Running in SSE mode, cluster:" + cluster + "\n\n");
@@ -181,8 +181,7 @@ namespace io.harness.cfsdk.client.api
             try
             {
                 SSEHttpclient = new HttpClient();
-                SSEHttpclient.DefaultRequestHeaders.Authorization
-                                             = new AuthenticationHeaderValue("Bearer", jwttoken);
+                SSEHttpclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwttoken);
                 SSEHttpclient.DefaultRequestHeaders.Add("API-Key", this.apiKey);
                 SSEHttpclient.DefaultRequestHeaders.Add("Accept", "text /event-stream");
 
@@ -215,12 +214,12 @@ namespace io.harness.cfsdk.client.api
                         Log.Information("POLLING - one iteration from sse");
                         if (config.streamEnabled)
                         {
-                            await ReschedulePooling();
-                            await Task.Delay(TimeSpan.FromSeconds(10000));
+                            await ReschedulePooling(false);
+                            await Task.Delay(TimeSpan.FromSeconds(10));
                         }
                         else
                         {
-                            startPollingMode(10000);
+                            startPollingMode(config.PollIntervalInMiliSeconds);
                             Log.Information("Start Running in POLLING mode - SSE disabled.\n\n");
                         }
 
@@ -231,8 +230,8 @@ namespace io.harness.cfsdk.client.api
             catch (Exception e)
             {
                 Log.Error("SSE --> Failed to establish connection {@e}", e);
-                await ReschedulePooling();
-                await Task.Delay(TimeSpan.FromSeconds(10000));
+                await ReschedulePooling(true);
+                await Task.Delay(TimeSpan.FromSeconds(10));
             }
         }
 
@@ -240,23 +239,26 @@ namespace io.harness.cfsdk.client.api
         {
             if (!string.IsNullOrEmpty(environmentID))
             {
-                Client client = new Client(defaultApi.httpClient);
+                Log.Information("Cache INIT with FeatureConfig's and  Segments's");
+                await ReadFeatuersAndSegments();
+            }
+        }
+        private async Task ReadFeatuersAndSegments()
+        {
+            Client client = new Client(defaultApi.httpClient);
 
-                IEnumerable<FeatureConfig> respF = await client.ClientEnvFeatureConfigsGetAsync(environmentID, cluster);
-                Log.Information("Cache INIT with FeatureConfig's");
-                foreach (FeatureConfig item in respF)
-                {
-                    Log.Information("{@Key} - {@f}", item.Feature, item);
-                    featureCache.Put(item.Feature, item);
-                }
+            IEnumerable<FeatureConfig> respF = await client.ClientEnvFeatureConfigsGetAsync(environmentID, cluster);
+            foreach (FeatureConfig item in respF)
+            {
+                Log.Information("{@Key} - {@f}", item.Feature, item);
+                featureCache.Put(item.Feature, item);
+            }
 
-                IEnumerable<Segment> respS = await client.ClientEnvTargetSegmentsGetAsync(environmentID, cluster);
-                Log.Information("Cache INIT with Segments's\n\n");
-                foreach (Segment item in respS)
-                {
-                    Log.Information("{@Key} - {@s}", item.Identifier, item);
-                    segmentCache.Put(item.Identifier, item);
-                }
+            IEnumerable<Segment> respS = await client.ClientEnvTargetSegmentsGetAsync(environmentID, cluster);
+            foreach (Segment item in respS)
+            {
+                Log.Information("{@Key} - {@s}", item.Identifier, item);
+                segmentCache.Put(item.Identifier, item);
             }
         }
         private void startPollingMode(int interval)
@@ -279,31 +281,16 @@ namespace io.harness.cfsdk.client.api
         /// <param name="e"></param>
         internal async void ReschedulePooling_timerOP(object source, System.Timers.ElapsedEventArgs e)
         {
-            await ReschedulePooling();
-
+            await ReschedulePooling(true);
         }
 
-        private async Task ReschedulePooling()
+        private async Task ReschedulePooling(bool checkStream)
         {
-            Client client = new Client(defaultApi.httpClient);
             Log.Information("POLLING Started - one iteration");
-            IEnumerable<FeatureConfig> respF = await client.ClientEnvFeatureConfigsGetAsync(environmentID, cluster);
-            foreach (FeatureConfig item in respF)
-            {
-                featureCache.Put(item.Feature, item);
-            }
-            Log.Information("Cache Updated with FeatureConfig's");
-
-            IEnumerable<Segment> respS = await client.ClientEnvTargetSegmentsGetAsync(environmentID, cluster);
-            foreach (Segment item in respS)
-            {
-                segmentCache.Put(item.Identifier, item);
-            }
-            Log.Information("Cache Updated with Segment's");
+            await ReadFeatuersAndSegments();
             Log.Information("POLLING Stoped");
 
-
-            if (config.StreamEnabled)
+            if (checkStream && config.StreamEnabled)
             {
                 if (poller != null) poller.stop();
 
