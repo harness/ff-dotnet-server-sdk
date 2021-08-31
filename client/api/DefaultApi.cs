@@ -4,7 +4,7 @@ using System.Net.Http.Headers;
 
 namespace io.harness.cfsdk.client.api
 {
-    public class DefaultApi
+    internal class DefaultApi
     {
     
         private string basePath = "http://localhost/api/1.0";
@@ -14,8 +14,7 @@ namespace io.harness.cfsdk.client.api
 
         public DefaultApi()
         {
-                httpClient = new HttpClient();
-            
+            httpClient = new HttpClient();
         }
 
         public DefaultApi setConnectTimeout(int connectionTimeout)

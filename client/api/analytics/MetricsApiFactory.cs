@@ -3,9 +3,9 @@ using System.Net.Http.Headers;
 
 namespace io.harness.cfsdk.client.api.analytics
 {
-    public class MetricsApiFactory
+    internal class MetricsApiFactory
     {
-        public static DefaultApi create(String jwtToken, Config config)
+        internal static DefaultApi create(String jwtToken, Config config)
         {
             DefaultApi metricsAPI = new DefaultApi();
 
@@ -14,8 +14,7 @@ namespace io.harness.cfsdk.client.api.analytics
                 metricsAPI.setBasePath(config.eventUrl);
                 metricsAPI.httpClient.BaseAddress = new Uri(config.eventUrl);
                 metricsAPI.setConnectTimeout(config.connectionTimeout);
-                metricsAPI.httpClient.DefaultRequestHeaders.Authorization
-                         = new AuthenticationHeaderValue("Bearer", jwtToken);
+                metricsAPI.SetJWT(jwtToken);
             }
             return metricsAPI;
         }
