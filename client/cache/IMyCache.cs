@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Collections.ObjectModel;
 using System.Text;
 
 namespace io.harness.cfsdk.client.cache
@@ -31,7 +32,7 @@ namespace io.harness.cfsdk.client.cache
         }
         public IDictionary<K, V> GetAllElements()
         {
-            return CacheMap;
+            return new ReadOnlyDictionary<K, V>(CacheMap);
         }
 
         public void Delete(K key)
