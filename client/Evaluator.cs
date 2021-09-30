@@ -193,7 +193,7 @@ namespace io.harness.cfsdk.client
             {
                 attrValue = "";
             }
-            Object = (String)attrValue;
+            Object = attrValue.ToString();
 
             if (clause.Values == null)
             {
