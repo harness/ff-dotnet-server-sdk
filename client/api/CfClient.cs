@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 
 namespace io.harness.cfsdk.client.api
 {
-    public class CfClient
+    public sealed class CfClient
     {
         private string apiKey;
         private Config config;
@@ -35,65 +35,36 @@ namespace io.harness.cfsdk.client.api
         private ShortTermPolling poller;
         //private Request sseRequest;
         private SSEListener listener;
-        public StreamReader streamReader { get; set; }
+        private StreamReader streamReader { get; set; }
         //private ServerSentEvent sse;
         private AnalyticsManager analyticsManager;
 
-        public bool isInitialized { get; set; }
-        internal static CfClient instance;
-        private static readonly object padlock = new object();
+        private bool isInitialized { get; set; }
 
-        public static async Task<CfClient> getInstance(string apiKey, Config config)
+
+        // Singleton implementation
+        private static readonly Lazy<CfClient> lazy = new Lazy<CfClient>(() => new CfClient()); 
+        public static CfClient getInstance() { return lazy.Value; }
+
+        public async Task Initialize(string apiKey)
         {
-            lock (padlock)
-            {
-                if (instance == null)
-                {
-                    Log.Information("\n\nSTARTING NEW INSTANCE");
-                    instance = new CfClient(apiKey, config);
+            await Initialize(apiKey, Config.Builder().Build() );
+        }
 
-                }
+
+        /// <summary>
+        /// Initialize the SDK.
+        /// </summary>
+        /// <param name="apiKey">SDK API key.</param>
+        /// <param name="config">SDK configuration.</param>
+        /// <returns>async task when initialization is completed</returns>
+        public async Task Initialize(string apiKey, Config config)
+        {
+            if( isInitialized )
+            {
+                throw new ApiException("Already initialized", 0, null, null, null);
             }
 
-            await instance.Authenticate();
-            await instance.init();
-
-            if (instance.apiKey != apiKey)
-            {
-                Log.Error("Client with different ApiKey exist");
-                throw new ApiException("Client with different ApiKey exist", 0, null, null, null);
-            };
-
-            return instance;
-        }
-
-
-
-        public static CfClient getInstance()
-        {
-
-            if (instance == null)
-            {
-                Log.Error("Client not created yet");
-                throw new ApiException("Client not created yet", 0, null, null, null);
-
-            };
-
-            return instance;
-        }
-        /// <summary>
-        /// setter for jwtToken
-        /// </summary>
-        /// <param name="jwt"></param>
-        public void setjwtToken(string jwt)
-        {
-            jwtToken = jwt;
-        }
-
-        public CfClient(string apiKey) : this(apiKey, Config.Builder().Build()) { }
-
-        public CfClient(string apiKey, Config config)
-        {
             this.apiKey = apiKey;
             this.config = config;
 
@@ -110,25 +81,23 @@ namespace io.harness.cfsdk.client.api
                     config.writeTimeout,
                     config.debug);
 
-            isInitialized = false;
+            await Authenticate();
+            await init();
         }
+
+
+        public CfClient() { }
 
         private async Task Authenticate()
         {
-            if (instance == null)
-            {
-                throw new Exception("Client not created");
-            }
-
-            // try to authenticate
-            AuthService authService =
-                    new AuthService(defaultApi, apiKey, config.PollIntervalInMiliSeconds);
+            // initiate authentication
+            AuthService authService = new AuthService(defaultApi, apiKey, config.PollIntervalInMiliSeconds);
             await authService.Authenticate();
-
         }
 
         private async Task init()
         {
+
             jwtToken = defaultApi.jwttoken;
 
             var handler = new JwtSecurityTokenHandler();
@@ -160,7 +129,7 @@ namespace io.harness.cfsdk.client.api
             isInitialized = true;
         }
 
-        public void StartSSE()
+        private void StartSSE()
         {
             if (streamReader != null) return;
 
@@ -268,11 +237,6 @@ namespace io.harness.cfsdk.client.api
 
         }
 
-        public void StopPollingMode()
-        {
-            poller.stop();
-        }
-
         /// <summary>
         /// method retrives by polling all FeatureConfig's & Segment's
         /// used to be trigered by polling timer
@@ -298,7 +262,7 @@ namespace io.harness.cfsdk.client.api
             }
         }
 
-        public async Task<bool> boolVariation(string key, dto.Target target, bool defaultValue)
+        public bool boolVariation(string key, dto.Target target, bool defaultValue)
         {
             bool servedVariation = defaultValue;
             Variation variation = null;
@@ -343,7 +307,7 @@ namespace io.harness.cfsdk.client.api
             }
         }
 
-        public async Task<string> stringVariation(string key, dto.Target target, string defaultValue)
+        public string stringVariation(string key, dto.Target target, string defaultValue)
         {
             string stringVariation = defaultValue;
             Variation variation = null;
@@ -388,7 +352,7 @@ namespace io.harness.cfsdk.client.api
             }
         }
 
-        public async Task<double> numberVariation(string key, dto.Target target, int defaultValue)
+        public double numberVariation(string key, dto.Target target, int defaultValue)
         {
             double numberVariation = defaultValue;
             Variation variation = null;
@@ -435,8 +399,7 @@ namespace io.harness.cfsdk.client.api
             }
         }
 
-
-        public async Task<JObject> jsonVariation(string key, dto.Target target, JObject defaultValue)
+        public JObject jsonVariation(string key, dto.Target target, JObject defaultValue)
         {
             JObject jsonObject = defaultValue;
             Variation variation = null;
@@ -535,21 +498,12 @@ namespace io.harness.cfsdk.client.api
         }
 
 
-        public async Task StopSSE(bool streamenabled = false)
+        private void StopSSE(bool streamenabled = false)
         {
             this.config.streamEnabled = streamenabled;
             streamReader.Close();
             streamReader.Dispose();
             streamReader = null;
-        }
-
-        public FeatureConfigCache GetFCache()
-        {
-            return featureCache;
-        }
-        public SegmentCache GetSCache()
-        {
-            return segmentCache;
         }
     }
 
