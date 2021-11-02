@@ -44,8 +44,14 @@ namespace io.harness.cfsdk.client.api
 
         // Singleton implementation
         private static readonly Lazy<CfClient> lazy = new Lazy<CfClient>(() => new CfClient()); 
-        public static CfClient getInstance() { return lazy.Value; }
+        public static CfClient Instance { get { return lazy.Value; }  }
 
+        /// <summary>
+        /// Initialize the SDK woth default configuration.
+        /// </summary>
+        /// <param name="apiKey">SDK API key.</param>
+        /// <exception cref="io.harness.cfsdk.HarnessOpenAPIService.ApiException">If already initialized</exception>
+        /// <returns>async task when initialization is completed</returns>
         public async Task Initialize(string apiKey)
         {
             await Initialize(apiKey, Config.Builder().Build() );
@@ -57,6 +63,7 @@ namespace io.harness.cfsdk.client.api
         /// </summary>
         /// <param name="apiKey">SDK API key.</param>
         /// <param name="config">SDK configuration.</param>
+        /// <exception cref="io.harness.cfsdk.HarnessOpenAPIService.ApiException">If already initialized</exception>
         /// <returns>async task when initialization is completed</returns>
         public async Task Initialize(string apiKey, Config config)
         {
@@ -67,8 +74,8 @@ namespace io.harness.cfsdk.client.api
 
             this.apiKey = apiKey;
             this.config = config;
+            this.isAnalyticsEnabled = config.analyticsEnabled;
 
-            isAnalyticsEnabled = config.analyticsEnabled;
             //cache init
             featureCache = new FeatureConfigCache();
             segmentCache = new SegmentCache();
