@@ -7,7 +7,7 @@ Harness CF .NET Server SDK
 [Harness](https://www.harness.io/) is a feature management platform that helps teams to build better software and to
 test features quicker.
 
-.NET Framework version required is 4.8.
+.NET Framework version required is >= 4.8.
 -------------------------
 
 ## Setup
@@ -33,7 +33,7 @@ config = Config.Builder()
                 .SetStreamEnabled(true)
                 .Build();
 
-CfClient cfClient = await CfClient.getInstance(API_KEY, config);
+await CfClient.Instance.Initialize(API_KEY, config);
 
 /**
  * Define you target on which you would like to evaluate 
@@ -52,19 +52,6 @@ io.harness.cfsdk.client.dto.Target target =
 
 **Your Harness SDK is now initialized. Congratulations!**
 
-### Public API Methods ###
-
-The Public API exposes a few methods that you can utilize:
-
-* `public async Task<bool> boolVariation(string key, dto.Target target, bool defaultValue)`
-
-* `public async Task<string> stringVariation(string key, dto.Target target, string defaultValue)`
-
-* `public async Task<double> numberVariation(string key, dto.Target target, int defaultValue)`
-
-* `public async Task<JObject> jsonVariation(string key, dto.Target target, JObject defaultValue)`
-
-
 ## Fetch evaluation's value
 
 It is possible to fetch a value for a given evaluation. Evaluation is performed based on a different type. In case there
@@ -74,21 +61,20 @@ Use the appropriate method to fetch the desired Evaluation of a certain type.
 
 ### Bool variation
 
-```
-boolean result = await cfClient.boolVariation("sample_boolean_flag", target, false);  
-```
+* `public bool boolVariation(string key, dto.Target target, bool defaultValue)`
 
 ### Number variation
 
-```
-double result =  awaitcfClient.numberVariation("sample_number_flag", target, 0);  
-```
+* `public double numberVariation(string key, dto.Target target, int defaultValue)`
 
 ### String variation
 
-```
-string result = await cfClient.stringVariation("sample_string_flag", target, "");  
-```
+* `public string stringVariation(string key, dto.Target target, string defaultValue)`
+
+### JSON variation
+
+* `public JObject jsonVariation(string key, dto.Target target, JObject defaultValue)`
+
 
 ## Using feature flags metrics
 
