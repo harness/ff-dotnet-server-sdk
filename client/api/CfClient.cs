@@ -46,6 +46,20 @@ namespace io.harness.cfsdk.client.api
         private static readonly Lazy<CfClient> lazy = new Lazy<CfClient>(() => new CfClient()); 
         public static CfClient Instance { get { return lazy.Value; }  }
 
+
+        [Obsolete("Method deprecated. Use Instance and Initialize instead ", false)]
+        public static async Task<CfClient> getInstance(string apiKey, Config config)
+        {
+            await CfClient.Instance.Initialize(apiKey, config);
+
+            return CfClient.Instance;
+        }
+        [Obsolete("Method deprecated. Use Initialize instead ", false)]
+        public static CfClient getInstance()
+        {
+            return CfClient.Instance;
+        }
+ 
         /// <summary>
         /// Initialize the SDK woth default configuration.
         /// </summary>
@@ -54,7 +68,7 @@ namespace io.harness.cfsdk.client.api
         /// <returns>async task when initialization is completed</returns>
         public async Task Initialize(string apiKey)
         {
-            await Initialize(apiKey, Config.Builder().Build() );
+            await Initialize(apiKey, Config.Builder().Build());
         }
 
 
@@ -94,6 +108,14 @@ namespace io.harness.cfsdk.client.api
 
 
         public CfClient() { }
+        [Obsolete("Method deprecated. Use CfClient() and Initialize instead ", false)]
+        public CfClient(string apiKey) : this(apiKey, Config.Builder().Build()) { }
+
+        [Obsolete("Method deprecated. Use CfClient() and Initialize instead ", false)]
+        public CfClient(string apiKey, Config config)
+        {
+            var _ = Initialize(apiKey, config); // fire and forget 
+        }
 
         private async Task Authenticate()
         {
