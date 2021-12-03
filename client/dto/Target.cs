@@ -62,7 +62,7 @@ namespace io.harness.cfsdk.client.dto
         private string name;
         private Dictionary<string, string> attributes = new Dictionary<string, string>();
         private bool isPrivate; // If the target is private
-        private HashSet<string> privateAttributes; // Custom set to set the attributes which are private
+        private HashSet<string> privateAttributes = new HashSet<string>(); // Custom set to set the attributes which are private
 
         public TargetBuilder()
         {
