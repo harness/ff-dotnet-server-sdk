@@ -14,9 +14,9 @@ namespace io.harness.cfsdk.client.api
         private SegmentCache segmentCache;
         private string environmentID;
         private string cluster;
-        private CfClient cfClient;
+        private InnerClient cfClient;
 
-        public SSEListener(DefaultApi defaultApi, FeatureConfigCache featureCache, SegmentCache segmentCache, string environmentID, string cluster, CfClient cfClient)
+        public SSEListener(DefaultApi defaultApi, FeatureConfigCache featureCache, SegmentCache segmentCache, string environmentID, string cluster, InnerClient cfClient)
         {
             this.defaultApi = defaultApi;
             this.featureCache = featureCache;
@@ -43,7 +43,7 @@ namespace io.harness.cfsdk.client.api
             }
             else if (domain.Equals("target-segment"))
             {
-                processSegment(jsommessage);
+                await processSegment(jsommessage);
             }
         }
 

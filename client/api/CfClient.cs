@@ -1,539 +1,68 @@
-﻿using io.harness.cfsdk.client.api.analytics;
-using io.harness.cfsdk.client.cache;
-using io.harness.cfsdk.client.polling;
-using io.harness.cfsdk.HarnessOpenAPIService;
-using Microsoft.IdentityModel.Tokens;
+﻿using io.harness.cfsdk.client.connector;
 using Newtonsoft.Json.Linq;
-using Serilog;
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace io.harness.cfsdk.client.api
 {
-    public sealed class CfClient
+    interface ICfClient
     {
-        private string apiKey;
-        private Config config;
-        private bool isAnalyticsEnabled;
-        private string jwtToken;
-        private string environmentID;
-        private string cluster;
+        void Initialize(string apiKey);
+        void Initialize(string apiKey, Config config);
+        void Initialize(IConnector connector);
+        void Initialize(IConnector connector, Config config);
 
-        private FeatureConfigCache featureCache;
-        private SegmentCache segmentCache;
-        private Evaluator evaluator;
+        bool BoolVariation(string key, dto.Target target, bool defaultValue);
+        string StringVariation(string key, dto.Target target, string defaultValue);
+        double NumberVariation(string key, dto.Target target, double defaultValue);
+        JObject JsonVariation(string key, dto.Target target, JObject defaultValue);
 
-        private DefaultApi defaultApi;
-        private HttpClient SSEHttpclient;
-        private ShortTermPolling poller;
-        //private Request sseRequest;
-        private SSEListener listener;
-        private StreamReader streamReader { get; set; }
-        //private ServerSentEvent sse;
-        private AnalyticsManager analyticsManager;
+        IDisposable Subscribe(IObserver<Event> observer);
+        IDisposable Subscribe(NotificationType evn, IObserver<Event> observer);
+        Task Update(Message msg);
 
-        private bool isInitialized { get; set; }
+        Task StartAsync();
+    }
 
-
+    class CfClient : ICfClient, IObservable<Event>
+    {
         // Singleton implementation
-        private static readonly Lazy<CfClient> lazy = new Lazy<CfClient>(() => new CfClient()); 
-        public static CfClient Instance { get { return lazy.Value; }  }
+        private static readonly Lazy<CfClient> lazy = new Lazy<CfClient>(() => new CfClient());
+        public static ICfClient Instance { get { return lazy.Value; } }
 
-
-        [Obsolete("Method deprecated. Use Instance and Initialize instead ", false)]
-        public static async Task<CfClient> getInstance(string apiKey, Config config)
-        {
-            await CfClient.Instance.Initialize(apiKey, config);
-
-            return CfClient.Instance;
-        }
-        [Obsolete("Method deprecated. Use Initialize instead ", false)]
-        public static CfClient getInstance()
-        {
-            return CfClient.Instance;
-        }
- 
-        /// <summary>
-        /// Initialize the SDK woth default configuration.
-        /// </summary>
-        /// <param name="apiKey">SDK API key.</param>
-        /// <exception cref="io.harness.cfsdk.HarnessOpenAPIService.ApiException">If already initialized</exception>
-        /// <returns>async task when initialization is completed</returns>
-        public async Task Initialize(string apiKey)
-        {
-            await Initialize(apiKey, Config.Builder().Build());
-        }
-
-
-        /// <summary>
-        /// Initialize the SDK.
-        /// </summary>
-        /// <param name="apiKey">SDK API key.</param>
-        /// <param name="config">SDK configuration.</param>
-        /// <exception cref="io.harness.cfsdk.HarnessOpenAPIService.ApiException">If already initialized</exception>
-        /// <returns>async task when initialization is completed</returns>
-        public async Task Initialize(string apiKey, Config config)
-        {
-            if( isInitialized )
-            {
-                throw new ApiException("Already initialized", 0, null, null, null);
-            }
-
-            this.apiKey = apiKey;
-            this.config = config;
-            this.isAnalyticsEnabled = config.analyticsEnabled;
-
-            //cache init
-            featureCache = new FeatureConfigCache();
-            segmentCache = new SegmentCache();
-
-            defaultApi =
-                DefaultApiFactory.create(
-                    config.configUrl,
-                    config.connectionTimeout,
-                    config.readTimeout,
-                    config.writeTimeout,
-                    config.debug);
-
-            await Authenticate();
-            await init();
-        }
+        private InnerClient client = null;
 
 
         public CfClient() { }
-        [Obsolete("Method deprecated. Use CfClient() and Initialize instead ", false)]
-        public CfClient(string apiKey) : this(apiKey, Config.Builder().Build()) { }
+        // alternative client creation
+        public CfClient(string apiKey) : this(apiKey, Config.Builder().Build()) {}
+        public CfClient(string apiKey, Config config) { client = new InnerClient(apiKey, config); }
+        public CfClient(IConnector connector) : this(connector, Config.Builder().Build()) { }
+        public CfClient(IConnector connector, Config config) { client = new InnerClient(connector, config);  }
 
-        [Obsolete("Method deprecated. Use CfClient() and Initialize instead ", false)]
-        public CfClient(string apiKey, Config config)
-        {
-            var _ = Initialize(apiKey, config); // fire and forget 
-        }
+        // initialize singletone instance
+        public void Initialize(string apiKey) { Initialize(apiKey, Config.Builder().Build());  }
+        public void Initialize(string apiKey, Config config) { client = new InnerClient(apiKey, config); }
+        public void Initialize(IConnector connector) { Initialize(connector, Config.Builder().Build());  }
+        public void Initialize(IConnector connector, Config config){ client = new InnerClient(connector, config); }
 
-        private async Task Authenticate()
-        {
-            // initiate authentication
-            AuthService authService = new AuthService(defaultApi, apiKey, config.PollIntervalInMiliSeconds);
-            await authService.Authenticate();
-        }
+        // start authentication with server
+        public async Task StartAsync() { await client.StartAsync(); }
 
-        private async Task init()
-        {
+        // read values
+        public bool BoolVariation(string key, dto.Target target, bool defaultValue) { return client.boolVariation(key, target, defaultValue);  }
+        public string StringVariation(string key, dto.Target target, string defaultValue) { return client.stringVariation(key, target, defaultValue); }
+        public double NumberVariation(string key, dto.Target target, double defaultValue) { return client.numberVariation(key, target, defaultValue); }
+        public JObject JsonVariation(string key, dto.Target target, JObject defaultValue) {  return client.jsonVariation(key, target, defaultValue); }
 
-            jwtToken = defaultApi.jwttoken;
+        // subscribe to receive notificatins
+        public IDisposable Subscribe(IObserver<Event> observer) { return client.Subscribe(observer); }
+        public IDisposable Subscribe(NotificationType evn, IObserver<Event> observer) { return client.Subscribe(evn, observer); }
 
-            var handler = new JwtSecurityTokenHandler();
-            SecurityToken jsonToken = handler.ReadToken(jwtToken);
-            JwtSecurityToken JWTToken = (JwtSecurityToken)jsonToken;
-            Log.Information("JWT Payload is --> {j}\n\n", JWTToken.Payload);
+        // force message
+        public async Task Update(Message msg) { await client.Update(msg);  }
 
-            environmentID = JWTToken.Payload["environment"].ToString();
-            cluster = JWTToken.Payload["clusterIdentifier"].ToString();
-
-            evaluator = new Evaluator(segmentCache);
-
-            await initCache(environmentID);
-
-
-            if (!config.StreamEnabled)
-            {
-                startPollingMode(config.PollIntervalInMiliSeconds);
-
-                Log.Information("Start Running in POLLING mode on {p} sec - SSE disabled.\n\n", config.pollIntervalInSeconds);
-            }
-            else
-            {
-                StartSSE();
-            }
-
-            analyticsManager =
-                config.AnalyticsEnabled ? new AnalyticsManager(environmentID, cluster, jwtToken, config) : null;
-            isInitialized = true;
-        }
-
-        private void StartSSE()
-        {
-            if (streamReader != null) return;
-
-            config.streamEnabled = true;
-            if (listener == null)
-            {
-                listener = new SSEListener(defaultApi, featureCache, segmentCache, environmentID, cluster, this);
-            }
-            Task.Run(() =>initStreamingMode(jwtToken, cluster));
-
-            // startSSE();
-            Log.Information("Start Running in SSE mode, cluster:" + cluster + "\n\n");
-        }
-
-        private async Task initStreamingMode(string jwttoken, string cluster)
-        {
-
-            try
-            {
-                SSEHttpclient = new HttpClient();
-                SSEHttpclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwttoken);
-                SSEHttpclient.DefaultRequestHeaders.Add("API-Key", this.apiKey);
-                SSEHttpclient.DefaultRequestHeaders.Add("Accept", "text /event-stream");
-
-                SSEHttpclient.Timeout = Timeout.InfiniteTimeSpan;
-
-
-                while (this.config.streamEnabled)
-                {
-                    try
-                    {
-                        Log.Information("SSE --> Establishing connection");
-                        using (streamReader = new StreamReader(await SSEHttpclient.GetStreamAsync(this.defaultApi.getBasePath() + "/stream?cluster=" + cluster)))
-                        {
-                            while (!streamReader.EndOfStream)
-                            {
-                                string message = await streamReader.ReadLineAsync();
-
-                                if (!string.IsNullOrEmpty(message)) Log.Information("SSE Received update  ---> {@m} ", message);
-                                await listener.onMessage(message);
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        //Here you can check for 
-                        //specific types of errors before continuing
-                        //Since this is a simple example, i'm always going to retry
-                        Log.Error("Error: {@e}", ex);
-                        Log.Information("SSE - interupted");
-                        Log.Information("POLLING - one iteration from sse");
-                        if (config.streamEnabled)
-                        {
-                            await ReschedulePooling(false);
-                            await Task.Delay(TimeSpan.FromSeconds(10));
-                        }
-                        else
-                        {
-                            startPollingMode(config.PollIntervalInMiliSeconds);
-                            Log.Information("Start Running in POLLING mode - SSE disabled.\n\n");
-                        }
-
-                    }
-                    Log.Information("SSE --> STOP-ed");
-                }
-            }
-            catch (Exception e)
-            {
-                Log.Error("SSE --> Failed to establish connection {@e}", e);
-                await ReschedulePooling(true);
-                await Task.Delay(TimeSpan.FromSeconds(10));
-            }
-        }
-
-        private async Task initCache(string environmentID)
-        {
-            if (!string.IsNullOrEmpty(environmentID))
-            {
-                Log.Information("Cache INIT with FeatureConfig's and  Segments's");
-                await ReadFeatuersAndSegments();
-            }
-        }
-        private async Task ReadFeatuersAndSegments()
-        {
-            Client client = new Client(defaultApi.httpClient);
-
-            IEnumerable<FeatureConfig> respF = await client.ClientEnvFeatureConfigsGetAsync(environmentID, cluster);
-            foreach (FeatureConfig item in respF)
-            {
-                Log.Information("{@Key} - {@f}", item.Feature, item);
-                featureCache.Put(item.Feature, item);
-            }
-
-            IEnumerable<Segment> respS = await client.ClientEnvTargetSegmentsGetAsync(environmentID, cluster);
-            foreach (Segment item in respS)
-            {
-                Log.Information("{@Key} - {@s}", item.Identifier, item);
-                segmentCache.Put(item.Identifier, item);
-            }
-        }
-        private void startPollingMode(int interval)
-        {
-            poller = new ShortTermPolling(interval);
-            poller.start(ReschedulePooling_timerOP);
-
-        }
-
-        /// <summary>
-        /// method retrives by polling all FeatureConfig's & Segment's
-        /// used to be trigered by polling timer
-        /// </summary>
-        /// <param name="source"></param>
-        /// <param name="e"></param>
-        internal async void ReschedulePooling_timerOP(object source, System.Timers.ElapsedEventArgs e)
-        {
-            await ReschedulePooling(true);
-        }
-
-        private async Task ReschedulePooling(bool checkStream)
-        {
-            Log.Information("POLLING Started - one iteration");
-            await ReadFeatuersAndSegments();
-            Log.Information("POLLING Stoped");
-
-            if (checkStream && config.StreamEnabled)
-            {
-                if (poller != null) poller.stop();
-
-                StartSSE();
-            }
-        }
-
-        public bool boolVariation(string key, dto.Target target, bool defaultValue)
-        {
-            bool servedVariation = defaultValue;
-            Variation variation = null;
-            FeatureConfig featureConfig = featureCache.getIfPresent(key);
-            try
-            {
-                if (featureConfig == null || featureConfig.Kind != FeatureConfigKind.Boolean)
-                {
-                    return defaultValue;
-                }
-
-                // If pre requisite exists, go ahead till the last dependency else return
-                if (!(featureConfig.Prerequisites == null || featureConfig.Prerequisites.Count == 0))
-                {
-                    bool result = checkPreRequisite(featureConfig, target);
-                    if (!result)
-                    {
-                        servedVariation = bool.Parse(featureConfig.OffVariation);
-                        return servedVariation;
-                    }
-                }
-                variation = evaluator.evaluate(featureConfig, target);
-                servedVariation = bool.Parse(variation.Value);
-                return servedVariation;
-            }
-            catch (Exception e)
-            {
-                Log.Error("err {e}", e);
-                return defaultValue;
-            }
-            finally
-            {
-                if (!target.IsPrivate
-                    && target.isValid()
-                    && isAnalyticsEnabled
-                    && analyticsManager != null
-                    && featureConfig != null
-                    && variation != null)
-                {
-                    analyticsManager.pushToQueue(target, featureConfig, variation);
-                }
-            }
-        }
-
-        public string stringVariation(string key, dto.Target target, string defaultValue)
-        {
-            string stringVariation = defaultValue;
-            Variation variation = null;
-            FeatureConfig featureConfig = featureCache.getIfPresent(key);
-            try
-            {
-                if (featureConfig == null || featureConfig.Kind != FeatureConfigKind.String)
-                {
-                    return defaultValue;
-                }
-
-                // If pre requisite exists, go ahead till the last dependency else return
-                if (!(featureConfig.Prerequisites == null || featureConfig.Prerequisites.Count == 0))
-                {
-                    bool result = checkPreRequisite(featureConfig, target);
-                    if (!result)
-                    {
-                        stringVariation = featureConfig.Variations.FirstOrDefault(f => f.Identifier == featureConfig.OffVariation).Value;
-                        return stringVariation;
-                    }
-                }
-                variation = evaluator.evaluate(featureConfig, target);
-                stringVariation = (string)variation.Value;
-                return stringVariation;
-            }
-            catch (Exception e)
-            {
-                Log.Error("err {e}", e);
-                return defaultValue;
-            }
-            finally
-            {
-                if (!target.IsPrivate
-                    && target.isValid()
-                    && isAnalyticsEnabled
-                    && analyticsManager != null
-                    && featureConfig != null
-                    && variation != null)
-                {
-                    analyticsManager.pushToQueue(target, featureConfig, variation);
-                }
-            }
-        }
-
-        public double numberVariation(string key, dto.Target target, int defaultValue)
-        {
-            double numberVariation = defaultValue;
-            Variation variation = null;
-            FeatureConfig featureConfig = featureCache.getIfPresent(key);
-            if (featureConfig == null || featureConfig.Kind != FeatureConfigKind.Int)
-            {
-                return defaultValue;
-            }
-
-            try
-            {
-                // If pre requisite exists, go ahead till the last dependency else return
-                if (!(featureConfig.Prerequisites == null || featureConfig.Prerequisites.Count == 0))
-                {
-                    bool result = checkPreRequisite(featureConfig, target);
-                    if (!result)
-                    {
-                        numberVariation = int.Parse(featureConfig.Variations.FirstOrDefault(f => f.Identifier == featureConfig.OffVariation).Value);
-
-                        //numberVariation = int.Parse(featureConfig.OffVariation);
-                        return numberVariation;
-                    }
-                }
-                variation = evaluator.evaluate(featureConfig, target);
-                numberVariation = int.Parse(variation.Value);
-                return numberVariation;
-            }
-            catch (Exception e)
-            {
-                Log.Error("err {e}", e);
-                return defaultValue;
-            }
-            finally
-            {
-                if (!target.IsPrivate
-                    && target.isValid()
-                    && isAnalyticsEnabled
-                    && analyticsManager != null
-                    && featureConfig != null
-                    && variation != null)
-                {
-                    analyticsManager.pushToQueue(target, featureConfig, variation);
-                }
-            }
-        }
-
-        public JObject jsonVariation(string key, dto.Target target, JObject defaultValue)
-        {
-            JObject jsonObject = defaultValue;
-            Variation variation = null;
-            FeatureConfig featureConfig = featureCache.getIfPresent(key);
-            try
-            {
-                if (featureConfig == null || featureConfig.Kind != FeatureConfigKind.Json)
-                {
-                    return defaultValue;
-                }
-
-                // If pre requisite exists, go ahead till the last dependency else return
-                if (!(featureConfig.Prerequisites == null || featureConfig.Prerequisites.Count == 0))
-                {
-                    bool result = checkPreRequisite(featureConfig, target);
-                    if (!result)
-                    {
-                        jsonObject = JObject.Parse(featureConfig.Variations.FirstOrDefault(f => f.Identifier == featureConfig.OffVariation).Value);
-
-                        // jsonObject = JObject.Parse(featureConfig.OffVariation);
-                        return jsonObject;
-                    }
-                }
-                variation = evaluator.evaluate(featureConfig, target);
-                jsonObject = JObject.Parse(variation.Value);
-                //jsonObject = new Gson().fromJson((string)variation.Value, JObject.class);
-                return jsonObject;
-            }
-            catch (Exception e)
-            {
-                Log.Error("err {e}", e);
-                return defaultValue;
-            }
-            finally
-            {
-                if (!target.IsPrivate
-                    && target.isValid()
-                    && isAnalyticsEnabled
-                    && analyticsManager != null
-                    && featureConfig != null
-                    && variation != null)
-                {
-                    analyticsManager.pushToQueue(target, featureConfig, variation);
-                }
-            }
-        }
-
-        private bool checkPreRequisite(FeatureConfig parentFeatureConfig, dto.Target target)
-        {
-            bool result = true;
-            List<Prerequisite> prerequisites = parentFeatureConfig.Prerequisites.ToList();
-            if (!(prerequisites == null || prerequisites.Count == 0))
-            {
-                Log.Information(
-                    "Checking pre requisites {@p} of parent feature {@f}",
-                    prerequisites,
-                    parentFeatureConfig);
-                foreach (Prerequisite pqs in prerequisites)
-                {
-                    string preReqFeature = pqs.Feature;
-                    FeatureConfig preReqFeatureConfig = featureCache.getIfPresent(preReqFeature);
-                    if (preReqFeatureConfig == null)
-                    {
-                        Log.Error(
-                            "Could not retrieve the pre requisite details of feature flag :{f}",
-                            preReqFeatureConfig.Feature);
-                    }
-
-                    // Pre requisite variation value evaluated below
-                    object preReqEvaluatedVariation =
-                        evaluator.evaluate(preReqFeatureConfig, target).Value;
-                    Log.Information(
-                            "Pre requisite flag {f} has variation {@v} for target {@t}",
-                            preReqFeatureConfig.Feature,
-                            preReqEvaluatedVariation,
-                            target);
-
-                    // Compare if the pre requisite variation is a possible valid value of
-                    // the pre requisite FF
-                    List<string> validPreReqVariations = pqs.Variations.ToList();
-                    Log.Information(
-                            "Pre requisite flag {f} should have the variations {@v}",
-                            preReqFeatureConfig.Feature,
-                            validPreReqVariations);
-                    if (!validPreReqVariations.Contains(preReqEvaluatedVariation.ToString()))
-                    {
-                        return false;
-                    }
-                    else
-                    {
-                        result = checkPreRequisite(preReqFeatureConfig, target);
-                    }
-                }
-            }
-            return result;
-        }
-
-
-        private void StopSSE(bool streamenabled = false)
-        {
-            this.config.streamEnabled = streamenabled;
-            streamReader.Close();
-            streamReader.Dispose();
-            streamReader = null;
-        }
     }
-
 }
