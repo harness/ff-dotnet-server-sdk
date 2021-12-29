@@ -8,7 +8,7 @@
     "ServiceName": "HarnessOpenAPIService",
     "AcceptAllUntrustedCertificates": true,
     "GeneratedFileName": "HarnessOpenAPIS",
-    "Endpoint": "C:\\Users\\samar\\source\\repos\\ff-net31-server-sdk\\CfClient\\resorces\\client-v1.yaml",
+    "Endpoint": "C:\\Users\\samar\\source\\repos\\ff-net31-server-sdk\\CfClient\\resources\\client-v1.yaml",
     "GeneratedFileNamePrefix": null,
     "GenerateCSharpClient": true,
     "GenerateTypeScriptClient": false,

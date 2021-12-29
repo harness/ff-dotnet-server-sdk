@@ -8,7 +8,7 @@
     "ServiceName": "HarnessOpenMetricsAPIService",
     "AcceptAllUntrustedCertificates": true,
     "GeneratedFileName": "HarnessOpenMetricsAPI",
-    "Endpoint": "C:\\Users\\samar\\source\\repos\\ff-net31-server-sdk\\CfClient\\resorces\\metrics-v1.yaml",
+    "Endpoint": "C:\\Users\\samar\\source\\repos\\ff-net31-server-sdk\\CfClient\\resources\\metrics-v1.yaml",
     "GeneratedFileNamePrefix": null,
     "GenerateCSharpClient": true,
     "GenerateTypeScriptClient": false,
