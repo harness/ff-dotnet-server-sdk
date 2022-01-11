@@ -1,4 +1,5 @@
 ﻿using io.harness.cfsdk.client.cache;
+using io.harness.cfsdk.client.connector;
 using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using io.harness.cfsdk.HarnessOpenMetricsAPIService;
@@ -10,16 +11,14 @@ using System.Threading.Tasks;
 
 namespace io.harness.cfsdk.client.api.analytics
 {
-    public class AnalyticsPublisherService
+    internal class AnalyticsPublisherService
     {
         private static string FEATURE_NAME_ATTRIBUTE = "featureName";
-        private static string FEATURE_VALUE_ATTRIBUTE = "featureValue";
         private static string VARIATION_VALUE_ATTRIBUTE = "featureValue";
         private static string VARIATION_IDENTIFIER_ATTRIBUTE = "variationIdentifier";
         private static string TARGET_ATTRIBUTE = "target";
         private static HashSet<dto.Target> globalTargetSet = new HashSet<dto.Target>();
         private static HashSet<dto.Target> stagingTargetSet = new HashSet<dto.Target>();
-        private static string JAR_VERSION = "JAR_VERSION";
         private static string SDK_TYPE = "SDK_TYPE";
         private static string ANONYMOUS_TARGET = "anonymous";
         private static string SERVER = "server";
@@ -27,27 +26,21 @@ namespace io.harness.cfsdk.client.api.analytics
         private static string SDK_VERSION = "SDK_VERSION";
 
 
-        private string sdkVerion = "1.0.1";
+        private Version sdkVersion = typeof(AnalyticsPublisherService).Assembly.GetName().Version;
 
-        private DefaultApi metricsAPI;
         private AnalyticsCache analyticsCache;
-        private string environmentID;
-        private string cluster;
-        private Config config;
+        private IConnector connector;
 
-        public AnalyticsPublisherService(string jwtToken, Config config, string environmentID, string cluster, AnalyticsCache analyticsCache)
+
+        public AnalyticsPublisherService(IConnector connector, AnalyticsCache analyticsCache)
         {
-
-            metricsAPI = MetricsApiFactory.create(jwtToken, config);
             this.analyticsCache = analyticsCache;
-            this.environmentID = environmentID;
-            this.cluster = cluster;
-            this.config = config;
+            this.connector = connector;
         }
 
-        public async Task sendDataAndResetCache()
+        public void sendDataAndResetCache()
         {
-            Log.Information("Reading from queue and building cache, SDL version: " + sdkVerion);
+            Log.Information("Reading from queue and building cache, SDL version: " + sdkVersion);
 
             IDictionary<Analytics, int> all = analyticsCache.GetAllElements();
 
@@ -59,15 +52,7 @@ namespace io.harness.cfsdk.client.api.analytics
                     if ((metrics.MetricsData != null && metrics.MetricsData.Count >0)
                         || (metrics.TargetData != null && metrics.TargetData.Count > 0))
                     {
-                        DateTime startTime = DateTime.Now;
-                        HarnessOpenMetricsAPIService.Client client = new HarnessOpenMetricsAPIService.Client(metricsAPI.httpClient);
-                        Log.Information("Trying to send --->  {Eid} ----- {@mb}", environmentID, metrics);
-                        await client.MetricsAsync(environmentID, cluster, metrics);
-                        DateTime endTime = DateTime.Now;
-                        if ((endTime - startTime).TotalMilliseconds > config.MetricsServiceAcceptableDuration)
-                        {
-                            Log.Warning("Metrics service API duratopm=[{}]", (endTime - startTime));
-                        }
+                        connector.PostMetrics(metrics);
                     }
 
                     stagingTargetSet.ToList().ForEach(element => globalTargetSet.Add(element));
@@ -106,7 +91,7 @@ namespace io.harness.cfsdk.client.api.analytics
                 if (!globalTargetSet.Contains(target) && !target.IsPrivate)
                 {
                     stagingTargetSet.Add(target);
-                    Dictionary<String, string> attributes = target.Attributes;
+                    Dictionary<string, string> attributes = target.Attributes;
                     attributes.ToList().ForEach(el =>
                        {
                            KeyValue keyValue = new KeyValue();
@@ -144,11 +129,10 @@ namespace io.harness.cfsdk.client.api.analytics
                 {
                     setMetricsAttriutes(metricsData, TARGET_ATTRIBUTE, target.Identifier);
                 }
-                setMetricsAttriutes(metricsData, JAR_VERSION, "3.1");
                 setMetricsAttriutes(metricsData, SDK_TYPE, SERVER);
 
                 setMetricsAttriutes(metricsData, SDK_LANGUAGE, ".NET");
-                setMetricsAttriutes(metricsData, SDK_VERSION, sdkVerion);
+                setMetricsAttriutes(metricsData, SDK_VERSION, sdkVersion.ToString() );
                 metrics.MetricsData.Add(metricsData);
             }
 
