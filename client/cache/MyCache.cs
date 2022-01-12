@@ -4,15 +4,16 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Text;
+using io.harness.cfsdk.client.dto;
 
 namespace io.harness.cfsdk.client.cache
 {
-    public interface IMyCache<K,V> : ICache<K, V>
+    internal interface IMyCache<K,V> : ICache<K, V>
     {
         IDictionary<K, V> GetAllElements();
     }
 
-    public class MemoryCache<K,V> : IMyCache<K, V>
+    internal class MemoryCache<K,V> : IMyCache<K, V>
     {
         private ConcurrentDictionary<K, V> CacheMap { get; set; }
 
@@ -56,6 +57,37 @@ namespace io.harness.cfsdk.client.cache
             {
                 Put(item);
             }
+        }
+    }
+    internal class AnalyticsCache : MemoryCache<Analytics, int>
+    {
+    }
+
+
+    /// <summary>
+    /// In memory cache wrapper.
+    /// </summary>
+    internal class FeatureSegmentCache : ICache
+    {
+        private MemoryCache<string, object> memCache = new MemoryCache<string, object>();
+
+        public void Delete(string key)
+        {
+            memCache.Delete(key);
+        }
+
+        public object Get(string key)
+        {
+            return memCache.getIfPresent(key);
+        }
+
+        public void Set(string key, object value)
+        {
+            memCache.Put(key, value);
+        }
+        public ICollection<string> Keys()
+        {
+            return memCache.GetAllElements().Keys;
         }
     }
 }

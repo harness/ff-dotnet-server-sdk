@@ -1,0 +1,3 @@
+[submodule "tests/ff-server-sdk-test/ff-test-cases"]
+	path = tests/ff-server-sdk-test/ff-test-cases
+	url = https://github.com/drone/ff-test-cases.git

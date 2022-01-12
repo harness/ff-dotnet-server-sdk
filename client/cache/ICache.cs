@@ -5,7 +5,7 @@ using System.Text;
 
 namespace io.harness.cfsdk.client.cache
 {
-    public interface ICache<K, V>
+    internal interface ICache<K, V>
     {
 
         void PutAll(ICollection<KeyValuePair<K, V>> keyValuePairs);
@@ -14,5 +14,17 @@ namespace io.harness.cfsdk.client.cache
         void Put(KeyValuePair<K, V> keyValuePair);
        
         V getIfPresent(K  key);
+    }
+
+    public interface ICache
+    {
+        void Set(string key, Object value);
+        Object Get(string key);
+        void Delete(string key);
+        ICollection<string> Keys();
+    }
+    public interface IStore : ICache
+    {
+        void Close();
     }
 }

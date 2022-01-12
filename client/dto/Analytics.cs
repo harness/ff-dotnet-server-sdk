@@ -1,8 +1,10 @@
-﻿using io.harness.cfsdk.HarnessOpenAPIService;
+﻿using System;
+using System.Collections.Generic;
+using io.harness.cfsdk.HarnessOpenAPIService;
 
 namespace io.harness.cfsdk.client.dto
 {
-    public class Analytics
+    public class Analytics : IEquatable<Analytics>
     {
         private FeatureConfig featureConfig;
         private Target target;
@@ -21,49 +23,28 @@ namespace io.harness.cfsdk.client.dto
             Variation = _variation;
             EventType = _eventType;
         }
+        public Analytics() { }
 
-        public Analytics()
+        public override bool Equals(object obj)
         {
-        }
-
-        public static AnalyticsBuilder Builder()
-        {
-            return new AnalyticsBuilder();
-        }
-    }
-
-    public class AnalyticsBuilder
-    {
-        Analytics analyticstobuild;
-
-        public AnalyticsBuilder()
-        {
-            analyticstobuild = new Analytics();
+            return Equals(obj as Analytics);
         }
 
-        public AnalyticsBuilder featureConfig(FeatureConfig config)
+        public bool Equals(Analytics other)
         {
-            analyticstobuild.FeatureConfig = config;
-            return this;
+            return other != null &&
+                   EqualityComparer<FeatureConfig>.Default.Equals(featureConfig, other.featureConfig) &&
+                   EqualityComparer<Target>.Default.Equals(target, other.target) &&
+                   EqualityComparer<Variation>.Default.Equals(variation, other.variation);
         }
-        public AnalyticsBuilder target(Target target)
+
+        public override int GetHashCode()
         {
-            analyticstobuild.Target = target;
-            return this;
-        }
-        public AnalyticsBuilder variation(Variation variation)
-        {
-            analyticstobuild.Variation = variation;
-            return this;
-        }
-        public AnalyticsBuilder eventType(EventType event_type)
-        {
-            analyticstobuild.EventType = event_type;
-            return this;
-        }
-        public Analytics Build()
-        {
-            return analyticstobuild;
+            int hashCode = -1526478203;
+            hashCode = hashCode * -1521134295 + EqualityComparer<FeatureConfig>.Default.GetHashCode(featureConfig);
+            hashCode = hashCode * -1521134295 + EqualityComparer<Target>.Default.GetHashCode(target);
+            hashCode = hashCode * -1521134295 + EqualityComparer<Variation>.Default.GetHashCode(variation);
+            return hashCode;
         }
     }
 }

@@ -1,58 +1,61 @@
-﻿using io.harness.cfsdk.HarnessOpenAPIService;
+﻿using io.harness.cfsdk.client.connector;
+using io.harness.cfsdk.HarnessOpenAPIService;
 using Serilog;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace io.harness.cfsdk.client.api
 {
-    internal class AuthService
+    interface IAuthCallback
     {
-        private DefaultApi defaultApi;
-        private string apiKey;
-        private int pollIntervalInSec;
+        void OnAuthenticationSuccess();
+    }
+    interface IAuthService
+    {
+        void Start();
+        void Stop();
+    }
 
-        public AuthService( DefaultApi defaultApi, string apiKey, int pollIntervalInSec)
+    /// <summary>
+    /// The class is in charge of initiating authentication requests and retry until successful authentication.
+    /// </summary>
+    internal class AuthService : IAuthService
+    {
+        private IConnector connector;
+        private Config config;
+        private Timer authTimer;
+        private IAuthCallback callback;
+
+        public AuthService(IConnector connector, Config config, IAuthCallback callback)
         {
-            this.defaultApi = defaultApi;
-            this.apiKey = apiKey;
-            this.pollIntervalInSec = pollIntervalInSec;
+            this.connector = connector;
+            this.config = config;
+            this.callback = callback;
         }
-
-        public async Task Authenticate()
+        public void Start()
         {
-            if (string.IsNullOrEmpty(apiKey))
-            {
-                throw new CfClientException("SDK key cannot be empty");
-            }
-
+            // initiate authentication
+            authTimer = new Timer(new TimerCallback(OnTimedEvent), null, 0, this.config.PollIntervalInMiliSeconds);
+        }
+        public void Stop()
+        {
+            authTimer.Dispose();
+            authTimer = null;
+        }
+        private void OnTimedEvent(object source)
+        {
             try
             {
-
-                AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-                authenticationRequest.ApiKey = apiKey;
-                authenticationRequest.Target = new Target2 { Identifier = "" };
-
-                Client client = new Client(defaultApi.httpClient);
-
-                AuthenticationResponse response = await client.ClientAuthAsync(authenticationRequest);
-                string authToken = response.AuthToken;
-               
-                Log.Information("Auth Token ---> {At}", authToken );
-
-                defaultApi.SetJWT(authToken);
-
-
+                connector.Authenticate();
+                callback.OnAuthenticationSuccess();
+                Stop();
+                Log.Information("Stopping authentication service");
             }
-            catch (ApiException apiException)
+            catch
             {
-                if (apiException.StatusCode == 401)
-                {
-                    string errorMsg = "Invalid apiKey "+ apiKey+". Serving default value. ";
-                    Log.Error(errorMsg);
-                    throw new CfClientException(errorMsg);
-                }
-                Log.Error("Failed to get auth token {}", apiException.Message);
+                // Exception thrown on Authentication. Timer will retry authentication.
+                Log.Error($"Exception while authenticating, retry in {this.config.pollIntervalInSeconds}");
             }
         }
-
     }
 }

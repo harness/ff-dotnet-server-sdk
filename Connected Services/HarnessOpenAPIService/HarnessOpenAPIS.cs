@@ -1026,7 +1026,7 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         [Newtonsoft.Json.JsonProperty("name", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Name { get; set; }
     
-        [Newtonsoft.Json.JsonProperty("description", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty("description", NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Description { get; set; }
     
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties = new System.Collections.Generic.Dictionary<string, object>();
@@ -1060,7 +1060,7 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         [System.ComponentModel.DataAnnotations.Required]
         public System.Collections.Generic.ICollection<string> Values { get; set; } = new System.Collections.ObjectModel.Collection<string>();
     
-        [Newtonsoft.Json.JsonProperty("negate", Required = Newtonsoft.Json.Required.Always)]
+        [Newtonsoft.Json.JsonProperty("negate", Required = Newtonsoft.Json.Required.Default)]
         public bool Negate { get; set; }
     
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties = new System.Collections.Generic.Dictionary<string, object>();
@@ -1123,7 +1123,7 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "10.4.4.0 (Newtonsoft.Json v12.0.0.2)")]
     public partial class Serve 
     {
-        [Newtonsoft.Json.JsonProperty("distribution", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty("distribution", NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public Distribution Distribution { get; set; }
     
         [Newtonsoft.Json.JsonProperty("variation", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
@@ -1383,23 +1383,23 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public string Identifier { get; set; }
     
-        [Newtonsoft.Json.JsonProperty("account", Required = Newtonsoft.Json.Required.Always)]
+        [Newtonsoft.Json.JsonProperty("account", Required = Newtonsoft.Json.Required.Default)]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public string Account { get; set; }
     
-        [Newtonsoft.Json.JsonProperty("org", Required = Newtonsoft.Json.Required.Always)]
+        [Newtonsoft.Json.JsonProperty("org", Required = Newtonsoft.Json.Required.Default)]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public string Org { get; set; }
     
-        [Newtonsoft.Json.JsonProperty("environment", Required = Newtonsoft.Json.Required.Always)]
+        [Newtonsoft.Json.JsonProperty("environment", Required = Newtonsoft.Json.Required.Default)]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public string Environment { get; set; }
     
-        [Newtonsoft.Json.JsonProperty("project", Required = Newtonsoft.Json.Required.Always)]
+        [Newtonsoft.Json.JsonProperty("project", Required = Newtonsoft.Json.Required.Default)]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public string Project { get; set; }
     
-        [Newtonsoft.Json.JsonProperty("name", Required = Newtonsoft.Json.Required.Always)]
+        [Newtonsoft.Json.JsonProperty("name", Required = Newtonsoft.Json.Required.Default)]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public string Name { get; set; }
     

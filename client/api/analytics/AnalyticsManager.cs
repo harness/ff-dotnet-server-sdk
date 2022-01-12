@@ -1,6 +1,7 @@
 ﻿using Disruptor;
 using Disruptor.Dsl;
 using io.harness.cfsdk.client.cache;
+using io.harness.cfsdk.client.connector;
 using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using Serilog;
@@ -10,39 +11,58 @@ using System.Timers;
 
 namespace io.harness.cfsdk.client.api.analytics
 {
+    interface IMetricCallback
+    {
 
-    //This class handles various analytics service related components and prepares them 1) It creates
-    //the LMAX ring buffer 2) It pushes data to the buffer and publishes it for consumption 3)
-    //Initilazes the cache for analytics
-    public class AnalyticsManager
+    }
+    interface IMetricsProcessor
+    {
+        void Start();
+        void Stop();
+        void PushToQueue(dto.Target target, FeatureConfig featureConfig, Variation variation);
+    }
+    internal class MetricsProcessor : IMetricsProcessor
     {
         private AnalyticsCache analyticsCache;
         private RingBuffer<Analytics> ringBuffer;
         private Timer timer;
-
-        public AnalyticsManager(String environmentID, String cluster, String jwtToken, Config config)
+        private AnalyticsPublisherService analyticsPublisherService;
+        private IMetricCallback callback;
+        private Config config;
+        public MetricsProcessor(IConnector connector, Config config, IMetricCallback callback)
         {
             this.analyticsCache = new AnalyticsCache();
-
-            AnalyticsPublisherService analyticsPublisherService =
-                 new AnalyticsPublisherService(jwtToken, config, environmentID, cluster, analyticsCache);
-            ringBuffer = createRingBuffer(config.getBufferSize(), analyticsPublisherService);
-
-            timer = new Timer((long)config.Frequency * 1000);
-            timer.Elapsed += new ElapsedEventHandler(run_onTimer);
-            timer.AutoReset = true;
-            timer.Enabled = true;
-            timer.Start();
+            this.callback = callback;
+            this.config = config;
+            this.analyticsPublisherService = new AnalyticsPublisherService(connector, analyticsCache);
+            this.ringBuffer = createRingBuffer(config.getBufferSize(), analyticsPublisherService);
         }
-        public void pushToQueue(dto.Target target, FeatureConfig featureConfig, Variation variation)
+
+        public void Start()
         {
-            Analytics analytics =
-                Analytics.Builder()
-                    .featureConfig(featureConfig)
-                    .target(target)
-                    .variation(variation)
-                    .eventType(EventType.METRICS)
-                    .Build();
+            if (config.analyticsEnabled)
+            {
+                this.timer = new Timer((long)config.Frequency * 1000);
+                this.timer.Elapsed += Timer_Elapsed;
+                this.timer.AutoReset = true;
+                this.timer.Enabled = true;
+                this.timer.Start();
+            }
+        }
+
+
+        public void Stop()
+        {
+            if(config.analyticsEnabled && this.timer != null)
+            {
+                this.timer.Stop();
+                this.timer = null;
+            }
+        }
+
+        public void PushToQueue(dto.Target target, FeatureConfig featureConfig, Variation variation)
+        {
+            Analytics analytics = new Analytics(featureConfig, target, variation, EventType.METRICS);
             long sequence = -1;
             if (!ringBuffer.TryNext(out sequence)) // Grab the next sequence if we can
             {
@@ -79,7 +99,7 @@ namespace io.harness.cfsdk.client.api.analytics
             // Get the ring buffer from the Disruptor to be used for publishing.
             return disruptor.RingBuffer;
         }
-        internal async void run_onTimer(object source, System.Timers.ElapsedEventArgs e)
+        internal void Timer_Elapsed(object sender, ElapsedEventArgs e)
         {
             long sequence = -1;
             if (!ringBuffer.TryNext(out sequence)) // Grab the next sequence if we can

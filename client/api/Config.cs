@@ -1,4 +1,5 @@
 ﻿using System;
+using io.harness.cfsdk.client.cache;
 
 namespace io.harness.cfsdk.client.api
 {
@@ -6,15 +7,15 @@ namespace io.harness.cfsdk.client.api
     {
         public static int MIN_FREQUENCY = 60;
 
-        public string ConfigUrl { get => configUrl;  } 
-        internal string configUrl  = "https://config.ff.harness.io/api/1.0";
-        public string EventUrl { get => eventUrl; } 
+        public string ConfigUrl { get => configUrl; }
+        internal string configUrl = "https://config.ff.harness.io/api/1.0";
+        public string EventUrl { get => eventUrl; }
         internal string eventUrl = "https://events.ff.harness.io/api/1.0";
         public bool StreamEnabled { get => streamEnabled; }
         internal bool streamEnabled = true;
 
-        public int PollIntervalInMiliSeconds { get => pollIntervalInSeconds*1000;  }
-        internal int pollIntervalInSeconds = 60;
+        public int PollIntervalInMiliSeconds { get => pollIntervalInSeconds * 1000; }
+        internal int pollIntervalInSeconds = 20;
 
         // configurations for Analytics
         public bool AnalyticsEnabled { get => analyticsEnabled; }
@@ -23,6 +24,11 @@ namespace io.harness.cfsdk.client.api
         public int Frequency { get => Math.Max(frequency, Config.MIN_FREQUENCY); }
         private int frequency = 60;
 
+        public ICache Cache { get => cache; }
+        internal ICache cache = new FeatureSegmentCache();
+
+        public IStore Store { get => store;  }
+        internal IStore store = null;
 
         //BufferSize must be a power of 2 for LMAX to work. This function vaidates
         //that. Source: https://stackoverflow.com/a/600306/1493480
@@ -120,7 +126,16 @@ namespace io.harness.cfsdk.client.api
             this.configtobuild.pollIntervalInSeconds = pollIntervalInSeconds;
             return this;
         }
-
+        public ConfigBuilder SetCache(ICache cache)
+        {
+            this.configtobuild.cache = cache;
+            return this;
+        }
+        public ConfigBuilder SetStore(IStore store)
+        {
+            this.configtobuild.store = store;
+            return this;
+        }
         public ConfigBuilder SetStreamEnabled(bool enabled = true)
         {
             configtobuild.streamEnabled = enabled;
