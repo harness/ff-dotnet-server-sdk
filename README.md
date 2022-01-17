@@ -13,7 +13,7 @@ test features quicker.
 ## Setup
 
 You can reference the SDK in your project using NuGet package. Package is published to default package repository (nuget.org).
-Package name: `ff-netF48-server-sdk --version 1.1.0`
+Package name: `ff-netF48-server-sdk --version 1.0.8`
 
 More information can be found here https://docs.microsoft.com/en-us/nuget/quickstart/install-and-use-a-package-using-the-dotnet-cli
 
