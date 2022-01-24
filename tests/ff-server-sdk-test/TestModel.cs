@@ -17,11 +17,4 @@ namespace ff_server_sdk_test
         {
         }
     }
-
-    public class TestResult
-    {
-        public TestModel TestModel { get; set; }
-        public string Identifier { get; set;  }
-        public bool Result { get; set; }
-    }
 }
