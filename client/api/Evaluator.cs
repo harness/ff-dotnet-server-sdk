@@ -245,39 +245,42 @@ namespace io.harness.cfsdk.client.api
                 return false;
             }
 
+            if (clause.Values == null || clause.Values.Count == 0)
+            {
+                return false;
+            }
+
+            if (clause.Op == "segmentMatch")
+            {
+                return IsTargetIncludedOrExcludedInSegment(clause.Values.ToList(), target);
+            }
+
             object attrValue = getAttrValue(target, clause.Attribute);
             if(attrValue == null)
             {
                 return false;
             }
 
-            if(clause.Values == null || clause.Values.Count == 0)
-            {
-                return false;
-            }
-
-            string Object = attrValue.ToString();
+            string attrStr = attrValue.ToString();
             string value = clause.Values.First();
 
             switch (clause.Op)
             {
                 case "starts_with":
-                    return Object.StartsWith(value);
+                    return attrStr.StartsWith(value);
                 case "ends_with":
-                    return Object.EndsWith(value);
+                    return attrStr.EndsWith(value);
                 case "match":
                     Regex rgx = new Regex(value);
-                    return rgx.IsMatch(Object);
+                    return rgx.IsMatch(attrStr);
                 case "contains":
-                    return Object.Contains(value);
+                    return attrStr.Contains(value);
                 case "equal":
-                    return Object.ToLower().Equals(value.ToLower());
-                case "equal_sensitive":
-                    return Object.Equals(value);
+                    return attrStr.ToLower().Equals(value.ToLower());
+                case "attrStr":
+                    return attrStr.Equals(value);
                 case "in":
-                    return value.Contains(Object);
-                case "segmentMatch":
-                    return IsTargetIncludedOrExcludedInSegment(clause.Values.ToList(), target);
+                    return value.Contains(attrStr);
                 default:
                     return false;
             }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using io.harness.cfsdk.client.api;
 using io.harness.cfsdk.client.cache;
 using io.harness.cfsdk.client.dto;
@@ -11,30 +12,38 @@ using NUnit.Framework;
 
 namespace ff_server_sdk_test
 {
-    public class EvaluatorTest: IEvaluatorCallback
+    public class EvaluatorListener : IEvaluatorCallback
     {
-        private List<TestModel> testData = new List<TestModel>();
-        private List<TestResult> testResults = new List<TestResult>();
-        private IRepository repository;
-        private ICache cache;
-
-        private Evaluator evaluator;
-        private string noTarget = "_no_target";
-        [SetUp]
-        public void Setup()
+        public void evaluationProcessed(FeatureConfig featureConfig, io.harness.cfsdk.client.dto.Target target, Variation variation)
         {
+            var targetName = target != null ? target.Name : "_no_target";
+            Serilog.Log.Information($"processEvaluation {featureConfig.Feature}, {targetName}, {variation.Value} ");
+        }
+    }
+    [TestFixture]
+    public class EvaluatorTest
+    {
+        private static List<TestModel> testData = new List<TestModel>();
+        private static IRepository repository;
+        private static ICache cache;
 
-            this.cache = new FeatureSegmentCache();
-            this.repository = new StorageRepository(this.cache, null, null);
-            this.evaluator = new Evaluator(this.repository, this);
+        private static Evaluator evaluator;
+        private string noTarget = "_no_target";
+
+        // Initial Evaluator test setup
+        static EvaluatorTest()
+        {
+            var listener = new EvaluatorListener();
+            cache = new FeatureSegmentCache();
+            repository = new StorageRepository(cache, null, null);
+            evaluator = new Evaluator(repository, listener);
 
             Assert.DoesNotThrow(() =>
             {
-               foreach (string fileName in Directory.GetFiles("./ff-test-cases/tests", "*.json"))
-               {
+                foreach (string fileName in Directory.GetFiles("./ff-test-cases/tests", "*.json"))
+                {
                     var testModel = JsonConvert.DeserializeObject<TestModel>(File.ReadAllText(fileName));
                     Assert.NotNull(testModel);
-
 
                     string name = Path.GetFileName(fileName);
                     string feature = testModel.flag.Feature + name;
@@ -42,71 +51,60 @@ namespace ff_server_sdk_test
                     testModel.testFile = name;
 
                     testData.Add(testModel);
-                }
-           });
-        }
 
-        [Test]
-        public void ProccessEvaluations()
-        {
-            testData.ForEach(t => ProcessTest(t));
-        }
-
-        private void ProcessTest(TestModel model)
-        {
-            Assert.DoesNotThrow(() =>
-            {
-                this.repository.SetFlag(model.flag.Feature, model.flag);
-                if (model.segments != null)
-                {
-                    model.segments.ForEach(s =>
+                    repository.SetFlag(testModel.flag.Feature, testModel.flag);
+                    if (testModel.segments != null)
                     {
-                        this.repository.SetSegment(s.Identifier, s);
-                    });
-                }
-
-                foreach (var item in model.expected)
-                {
-                    this.testResults.Add(new TestResult() { Identifier = item.Key, TestModel = model, Result = item.Value });
-                }
-
-
-                foreach (var testResult in this.testResults)
-                {
-
-                    io.harness.cfsdk.client.dto.Target target = null;
-                    if (!testResult.Identifier.Equals(noTarget))
-                    {
-                        if (testResult.TestModel.targets != null)
+                        testModel.segments.ForEach(s =>
                         {
-                            target = testResult.TestModel.targets.Find(t => { return t.Identifier == testResult.Identifier; });
-                        }
-                    }
-                    string feature = testResult.TestModel.flag.Feature;
-                    switch (testResult.TestModel.flag.Kind)
-                    {
-                        case FeatureConfigKind.Boolean:
-                            bool res = evaluator.BoolVariation(feature, target, false);
-                            Assert.AreEqual(res, testResult.Result, $"Expected result for {feature} was {testResult.Result}");
-                            break;
-                        case FeatureConfigKind.Int:
-                            double resInt = evaluator.NumberVariation(feature, target, 0);
-                            break;
-                        case FeatureConfigKind.String:
-                            string resStr = evaluator.StringVariation(feature, target, "");
-                            break;
-                        case FeatureConfigKind.Json:
-                            JObject resObj = evaluator.JsonVariation(feature, target, JObject.Parse("{val: 'default value'}"));
-                            break;
+                            repository.SetSegment(s.Identifier, s);
+                        });
                     }
                 }
             });
         }
-
-        public void evaluationProcessed(FeatureConfig featureConfig, io.harness.cfsdk.client.dto.Target target, Variation variation)
+ 
+        private static IEnumerable<TestCaseData> GenerateTestCases()
         {
-            var targetName = target != null ? target.Name : noTarget;
-            Serilog.Log.Information( $"processEvaluation {featureConfig.Feature}, {targetName}, {variation.Value} ");
+  
+            foreach (var test in testData)
+            {
+                foreach (var item in test.expected)
+                {
+                    yield return new TestCaseData(test.flag.Feature, item.Key, item.Value, test);
+                }
+            }
         }
+
+        [Test, Category("Evaluation Testing"), TestCaseSource("GenerateTestCases")]
+        public void ExecuteTestCases(string f, string identifier, bool result, TestModel test)
+        {
+            io.harness.cfsdk.client.dto.Target target = null;
+            if (!identifier.Equals(noTarget))
+            {
+                if (test.targets != null)
+                {
+                    target = test.targets.Find(t => { return t.Identifier == identifier; });
+                }
+            }
+            string feature = test.flag.Feature;
+            switch (test.flag.Kind)
+            {
+                case FeatureConfigKind.Boolean:
+                    bool res = evaluator.BoolVariation(feature, target, false);
+                    Assert.AreEqual(res, result, $"Expected result for {feature} was {result}");
+                    break;
+                case FeatureConfigKind.Int:
+                    double resInt = evaluator.NumberVariation(feature, target, 0);
+                    break;
+                case FeatureConfigKind.String:
+                    string resStr = evaluator.StringVariation(feature, target, "");
+                    break;
+                case FeatureConfigKind.Json:
+                    JObject resObj = evaluator.JsonVariation(feature, target, JObject.Parse("{val: 'default value'}"));
+                    break;
+            }
+        }
+
     }
 }
