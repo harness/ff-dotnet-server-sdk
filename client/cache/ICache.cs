@@ -19,7 +19,7 @@ namespace io.harness.cfsdk.client.cache
     public interface ICache
     {
         void Set(string key, Object value);
-        Object Get(string key);
+        Object Get(string key, Type type);
         void Delete(string key);
         ICollection<string> Keys();
     }

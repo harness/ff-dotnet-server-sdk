@@ -12,7 +12,6 @@ namespace io.harness.cfsdk.client.api
         private string storeName;
         public FileMapStore(string name)
         {
-            
             storeName = name;
             Directory.CreateDirectory(name);
             Array.ForEach(Directory.EnumerateFiles(name).ToArray(), f => File.Delete(f));
@@ -28,10 +27,22 @@ namespace io.harness.cfsdk.client.api
             File.Delete(Path.Combine(storeName, key));
         }
 
-        public object Get(string key)
+        public object Get(string key, Type t)
         {
-            var str = File.ReadAllText(Path.Combine(storeName, key));
-            return JsonConvert.DeserializeObject(str);
+            try
+            {
+                var filePath = Path.Combine(storeName, key);
+                if (File.Exists(filePath))
+                {
+                    var str = File.ReadAllText(filePath);
+                    return JsonConvert.DeserializeObject(str, t);
+                }
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public ICollection<string> Keys()

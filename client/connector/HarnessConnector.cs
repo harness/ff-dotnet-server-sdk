@@ -49,7 +49,7 @@ namespace io.harness.cfsdk.client.connector
             this.metricHttpClient.Timeout = TimeSpan.FromSeconds(config.ConnectionTimeout);
 
             this.sseHttpClient = new HttpClient();
-            this.sseHttpClient.BaseAddress = new Uri(this.config.ConfigUrl);
+            this.sseHttpClient.BaseAddress = new Uri(this.config.ConfigUrl.EndsWith("/") ? this.config.ConfigUrl : this.config.ConfigUrl + "/" );
             this.sseHttpClient.DefaultRequestHeaders.Add("API-Key", this.apiKey);
             this.sseHttpClient.DefaultRequestHeaders.Add("Accept", "text /event-stream");
             this.sseHttpClient.Timeout = Timeout.InfiniteTimeSpan;
@@ -145,8 +145,8 @@ namespace io.harness.cfsdk.client.connector
             {
                 currentStream.Close();
             }
-            string url = $"/stream?cluster={this.cluster}";
-            this.currentStream =  new EventSource(this.sseHttpClient, url, updater);
+            string url = $"stream?cluster={this.cluster}";
+            this.currentStream =  new EventSource(this.sseHttpClient, url, this.config, updater);
             return currentStream;
         }
         public void PostMetrics(HarnessOpenMetricsAPIService.Metrics metrics)

@@ -12,10 +12,21 @@ namespace io.harness.cfsdk.client.connector
 {
     public class LocalConnector : IConnector
     {
+        private string flagPath;
+        private string segmentPath;
+        private string metricPath;
         private string source;
         public LocalConnector(string source)
         {
             this.source = source;
+
+            this.flagPath = Path.Combine(source, "flags");
+            this.segmentPath = Path.Combine(source, "segments");
+            this.metricPath = Path.Combine(source, "metrics");
+
+            Directory.CreateDirectory(this.flagPath);
+            Directory.CreateDirectory(this.segmentPath);
+            Directory.CreateDirectory(this.metricPath);
         }
 
         public string Authenticate()
@@ -30,7 +41,7 @@ namespace io.harness.cfsdk.client.connector
 
         public FeatureConfig GetFlag(string identifier)
         {
-            string filePath = Path.Combine(Path.Combine(this.source, "flags"), identifier + ".json");
+            string filePath = Path.Combine(flagPath, identifier + ".json");
             return JsonConvert.DeserializeObject<FeatureConfig>(File.ReadAllText(filePath));
         }
 
@@ -39,7 +50,7 @@ namespace io.harness.cfsdk.client.connector
             var features = new List<FeatureConfig>();
             try
             {
-                foreach (string fileName in Directory.GetFiles(Path.Combine(this.source, "flags"), "*.json"))
+                foreach (string fileName in Directory.GetFiles(flagPath, "*.json"))
                 {
                     var feature = JsonConvert.DeserializeObject<FeatureConfig>(File.ReadAllText(fileName));
                     if (feature != null)
@@ -57,7 +68,7 @@ namespace io.harness.cfsdk.client.connector
 
         public Segment GetSegment(string identifier)
         {
-            string filePath =Path.Combine(this.source, "flags", identifier + ".json");
+            string filePath =Path.Combine(segmentPath, identifier + ".json");
             return JsonConvert.DeserializeObject<Segment>(File.ReadAllText(filePath));
         }
 
@@ -66,7 +77,7 @@ namespace io.harness.cfsdk.client.connector
             var segments = new List<Segment>();
             try
             {
-                segments.AddRange(from string fileName in Directory.GetFiles(Path.Combine(this.source, "segments"), "*.json")
+                segments.AddRange(from string fileName in Directory.GetFiles(segmentPath, "*.json")
                                   let segment = JsonConvert.DeserializeObject<Segment>(File.ReadAllText(fileName))
                                   where segment != null
                                   select segment);
@@ -80,7 +91,7 @@ namespace io.harness.cfsdk.client.connector
 
         public void PostMetrics(Metrics metrics)
         {
-            string fileName = Path.Combine(this.source, "metrics", $"{DateTime.Now.ToLongDateString()}.jsonl" );
+            string fileName = Path.Combine(metricPath, $"{DateTime.Now.ToLongDateString()}.jsonl" );
             using (StreamWriter w = File.AppendText(fileName))
             {
                 var str = JsonConvert.SerializeObject(metrics);
@@ -90,7 +101,7 @@ namespace io.harness.cfsdk.client.connector
 
         public IService Stream(IUpdateCallback updater)
         {
-            return new FileWatcherService(this.source, updater);
+            return new FileWatcherService(this.flagPath, this.segmentPath, updater);
         }
 
 
@@ -99,10 +110,10 @@ namespace io.harness.cfsdk.client.connector
             private FileWatcher flagWatcher;
             private FileWatcher segmentWatcher;
             private IUpdateCallback callback;
-            public FileWatcherService(string source, IUpdateCallback callback)
+            public FileWatcherService(string flagPath, string segmentPath, IUpdateCallback callback)
             {
-                this.flagWatcher = new FileWatcher("flag", Path.Combine(source, "flags"), callback);
-                this.segmentWatcher = new FileWatcher("target-segment", Path.Combine(source, "segments"), callback);
+                this.flagWatcher = new FileWatcher("flag", flagPath, callback);
+                this.segmentWatcher = new FileWatcher("target-segment", segmentPath, callback);
                 this.callback = callback;
             }
             public void Close()

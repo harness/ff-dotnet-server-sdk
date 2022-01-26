@@ -14,14 +14,16 @@ namespace io.harness.cfsdk.client.connector
     public class EventSource : IService
     {
         private string url;
+        private Config config;
         private HttpClient httpClient;
         private StreamReader streamReader;
         private IUpdateCallback callback;
 
-        public EventSource(HttpClient httpClient, string url, IUpdateCallback callback)
+        public EventSource(HttpClient httpClient, string url, Config config, IUpdateCallback callback)
         {
             this.httpClient = httpClient;
             this.url = url;
+            this.config = config;
             this.callback = callback;
         }
 
@@ -37,9 +39,12 @@ namespace io.harness.cfsdk.client.connector
 
         public void Stop()
         {
-            this.streamReader.Close();
-            this.streamReader.Dispose();
-            this.streamReader = null;
+            if (this.streamReader != null)
+            { 
+                this.streamReader.Close();
+                this.streamReader.Dispose();
+                this.streamReader = null;
+            }
 
             Log.Information("Stopping EventSource service.");
         }
@@ -76,7 +81,7 @@ namespace io.harness.cfsdk.client.connector
             }
             catch (Exception)
             {
-                
+                Log.Error($"EventSource service throw error. Retrying in {this.config.pollIntervalInSeconds}");
             }
             finally
             {

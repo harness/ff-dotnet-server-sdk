@@ -23,7 +23,7 @@ namespace io.harness.example
                     Console.WriteLine("Notification Ready");
                     break;
                 case NotificationType.CHANGED:
-                    Console.WriteLine($"Flag cganged for {value.identifier}");
+                    Console.WriteLine($"Flag changed for {value.identifier}");
                     break;
                 case NotificationType.FAILED:
                     Console.WriteLine("Notification Error");
@@ -40,7 +40,7 @@ namespace io.harness.example
         static void LocalExample()
         {
             FileMapStore fileMapStore = new FileMapStore("Non-Freemium");
-            var connector = new LocalConnector("./local");
+            var connector = new LocalConnector("local");
             client = new CfClient(connector, Config.Builder().SetStore(fileMapStore).Build());
             client.Subscribe(NotificationType.READY, observer);
             client.Subscribe(NotificationType.CHANGED, observer);
@@ -109,15 +109,18 @@ namespace io.harness.example
         }
         static void RemoteExample()
         {
-            
+            FileMapStore fileMapStore = new FileMapStore("file_cache");
+
+            client = CfClient.Instance;
             Config config = Config.Builder()
                 .SetAnalyticsEnabled()
-                .SetStreamEnabled(false)
+                .SetStreamEnabled(true)
+                .SetStore(fileMapStore)
                 .ConfigUrl("https://config.feature-flags.uat.harness.io/api/1.0")
                 .EventUrl("https://event.feature-flags.uat.harness.io/api/1.0")
                 .Build();
-            CfClient.Instance.Initialize(API_KEY, config);
-            CfClient.Instance.Subscribe(observer);
+            client.Initialize(API_KEY, config);
+            client.Subscribe(observer);
 
         }
         static async Task Main(string[] args)
@@ -139,6 +142,8 @@ namespace io.harness.example
                 case "local":       LocalExample(); break;
                 case "multiple":    MultipleClientExample(); return;
             }
+            if (client == null)
+                return;
             
 
             await client.StartAsync();
@@ -153,10 +158,10 @@ namespace io.harness.example
 
             while (true)
             {
-                bool bResult = CfClient.Instance.BoolVariation("flag1", target, false);
+                bool bResult = client.BoolVariation("flag1", target, false);
                 Console.WriteLine($"Bool Variation value ----> {bResult}");
 
-                JObject jResult = CfClient.Instance.JsonVariation("flag4", target, new JObject());
+                JObject jResult = client.JsonVariation("flag4", target, new JObject());
                 Console.WriteLine($"Bool Variation value ----> {jResult}");
 
                 Thread.Sleep(20000);

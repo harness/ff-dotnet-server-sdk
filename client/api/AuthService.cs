@@ -39,8 +39,11 @@ namespace io.harness.cfsdk.client.api
         }
         public void Stop()
         {
-            authTimer.Dispose();
-            authTimer = null;
+            if (authTimer != null)
+            {
+                authTimer.Dispose();
+                authTimer = null;
+            }
         }
         private void OnTimedEvent(object source)
         {

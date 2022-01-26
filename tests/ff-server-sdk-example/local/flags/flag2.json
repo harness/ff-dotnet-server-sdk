@@ -1,26 +1,24 @@
 {
-  "defaultServe": { "distribution": null, "variation": "one" },
-  "environment": "local",
+  "defaultServe": {
+    "variation": "True"
+  },
+  "environment": "Streamsoft",
   "feature": "flag2",
   "kind": "int",
-  "offVariation": "two",
+  "offVariation": "False",
   "prerequisites": [],
-  "project": "FeatureFlagsDemo",
+  "project": "harnessappdemo",
   "rules": [],
-  "state": "on",
+  "state": "off",
   "variationToTargetMap": null,
-  "variations": [
-    {
-      "description": null,
-      "identifier": "one",
-      "name": "One",
-      "value": "100"
-    },
-    {
-      "description": null,
-      "identifier": "two",
-      "name": "Two",
-      "value": "200"
-    }
-  ]
+  "variations": [{
+    "identifier": "True",
+    "name": "True",
+    "value": "100"
+  }, {
+    "identifier": "False",
+    "name": "False",
+    "value": "-100"
+  }],
+  "version": 3
 }

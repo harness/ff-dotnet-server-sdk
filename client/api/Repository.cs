@@ -44,8 +44,8 @@ namespace io.harness.cfsdk.client.api
             this.callback = callback;
         }
 
-        private string FlagKey(string identifier) {  return "flags/" + identifier; }
-        private string SegmentKey(string identifier) { return "segments/" + identifier; }
+        private string FlagKey(string identifier) {  return "flags_" + identifier; }
+        private string SegmentKey(string identifier) { return "segments_" + identifier; }
 
         public FeatureConfig GetFlag(string identifier)
         {
@@ -110,32 +110,32 @@ namespace io.harness.cfsdk.client.api
                 this.callback.OnSegmentDeleted(identifier);
             }
         }
-        private Object GetCache(string key, bool updateCache)
+        private T GetCache<T>(string key, bool updateCache)
         {
-            Object item = this.cache.Get(key);
+            Object item = this.cache.Get(key, typeof(T));
             if (item != null)
             {
-                return item;
+                return (T)item;
             }
             if (this.store != null)
             {
-                item = this.store.Get(key);
+                item = this.store.Get(key, typeof(T));
                 if (updateCache && item != null)
                 {
                     this.cache.Set(key, item);
                 }
             }
-            return item;
+            return (T)item;
         }
         private FeatureConfig GetFlag( string identifer, bool updateCache)
         {
             string key = FlagKey(identifer);
-            return (FeatureConfig)GetCache(key, updateCache);
+            return GetCache<FeatureConfig>(key, updateCache);
         }
         private Segment GetSegment(string identifer, bool updateCache)
         {
             string key = SegmentKey(identifer);
-            return (Segment)GetCache(key, updateCache);
+            return GetCache<Segment>(key, updateCache);
         }
         void IRepository.SetFlag(string identifier, FeatureConfig featureConfig)
         {

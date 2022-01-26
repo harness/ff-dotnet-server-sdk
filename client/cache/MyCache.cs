@@ -76,7 +76,7 @@ namespace io.harness.cfsdk.client.cache
             memCache.Delete(key);
         }
 
-        public object Get(string key)
+        public object Get(string key, Type t)
         {
             return memCache.getIfPresent(key);
         }
