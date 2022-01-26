@@ -60,11 +60,11 @@ namespace io.harness.cfsdk.client.api.analytics
                     Log.Information("Successfully sent analytics data to the server");
                     analyticsCache.resetCache();
                 }
-                catch (HarnessOpenMetricsAPIService.ApiException e)
+                catch (CfClientException ex)
                 {
                     // Clear the set because the cache is only invalidated when there is no
                     // exception, so the targets will reappear in the next iteration
-                    Log.Error("Failed to send metricsData {@e}", e);
+                    Log.Error("Failed to send metricsData {@e}", ex);
                 }
             }
         }

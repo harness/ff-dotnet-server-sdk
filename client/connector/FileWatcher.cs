@@ -51,7 +51,7 @@ namespace io.harness.cfsdk.client.connector
             {
                 watcher = new FileSystemWatcher();
                 watcher.Path = this.path;
-                watcher.NotifyFilter = NotifyFilters.LastWrite;
+                watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
                 watcher.Filter = "*.json";
                 watcher.Changed += Watcher_Changed;
                 watcher.Created += Watcher_Created;

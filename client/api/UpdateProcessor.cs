@@ -54,7 +54,7 @@ namespace io.harness.cfsdk.client.api
             if (this.service != null)
             {
                 this.service.Stop();
-                // TODO: wait for ProcessMessage to finish.
+                this.service = null;
             }
         }
 
@@ -75,9 +75,9 @@ namespace io.harness.cfsdk.client.api
         {
             this.callback.OnStreamDisconnected();
             Stop();
-            Task.Run(async () =>
+            Task.Run( () =>
             {
-                await Task.Delay(TimeSpan.FromSeconds(this.config.pollIntervalInSeconds));
+                Task.Delay(TimeSpan.FromSeconds(this.config.pollIntervalInSeconds)).Wait();
                 Start();
             });
         }

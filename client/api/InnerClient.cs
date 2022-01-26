@@ -19,7 +19,14 @@ using System.Collections.Concurrent;
 
 namespace io.harness.cfsdk.client.api
 {
-    internal class InnerClient : IAuthCallback, IRepositoryCallback, IPollCallback, IUpdateCallback, IEvaluatorCallback, IMetricCallback
+    internal class InnerClient :
+        IAuthCallback,
+        IRepositoryCallback,
+        IPollCallback,
+        IUpdateCallback,
+        IEvaluatorCallback,
+        IMetricCallback,
+        IConnectionCallback
     {
 
         readonly ConcurrentDictionary<IObserver<Event>, HashSet<NotificationType>> observers = new ConcurrentDictionary<IObserver<Event>, HashSet<NotificationType>>();
@@ -46,7 +53,7 @@ namespace io.harness.cfsdk.client.api
 
         public void Initialize(string apiKey, Config config)
         {
-            Initialize(new HarnessConnector(apiKey, config), config);
+            Initialize(new HarnessConnector(apiKey, config, this), config);
         }
 
         public void Initialize(IConnector connector, Config config)
@@ -86,6 +93,8 @@ namespace io.harness.cfsdk.client.api
         }
         #endregion
 
+
+
         #region Authentication callback
         public void OnAuthenticationSuccess()
         {
@@ -94,9 +103,17 @@ namespace io.harness.cfsdk.client.api
             update.Start();
             metric.Start();
         }
-        public void OnReauthenticate()
+
+        #endregion
+
+        #region Reauthentication callback
+        public void OnReauthenticateRequested()
         {
             polling.Stop();
+            update.Stop();
+            metric.Stop();
+
+            authService.Start();
         }
         #endregion
 
@@ -206,6 +223,7 @@ namespace io.harness.cfsdk.client.api
         {
             this.metric.PushToQueue(target, featureConfig, variation);
         }
+
 
         private class Unsubscriber : IDisposable
         {

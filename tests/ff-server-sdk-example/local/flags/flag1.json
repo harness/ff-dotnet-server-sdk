@@ -1,26 +1,24 @@
 {
-  "defaultServe": { "distribution": null, "variation": "true" },
-  "environment": "local",
+  "defaultServe": {
+    "variation": "true"
+  },
+  "environment": "Streamsoft",
   "feature": "flag1",
   "kind": "boolean",
   "offVariation": "false",
   "prerequisites": [],
-  "project": "FeatureFlagsDemo",
+  "project": "harnessappdemo",
   "rules": [],
-  "state": "off",
+  "state": "on",
   "variationToTargetMap": null,
-  "variations": [
-    {
-      "description": null,
-      "identifier": "true",
-      "name": "Enable Page",
-      "value": "true"
-    },
-    {
-      "description": null,
-      "identifier": "false",
-      "name": "Disable Page",
-      "value": "false"
-    }
-  ]
+  "variations": [{
+    "identifier": "true",
+    "name": "True",
+    "value": "true"
+  }, {
+    "identifier": "false",
+    "name": "False",
+    "value": "false"
+  }],
+  "version": 10
 }
