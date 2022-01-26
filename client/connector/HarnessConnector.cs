@@ -13,6 +13,11 @@ using Serilog;
 
 namespace io.harness.cfsdk.client.connector
 {
+    interface IConnectionCallback
+    {
+        void OnReauthenticateRequested();
+    }
+
     internal class HarnessConnector : IConnector
     {
         private String token;
@@ -25,13 +30,15 @@ namespace io.harness.cfsdk.client.connector
 
         private string apiKey;
         private Config config;
+        private IConnectionCallback callback;
 
         private IService currentStream;
         private CancellationTokenSource cancelToken = new CancellationTokenSource();
-        public HarnessConnector(String apiKey, Config config)
+        public HarnessConnector(String apiKey, Config config, IConnectionCallback callback)
         {
             this.config = config;
             this.apiKey = apiKey;
+            this.callback = callback;
 
             this.apiHttpClient = new HttpClient();
             this.apiHttpClient.BaseAddress = new Uri(config.ConfigUrl);
@@ -64,7 +71,7 @@ namespace io.harness.cfsdk.client.connector
             }
             catch (AggregateException ex)
             {
-                // TODO: Reauthenticate
+                ReauthenticateIfNeeded(ex);
                 throw new CfClientException(ex.Message);
             }
         }
@@ -76,7 +83,7 @@ namespace io.harness.cfsdk.client.connector
                 {
                     Client client = new Client(this.apiHttpClient);
                     client.BaseUrl = this.config.ConfigUrl;
-                    return client.ClientEnvTargetSegmentsGetAsync( this.environment, this.cluster, this.cancelToken.Token);
+                    return client.ClientEnvTargetSegmentsGetAsync(this.environment, this.cluster, this.cancelToken.Token);
                 });
 
                 task.Wait();
@@ -85,7 +92,7 @@ namespace io.harness.cfsdk.client.connector
             }
             catch (AggregateException ex)
             {
-                // TODO: Reauthenticate
+                ReauthenticateIfNeeded(ex);
                 throw new CfClientException(ex.Message);
             }
         }
@@ -107,6 +114,7 @@ namespace io.harness.cfsdk.client.connector
             }
             catch (AggregateException ex)
             {
+                ReauthenticateIfNeeded(ex);
                 throw new CfClientException(ex.Message);
             }
         }
@@ -127,7 +135,7 @@ namespace io.harness.cfsdk.client.connector
             }
             catch (AggregateException ex)
             {
-                // TODO: Reauthenticate
+                ReauthenticateIfNeeded(ex);
                 throw new CfClientException(ex.Message);
             }
         }
@@ -161,7 +169,7 @@ namespace io.harness.cfsdk.client.connector
             }
             catch (AggregateException ex)
             {
-                // TODO: handle exception
+                ReauthenticateIfNeeded(ex);
                 throw new CfClientException(ex.Message);
             }
         }
@@ -219,6 +227,19 @@ namespace io.harness.cfsdk.client.connector
                     throw e;
                 }
                 throw ex;
+            }
+        }
+        private void ReauthenticateIfNeeded(AggregateException ex)
+        {
+            foreach (var e in ex.InnerExceptions)
+            {
+                ApiException apiEx = e as ApiException;
+                if (apiEx != null && apiEx.StatusCode == (int)HttpStatusCode.Unauthorized)
+                {
+                    Log.Error("Initiate reauthentication");
+                    callback.OnReauthenticateRequested();
+                    return;
+                }
             }
         }
 
