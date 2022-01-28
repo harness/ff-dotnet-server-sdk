@@ -14,7 +14,7 @@ namespace io.harness.cfsdk.client.api
         Task Initialize(IConnector connector);
         Task Initialize(IConnector connector, Config config);
 
-        Task WaitToInitialize();
+        Task InitializeAndWait();
 
         bool BoolVariation(string key, dto.Target target, bool defaultValue);
         string StringVariation(string key, dto.Target target, string defaultValue);
@@ -46,19 +46,16 @@ namespace io.harness.cfsdk.client.api
         public CfClient(string apiKey, Config config)
         {
             client = new InnerClient(apiKey, config);
-            client.Start();
         }
         public CfClient(IConnector connector, Config config)
         {
             client = new InnerClient(connector, config);
-            client.Start();
         }
         // start authentication with server
-        public async Task WaitToInitialize()
+        public async Task InitializeAndWait()
         {
-            await client.WaitToInitialize();
+            await client.StartAsync();
         }
-
         // initialize singletone instance
         public async Task Initialize(string apiKey)
         {

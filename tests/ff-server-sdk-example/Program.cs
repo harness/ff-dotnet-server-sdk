@@ -45,7 +45,7 @@ namespace io.harness.example
             client.Subscribe(NotificationType.READY, observer);
             client.Subscribe(NotificationType.CHANGED, observer);
 
-            await client.WaitToInitialize();
+            await client.InitializeAndWait();
 
         }
         static async Task SingletonExample()
@@ -60,7 +60,7 @@ namespace io.harness.example
             client = new CfClient(API_KEY, Config.Builder().SetStore(fileMapStore).Build());
             client.Subscribe(NotificationType.READY, observer);
 
-            await client.WaitToInitialize();
+            await client.InitializeAndWait();
         }
         static async Task MultipleClientExample()
         {
@@ -94,8 +94,7 @@ namespace io.harness.example
                     .Identifier($"Target_{rand}")
                     .build();
 
-                await client.WaitToInitialize();
-
+                await client.InitializeAndWait();
 
                 bool bResult = CfClient.Instance.BoolVariation("flag1", target, false);
                 Console.WriteLine($"Client: {d.Key} Bool Variation value ----> {bResult}");
