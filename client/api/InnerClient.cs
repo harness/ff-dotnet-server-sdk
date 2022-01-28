@@ -40,7 +40,7 @@ namespace io.harness.cfsdk.client.api
         private IMetricsProcessor metric;
         private IConnector connector;
 
-
+        public InnerClient() { }
         public InnerClient(string apiKey, Config config)
         {
             Initialize(apiKey, config);
@@ -66,12 +66,14 @@ namespace io.harness.cfsdk.client.api
             this.evaluator = new Evaluator(this.repository, this);
             this.metric = new MetricsProcessor(connector, config, this);
         }
-        public async Task StartAsync()
+        public void Start()
         {
             Log.Information("Initialize authentication");
             // Start Authentication flow  
             this.authService.Start();
-
+        }
+        public async Task WaitToInitialize()
+        {
             var initWork = new[] {
                 this.polling.ReadyAsync()
             };
@@ -80,6 +82,11 @@ namespace io.harness.cfsdk.client.api
             await Task.WhenAll(initWork);
 
             Notify(new Event { type = NotificationType.READY });
+        }
+        public async Task StartAsync()
+        {
+            Start();
+            await WaitToInitialize();
         }
         #region Stream callback
 

@@ -37,7 +37,7 @@ namespace io.harness.example
         static readonly string API_KEY = "70d4d39e-e50f-4cee-99bf-6fd569138c74";
         static readonly Observer observer = new();
         static ICfClient client;
-        static void LocalExample()
+        static async Task LocalExample()
         {
             FileMapStore fileMapStore = new FileMapStore("Non-Freemium");
             var connector = new LocalConnector("local");
@@ -45,20 +45,24 @@ namespace io.harness.example
             client.Subscribe(NotificationType.READY, observer);
             client.Subscribe(NotificationType.CHANGED, observer);
 
+            await client.InitializeAndWait();
+
         }
-        static void SingletonExample()
+        static async Task SingletonExample()
         {
             client = CfClient.Instance;
             FileMapStore fileMapStore = new FileMapStore("Non-Freemium");
-            client.Initialize(API_KEY, Config.Builder().SetStore(fileMapStore).Build());
+            await client.Initialize(API_KEY, Config.Builder().SetStore(fileMapStore).Build());
         }
-        static void SimpleExample()
+        static async Task SimpleExample()
         {
             FileMapStore fileMapStore = new FileMapStore("Non-Freemium");
             client = new CfClient(API_KEY, Config.Builder().SetStore(fileMapStore).Build());
             client.Subscribe(NotificationType.READY, observer);
+
+            await client.InitializeAndWait();
         }
-        static async void MultipleClientExample()
+        static async Task MultipleClientExample()
         {
             Random r = new Random();
 
@@ -90,8 +94,7 @@ namespace io.harness.example
                     .Identifier($"Target_{rand}")
                     .build();
 
-
-                await client.StartAsync();
+                await client.InitializeAndWait();
 
                 bool bResult = CfClient.Instance.BoolVariation("flag1", target, false);
                 Console.WriteLine($"Client: {d.Key} Bool Variation value ----> {bResult}");
@@ -107,20 +110,20 @@ namespace io.harness.example
 
             }
         }
-        static void RemoteExample()
+        static async Task RemoteExample()
         {
             FileMapStore fileMapStore = new FileMapStore("file_cache");
 
             client = CfClient.Instance;
             Config config = Config.Builder()
                 .SetAnalyticsEnabled()
-                .SetStreamEnabled(true)
+                .SetStreamEnabled(false)
                 .SetStore(fileMapStore)
                 .ConfigUrl("https://config.feature-flags.uat.harness.io/api/1.0")
                 .EventUrl("https://event.feature-flags.uat.harness.io/api/1.0")
                 .Build();
-            client.Initialize(API_KEY, config);
             client.Subscribe(observer);
+            await client.Initialize(API_KEY, config);
 
         }
         static async Task Main(string[] args)
@@ -136,17 +139,14 @@ namespace io.harness.example
             string line = Console.ReadLine();
             switch (line)
             {
-                case "singleton":   SingletonExample();break;
-                case "remote":      RemoteExample();break;
-                case "simple":      SimpleExample();break;
-                case "local":       LocalExample(); break;
-                case "multiple":    MultipleClientExample(); return;
+                case "singleton":   await SingletonExample();break;
+                case "remote":      await RemoteExample();break;
+                case "simple":      await SimpleExample();break;
+                case "local":       await LocalExample(); break;
+                case "multiple":    await MultipleClientExample(); return;
             }
             if (client == null)
                 return;
-            
-
-            await client.StartAsync();
 
             io.harness.cfsdk.client.dto.Target target =
                 io.harness.cfsdk.client.dto.Target.builder()
