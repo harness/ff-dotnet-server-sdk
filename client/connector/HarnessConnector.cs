@@ -234,7 +234,7 @@ namespace io.harness.cfsdk.client.connector
             foreach (var e in ex.InnerExceptions)
             {
                 ApiException apiEx = e as ApiException;
-                if (apiEx != null && apiEx.StatusCode == (int)HttpStatusCode.Unauthorized)
+                if (apiEx != null && apiEx.StatusCode == (int)HttpStatusCode.Forbidden)
                 {
                     Log.Error("Initiate reauthentication");
                     callback.OnReauthenticateRequested();
