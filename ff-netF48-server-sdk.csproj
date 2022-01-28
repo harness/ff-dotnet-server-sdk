@@ -6,7 +6,7 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Version>1.1.0</Version>
     <PackOnBuild>true</PackOnBuild>
-    <PackageVersion>1.0.8</PackageVersion>
+    <PackageVersion>1.1.0</PackageVersion>
     <Authors>andrija.milovanovic@harness.io,milos.vasic@harness.io</Authors>
     <Copyright>Copyright © 2022 </Copyright>
     <PackageIconUrl>https://harness.io/icon-ff.svg</PackageIconUrl>
@@ -351,6 +351,48 @@
     <None Remove="tests\ff-server-sdk-test\bin\Debug\net5.0\ff-test-cases\tests\off_off_no_rules.json" />
     <None Remove="tests\ff-server-sdk-test\ff-test-cases\.git" />
     <None Remove="tests\ff-server-sdk-test\ff-test-cases\.gitignore" />
+    <None Remove="tests\.DS_Store" />
+    <None Remove="tests\ff-server-sdk-test\.DS_Store" />
+    <None Remove="tests\ff-server-sdk-test\bin\Debug\.DS_Store" />
+    <None Remove="tests\ff-server-sdk-test\bin\Debug\net5.0\.DS_Store" />
+    <None Remove="tests\ff-server-sdk-test\bin\Debug\net5.0\ff-test-cases\.DS_Store" />
+    <None Remove="tests\ff-server-sdk-test\ff-test-cases\.DS_Store" />
+    <None Remove="tests\ff-server-sdk-example\.DS_Store" />
+    <None Remove="tests\ff-server-sdk-example\obj\Release\net5.0\ff-server-sdk-example.assets.cache" />
+    <None Remove="tests\ff-server-sdk-example\obj\Release\net5.0\ff-server-sdk-example.csproj.AssemblyReference.cache" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\.DS_Store" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\log-20220126.txt" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\.DS_Store" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\Serilog.Sinks.Console.dll" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\Serilog.Sinks.File.dll" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\log-20220128.txt" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\local\.DS_Store" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\local\flags\.DS_Store" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\Non-Freemium\flags_flag1" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\file_cache\flags_harnessappdemocitriallimit" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\file_cache\flags_harnessappdemoenableglobalhelp" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\file_cache\flags_harnessappdemodarkmode" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\file_cache\segments_Test_Andrija" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\file_cache\flags_cf_sample_flag" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\file_cache\segments_Test_Andrija_2_Target_Group" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\file_cache\flags_harnessappdemoenablecimodule" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\file_cache\flags_harnessappdemocetriallimit" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\file_cache\flags_harnessappdemoenablecvmodule" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\file_cache\flags_harnessappdemocvtriallimit" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\file_cache\flags_flag1" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\file_cache\flags_harnessappdemocftriallimit" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\file_cache\flags_andrija_test_2" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\file_cache\flags_harnessappdemoenablecemodule" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\file_cache\flags_andrija_test" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\file_cache\flags_flag4" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\file_cache\flags_flag3" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\file_cache\flags_harnessappdemoenablecfmodule" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\file_cache\flags_harnessappdemocfribbon" />
+    <None Remove="tests\ff-server-sdk-example\bin\Debug\net5.0\file_cache\flags_flag2" />
+    <None Remove="tests\ff-server-sdk-example\local\.DS_Store" />
+    <None Remove="tests\ff-server-sdk-example\local\flags\flag2.json" />
+    <None Remove="tests\ff-server-sdk-example\local\flags\flag1.json" />
+    <None Remove="tests\ff-server-sdk-example\local\segments\segment1.json" />
   </ItemGroup>
   <ItemGroup>
     <OpenApiReference Include="Connected Services\HarnessOpenAPIService\HarnessOpenAPIS.nswag">
