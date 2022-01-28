@@ -1,10 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
     <RootNamespace>io.harness.cfsdk</RootNamespace>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Version>1.1.0</Version>
+    <PackOnBuild>true</PackOnBuild>
+    <PackageVersion>1.0.8</PackageVersion>
+    <Authors>andrija.milovanovic@harness.io,milos.vasic@harness.io</Authors>
+    <Copyright>Copyright © 2022 </Copyright>
+    <PackageIconUrl>https://harness.io/icon-ff.svg</PackageIconUrl>
+    <PackageLicenseUrl>https://github.com/drone/ff-dotnet-server-sdk/blob/main/LICENSE</PackageLicenseUrl>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <Owners>https://www.nuget.org/profiles/milos.vasic</Owners>
+    <PackageProjectUrl>https://github.com/drone/ff-dotnet-server-sdk</PackageProjectUrl>
+    <Summary>.NET Server SDK for Harness Feature Flag platform</Summary>
+    <PackageTags>featureflag harness</PackageTags>
+    <Title>Harness CF .NET Server SDK</Title>
+    <Description>Harness Feature Flags (FF) is a feature management solution that enables users to change the software’s functionality, without deploying new code. FF uses feature flags to hide code or behaviours without having to ship new versions of the software. A feature flag is like a powerful if statement.</Description>
+    <PackageReleaseNotes>.NET Server SDK for Harness Feature Flag platform</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
