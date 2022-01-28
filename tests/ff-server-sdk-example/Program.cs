@@ -9,42 +9,29 @@ using System.Threading.Tasks;
 
 namespace io.harness.example
 {
-    class Observer : IObserver<Event>
-    {
-        public void OnCompleted(){}
 
-        public void OnError(Exception error){}
-
-        public void OnNext(Event value)
-        {
-            switch (value.type)
-            {
-                case NotificationType.READY:
-                    Console.WriteLine("Notification Ready");
-                    break;
-                case NotificationType.CHANGED:
-                    Console.WriteLine($"Flag changed for {value.identifier}");
-                    break;
-                case NotificationType.FAILED:
-                    Console.WriteLine("Notification Error");
-                    break;
-            }
-           
-        }
-    }
     class Program 
     {
         static readonly string API_KEY = "70d4d39e-e50f-4cee-99bf-6fd569138c74";
-        static readonly Observer observer = new();
         static ICfClient client;
+
+        static void Subscribe()
+        {
+            client.InitializationCompleted += (sender, e) =>
+            {
+                Console.WriteLine("Notification Initialization Completed");
+            };
+            client.EvaluationChanged += (sender, identifier) =>
+            {
+                Console.WriteLine($"Flag changed for {identifier}");
+            };
+        }
         static async Task LocalExample()
         {
             FileMapStore fileMapStore = new FileMapStore("Non-Freemium");
             var connector = new LocalConnector("local");
             client = new CfClient(connector, Config.Builder().SetStore(fileMapStore).Build());
-            client.Subscribe(NotificationType.READY, observer);
-            client.Subscribe(NotificationType.CHANGED, observer);
-
+            Subscribe();
             await client.InitializeAndWait();
 
         }
@@ -58,7 +45,10 @@ namespace io.harness.example
         {
             FileMapStore fileMapStore = new FileMapStore("Non-Freemium");
             client = new CfClient(API_KEY, Config.Builder().SetStore(fileMapStore).Build());
-            client.Subscribe(NotificationType.READY, observer);
+            client.InitializationCompleted += (sender, e) =>
+            {
+                Console.WriteLine("Notification Initialization Completed");
+            };
 
             await client.InitializeAndWait();
         }
@@ -122,7 +112,7 @@ namespace io.harness.example
                 .ConfigUrl("https://config.feature-flags.uat.harness.io/api/1.0")
                 .EventUrl("https://event.feature-flags.uat.harness.io/api/1.0")
                 .Build();
-            client.Subscribe(observer);
+            Subscribe();
             await client.Initialize(API_KEY, config);
 
         }
