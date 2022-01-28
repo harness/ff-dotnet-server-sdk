@@ -28,9 +28,6 @@ namespace io.harness.cfsdk.client.api
         IMetricCallback,
         IConnectionCallback
     {
-
-        readonly ConcurrentDictionary<IObserver<Event>, HashSet<NotificationType>> observers = new ConcurrentDictionary<IObserver<Event>, HashSet<NotificationType>>();
-
         // Services
         private IAuthService authService;
         private IRepository repository;
@@ -40,14 +37,20 @@ namespace io.harness.cfsdk.client.api
         private IMetricsProcessor metric;
         private IConnector connector;
 
-        public InnerClient() { }
-        public InnerClient(string apiKey, Config config)
+        public event EventHandler InitializationCompleted;
+        public event EventHandler<string> EvaluationChanged;
+
+        private CfClient parent;
+        public InnerClient(CfClient parent) { this.parent = parent; }
+        public InnerClient(string apiKey, Config config, CfClient parent)
         {
+            this.parent = parent;
             Initialize(apiKey, config);
         }
 
-        public InnerClient(IConnector connector, Config config)
+        public InnerClient(IConnector connector, Config config, CfClient parent)
         {
+            this.parent = parent;
             Initialize(connector, config);
         }
 
@@ -81,7 +84,7 @@ namespace io.harness.cfsdk.client.api
             // We finished with initialization when Polling processor returns.
             await Task.WhenAll(initWork);
 
-            Notify(new Event { type = NotificationType.READY });
+            OnNotifyInitializationCompleted();
         }
         public async Task StartAsync()
         {
@@ -139,30 +142,37 @@ namespace io.harness.cfsdk.client.api
 
         public void OnFlagStored(string identifier)
         {
-            Notify(new Event { identifier = identifier , type = NotificationType.CHANGED });
+            OnNotifyEvaluationChanged(identifier);
         }
 
         public void OnFlagDeleted(string identifier)
         {
-            Notify(new Event { identifier = identifier, type = NotificationType.CHANGED });
+            OnNotifyEvaluationChanged(identifier);
         }
 
         public void OnSegmentStored(string identifier)
         {
             repository.FindFlagsBySegment(identifier).ToList().ForEach(i => {
-               Notify(new Event { identifier = i, type = NotificationType.CHANGED });
-
+                OnNotifyEvaluationChanged(i);
             });
         }
 
         public void OnSegmentDeleted(string identifier)
         {
             repository.FindFlagsBySegment(identifier).ToList().ForEach(i => {
-                Notify(new Event { identifier = i, type = NotificationType.CHANGED });
-
+                OnNotifyEvaluationChanged(i);
             });
         }
         #endregion
+
+        private void OnNotifyInitializationCompleted()
+        {
+            InitializationCompleted?.Invoke(parent, EventArgs.Empty);
+        }
+        private void OnNotifyEvaluationChanged(string identifier)
+        {
+            EvaluationChanged?.Invoke(parent, identifier);
+        }
 
         public bool BoolVariation(string key, dto.Target target, bool defaultValue)
         {
@@ -184,7 +194,6 @@ namespace io.harness.cfsdk.client.api
         public void Close()
         {
             this.connector.Close();
-            this.observers.Clear();
             this.authService.Stop();
             this.repository.Close();
             this.polling.Stop();
@@ -192,74 +201,13 @@ namespace io.harness.cfsdk.client.api
             this.metric.Stop();
         }
 
-        #region Notification managegement
-
-        private void Notify(Event e)
-        {
-            foreach(IObserver<Event> ob in observers.Keys)
-            {
-                if (observers.TryGetValue(ob, out HashSet<NotificationType> set))
-                {
-                    if (set != null && (set.Contains(e.type) || set.Contains(NotificationType.ALL)))
-                    {
-                        ob.OnNext(e);
-                    }
-                }
-            }
-        }
-
-        public IDisposable Subscribe(IObserver<Event> observer)
-        {
-            return Subscribe(NotificationType.ALL, observer);
-        }
-
-        public IDisposable Subscribe(NotificationType evn, IObserver<Event> observer)
-        {
-            HashSet<NotificationType> set = observers.GetOrAdd(observer, new HashSet<NotificationType>());
-            set.Add(evn);
-
-            return new Unsubscriber(observers, observer, evn);
-        }
-
         public void Update(Message message, bool manual)
         {
             this.update.Update(message, manual);
         }
-
         public void evaluationProcessed(FeatureConfig featureConfig, dto.Target target, Variation variation)
         {
             this.metric.PushToQueue(target, featureConfig, variation);
         }
-
-
-        private class Unsubscriber : IDisposable
-        {
-            private ConcurrentDictionary<IObserver<Event>, HashSet<NotificationType>> _observers;
-            private IObserver<Event> _observer;
-            private NotificationType _evn;
-
-            public Unsubscriber(ConcurrentDictionary<IObserver<Event>, HashSet<NotificationType>> observers, IObserver<Event> observer, NotificationType evn)
-            {
-                this._observers = observers;
-                this._observer = observer;
-                this._evn = evn;
-            }
-
-            public void Dispose()
-            {
-                HashSet<NotificationType> notifications;
-                if( _observers.TryGetValue(this._observer, out notifications) )
-                {
-                    notifications.Remove(this._evn);
-                    if(notifications.Count == 0)
-                    {
-
-                        _observers.TryRemove(this._observer, out notifications);
-                    }
-                }
-            }
-        }
-        #endregion
     }
-
 }
