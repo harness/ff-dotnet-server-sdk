@@ -21,14 +21,15 @@ namespace io.harness.cfsdk.client.api
         double NumberVariation(string key, dto.Target target, double defaultValue);
         JObject JsonVariation(string key, dto.Target target, JObject defaultValue);
 
-        IDisposable Subscribe(IObserver<Event> observer);
-        IDisposable Subscribe(NotificationType evn, IObserver<Event> observer);
-        void Update(Message msg);
 
+        event EventHandler InitializationCompleted;
+        event EventHandler<string> EvaluationChanged;
+
+        void Update(Message msg);
         void Close();
     }
 
-    public class CfClient : ICfClient, IObservable<Event>
+    public class CfClient : ICfClient
     {
         // Singleton implementation
         private static readonly Lazy<CfClient> lazy = new Lazy<CfClient>(() => new CfClient());
@@ -36,20 +37,31 @@ namespace io.harness.cfsdk.client.api
 
         private readonly InnerClient client = null;
 
+        public event EventHandler InitializationCompleted
+        {
+            add { client.InitializationCompleted += value; }
+            remove { client.InitializationCompleted -= value;    }
+        }
+        public event EventHandler<string> EvaluationChanged
+        {
+            add { client.EvaluationChanged += value; }
+            remove { client.EvaluationChanged -= value; }
+        }
+
         // alternative client creation
         public CfClient(string apiKey) : this(apiKey, Config.Builder().Build()) {}
         public CfClient(IConnector connector) : this(connector, Config.Builder().Build()) { }
         public CfClient()
         {
-            client = new InnerClient();
+            client = new InnerClient(this);
         }
         public CfClient(string apiKey, Config config)
         {
-            client = new InnerClient(apiKey, config);
+            client = new InnerClient(apiKey, config, this);
         }
         public CfClient(IConnector connector, Config config)
         {
-            client = new InnerClient(connector, config);
+            client = new InnerClient(connector, config, this);
         }
         // start authentication with server
         public async Task InitializeAndWait()
@@ -81,10 +93,6 @@ namespace io.harness.cfsdk.client.api
         public string StringVariation(string key, dto.Target target, string defaultValue) { return client.StringVariation(key, target, defaultValue); }
         public double NumberVariation(string key, dto.Target target, double defaultValue) { return client.NumberVariation(key, target, defaultValue); }
         public JObject JsonVariation(string key, dto.Target target, JObject defaultValue) {  return client.JsonVariation(key, target, defaultValue); }
-
-        // subscribe to receive notificatins
-        public IDisposable Subscribe(IObserver<Event> observer) { return client.Subscribe(observer); }
-        public IDisposable Subscribe(NotificationType evn, IObserver<Event> observer) { return client.Subscribe(evn, observer); }
 
         // force message
         public void Update(Message msg) { client.Update(msg, true);  }
