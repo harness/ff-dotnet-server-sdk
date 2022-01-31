@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
@@ -234,7 +234,7 @@ namespace io.harness.cfsdk.client.connector
             foreach (var e in ex.InnerExceptions)
             {
                 ApiException apiEx = e as ApiException;
-                if (apiEx != null && apiEx.StatusCode == (int)HttpStatusCode.Unauthorized) //401
+                if (apiEx != null && apiEx.StatusCode == (int)HttpStatusCode.Forbidden)
                 {
                     Log.Error("Initiate reauthentication");
                     callback.OnReauthenticateRequested();
