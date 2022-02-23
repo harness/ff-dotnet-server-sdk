@@ -86,16 +86,16 @@ namespace io.harness.example
 
                 await client.InitializeAndWait();
 
-                bool bResult = CfClient.Instance.BoolVariation("flag1", target, false);
+                bool bResult = CfClient.Instance.boolVariation("flag1", target, false);
                 Console.WriteLine($"Client: {d.Key} Bool Variation value ----> {bResult}");
 
-                double nResult = CfClient.Instance.NumberVariation("flag2", target, -1);
+                double nResult = CfClient.Instance.numberVariation("flag2", target, -1);
                 Console.WriteLine($"Client: {d.Key} Number Variation value ----> {nResult}");
 
-                string sResult = CfClient.Instance.StringVariation("flag3", target, "NO VALUE!!!!");
+                string sResult = CfClient.Instance.stringVariation("flag3", target, "NO VALUE!!!!");
                 Console.WriteLine($"Client: {d.Key} String Variation value ----> {sResult}");
 
-                JObject jResult = CfClient.Instance.JsonVariation("flag4", target, new JObject());
+                JObject jResult = CfClient.Instance.jsonVariation("flag4", target, new JObject());
                 Console.WriteLine($"Client: {d.Key} Json Variation value ----> {jResult}");
 
             }
@@ -148,10 +148,10 @@ namespace io.harness.example
 
             while (true)
             {
-                bool bResult = client.BoolVariation("flag1", target, false);
+                bool bResult = client.boolVariation("flag1", target, false);
                 Console.WriteLine($"Bool Variation value ----> {bResult}");
 
-                JObject jResult = client.JsonVariation("flag4", target, new JObject());
+                JObject jResult = client.jsonVariation("flag4", target, new JObject());
                 Console.WriteLine($"Bool Variation value ----> {jResult}");
 
                 Thread.Sleep(20000);

@@ -16,10 +16,10 @@ namespace io.harness.cfsdk.client.api
 
         Task InitializeAndWait();
 
-        bool BoolVariation(string key, dto.Target target, bool defaultValue);
-        string StringVariation(string key, dto.Target target, string defaultValue);
-        double NumberVariation(string key, dto.Target target, double defaultValue);
-        JObject JsonVariation(string key, dto.Target target, JObject defaultValue);
+        bool boolVariation(string key, dto.Target target, bool defaultValue);
+        string stringVariation(string key, dto.Target target, string defaultValue);
+        double numberVariation(string key, dto.Target target, double defaultValue);
+        JObject jsonVariation(string key, dto.Target target, JObject defaultValue);
 
 
         event EventHandler InitializationCompleted;
@@ -89,10 +89,10 @@ namespace io.harness.cfsdk.client.api
         }
 
         // read values
-        public bool BoolVariation(string key, dto.Target target, bool defaultValue) { return client.BoolVariation(key, target, defaultValue);  }
-        public string StringVariation(string key, dto.Target target, string defaultValue) { return client.StringVariation(key, target, defaultValue); }
-        public double NumberVariation(string key, dto.Target target, double defaultValue) { return client.NumberVariation(key, target, defaultValue); }
-        public JObject JsonVariation(string key, dto.Target target, JObject defaultValue) {  return client.JsonVariation(key, target, defaultValue); }
+        public bool boolVariation(string key, dto.Target target, bool defaultValue) { return client.BoolVariation(key, target, defaultValue);  }
+        public string stringVariation(string key, dto.Target target, string defaultValue) { return client.StringVariation(key, target, defaultValue); }
+        public double numberVariation(string key, dto.Target target, double defaultValue) { return client.NumberVariation(key, target, defaultValue); }
+        public JObject jsonVariation(string key, dto.Target target, JObject defaultValue) {  return client.JsonVariation(key, target, defaultValue); }
 
         // force message
         public void Update(Message msg) { client.Update(msg, true);  }
