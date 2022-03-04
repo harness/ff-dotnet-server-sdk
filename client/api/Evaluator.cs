@@ -45,7 +45,7 @@ namespace io.harness.cfsdk.client.api
                 bool prereq = checkPreRequisite(featureConfig, target);
                 if( !prereq)
                 {
-                    return featureConfig.Variations.First(v => v.Identifier.Equals(featureConfig.OffVariation));
+                    return featureConfig.Variations.FirstOrDefault(v => v.Identifier.Equals(featureConfig.OffVariation));
                 }
             }
 
@@ -143,7 +143,7 @@ namespace io.harness.cfsdk.client.api
 
             if(variation != null && featureConfig.Variations != null)
             {
-                return featureConfig.Variations.First(var => var.Identifier.Equals(variation));
+                return featureConfig.Variations.FirstOrDefault(var => var.Identifier.Equals(variation));
             }
             return null;
 
@@ -230,7 +230,7 @@ namespace io.harness.cfsdk.client.api
                     // if we have rules, all should pass
                     if (segment.Rules != null)
                     {
-                        Clause firstFailure = segment.Rules.First(r => EvaluateClause(r, target) == false);
+                        Clause firstFailure = segment.Rules.FirstOrDefault(r => EvaluateClause(r, target) == false);
                         return firstFailure == null;
                     }
                 }
