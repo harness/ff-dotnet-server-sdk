@@ -48,10 +48,10 @@ namespace ff_sdk
             //   - Serilog 2.10.0
             //   - Serilog.Sinks.Console 4.0.1
             // View Serilog docs for more additional information https://github.com/serilog/serilog/wiki/Getting-Started
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.Console()
-                .CreateLogger();
+            // Log.Logger = new LoggerConfiguration()
+            //    .MinimumLevel.Debug()
+            //    .WriteTo.Console()
+            //    .CreateLogger();
 
             // Add your API Key here that you created in Harness
             String API_KEY = "01ca2527-9f0a-41c4-8ee7-1e150de87f6a";
