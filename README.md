@@ -29,65 +29,40 @@ Class can be accessed as Singleton instance.
 
 ```c#
 using System;
+using System.Collections.Generic;
 using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.client.api;
 using System.Threading;
-using Serilog;
 
-
-namespace ff_sdk
+namespace getting_started
 {
     class Program
     {
+        public static String apiKey = Environment.GetEnvironmentVariable("FF_API_KEY");
+        public static String flagName = Environment.GetEnvironmentVariable("FF_FLAG_NAME") is string v && v.Length > 0 ? v : "harnessappdemodarkmode";
+        
         static void Main(string[] args)
         {
-            Config config;
-
-            // If you want you can uncoment this configure serilog sink you want and see internal SDK information messages:
-            // Note you will need to add the following nuget packages:
-            //   - Serilog 2.10.0
-            //   - Serilog.Sinks.Console 4.0.1
-            // View Serilog docs for more additional information https://github.com/serilog/serilog/wiki/Getting-Started
-            // Log.Logger = new LoggerConfiguration()
-            //    .MinimumLevel.Debug()
-            //    .WriteTo.Console()
-            //    .CreateLogger();
-
-            // Add your API Key here that you created in Harness
-            String API_KEY = "01ca2527-9f0a-41c4-8ee7-1e150de87f6a";
-            config = Config.Builder()
-                .SetPollingInterval(60000)
-                .SetAnalyticsEnabled()
-                .SetStreamEnabled(true)
-                .Build();
-
-            CfClient.Instance.Initialize(API_KEY, config);
-
-
-            /**
-             * Define you target on which you would like to evaluate 
-             * the featureFlag
-             */
-            Target target = io.harness.cfsdk.client.dto.Target.builder()
-                            .Name("User1") //can change with your target name
-                            .Identifier("user1@example.com") //can change with your target identifier
+            // Create a feature flag client
+            CfClient.Instance.Initialize(apiKey, Config.Builder().Build());
+            
+            // Create a target (different targets can get different results based on rules)
+            Target target = Target.builder()
+                            .Name("DotNetSDK") 
+                            .Identifier("dotnetsdk")
+                            .Attributes(new Dictionary<string, string>(){{"location", "emea"}})
                             .build();
 
-            string yourFlag = "SimpleBool"; // Can change to your flag name
+           // Loop forever reporting the state of the flag
             while (true)
             {
-                // If the flag you created in Harness is a boolean flag then use boolVariation.
-                // If it's a number or string use numberVaraition or stringVariation e.g
-                //double resultNumber = CfClient.Instance.numberVariation(yourFlag, target, -1.0);
-                //string resultString = CfClient.Instance.stringVariation(yourFlag, target, "NO VALUE !!!");
-
-                bool resultBool = CfClient.Instance.boolVariation(yourFlag, target, false);
-                Console.WriteLine("Bool value ---->" + resultBool);
-
+                bool resultBool = CfClient.Instance.boolVariation(flagName, target, false);
+                Console.WriteLine("Flag variation " + resultBool);
                 Thread.Sleep(10 * 1000);
             }
         }
     }
+}
 }
 ```
 
