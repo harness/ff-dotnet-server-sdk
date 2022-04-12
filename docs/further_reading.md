@@ -1,13 +1,16 @@
-## Initialization
+# Further Reading
 
-The user can alternatively directly instantiate `CfClient`, pass required configration parameters, and initiate authentication process
-```c#
-// Creates instance of a client
-var client = new CfClient(API_KEY, Config.Builder().Build());
+Covers advanced topics (different config options and scenarios)
 
-// Starts authentication and asynchronously wait for initialisation to complete
-await client.InitializeAndWait();
-```
+## Recommended reading
+
+[Feature Flag Concepts](https://ngdocs.harness.io/article/7n9433hkc0-cf-feature-flag-overview)
+
+[Feature Flag SDK Concepts](https://ngdocs.harness.io/article/rvqprvbq8f-client-side-and-server-side-sdks)
+
+## Setting up your Feature Flags
+
+[Feature Flags Getting Started](https://ngdocs.harness.io/article/0a2u2ppp8s-getting-started-with-feature-flags)
 
 ## Other Variation Types
 
@@ -26,6 +29,18 @@ await client.InitializeAndWait();
 ### JSON variation
 
 * `public JObject jsonVariation(string key, dto.Target target, JObject defaultValue)`
+
+
+## Waiting for Initialization
+
+The user can call InitializeAndWait to block and wait for the SDK
+```c#
+// Creates instance of a client
+var client = new CfClient(API_KEY, Config.Builder().Build());
+
+// Starts authentication and asynchronously wait for initialisation to complete
+await client.InitializeAndWait();
+```
 
 ## Connector
 
