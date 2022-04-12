@@ -68,18 +68,12 @@ namespace getting_started
                             .build();
 
            // Loop forever reporting the state of the flag
-           Console.CancelKeyPress += new ConsoleCancelEventHandler(OnExit);
             while (true)
             {
                 bool resultBool = CfClient.Instance.boolVariation(flagName, target, false);
                 Console.WriteLine("Flag variation " + resultBool);
                 Thread.Sleep(10 * 1000);
             }
-        }
-        
-        protected static void OnExit(object sender, ConsoleCancelEventArgs args)
-        {
-            Console.WriteLine("Exit");
         }
     }
 }
