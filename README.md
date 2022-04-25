@@ -1,187 +1,110 @@
 Harness CF .NET Server SDK
 ========================
 
-## Overview
-
--------------------------
-[Harness](https://www.harness.io/) is a feature management platform that helps teams to build better software and to
-test features quicker.
-
-## Packaging
-
-Library is packaged as multi-target supporting `netstandard2.0` set of API's and additionaly target `net461` for older frameworks.
+## Table of Contents
+**[Intro](#Intro)**<br>
+**[Requirements](#Requirements)**<br>
+**[Quickstart](#Quickstart)**<br>
+**[Further Reading](docs/further_reading.md)**<br>
+**[Build Instructions](docs/build.md)**<br>
 
 
-## Setup
+## Intro
 
-You can reference the SDK in your project using NuGet package. Package is published to default package repository (nuget.org).
-Package name: `ff-netF48-server-sdk --version 1.1.1`
+Harness Feature Flags (FF) is a feature management solution that enables users to change the software’s functionality, without deploying new code. FF uses feature flags to hide code or behaviours without having to ship new versions of the software. A feature flag is like a powerful if statement.
+* For more information, see https://harness.io/products/feature-flags/
+* To read more, see https://ngdocs.harness.io/category/vjolt35atg-feature-flags
+* To sign up, https://app.harness.io/auth/#/signup/
 
-More information can be found here https://docs.microsoft.com/en-us/nuget/quickstart/install-and-use-a-package-using-the-dotnet-cli
+![FeatureFlags](https://github.com/harness/ff-python-server-sdk/raw/main/docs/images/ff-gui.png)
 
-After dependency has been added, the SDK elements, primarily `CfClient` should be accessible in the main application.
+## Requirements
+[.NET Framework >= 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48)<br> 
+or<br>
+[.Net 5.0.104](https://docs.microsoft.com/en-us/nuget/quickstart/install-and-use-a-package-using-the-dotnet-cli) or newer (dotnet --version)<br>
+The library is packaged as multi-target supporting `netstandard2.0` set of API's and additionaly targets `net461` for older frameworks.
 
-## Initialization
 
-`CfClient` is a main class that provides all features of SDK.
+## Quickstart
+The Feature Flag SDK provides a client that connects to the feature flag service, and fetches the value
+of featue flags.   The following section provides an example of how to install the SDK and initalize it from
+an application.
+This quickstart assumes you have followed the instructions to [setup a Feature Flag project and have created a flag called `harnessappdemodarkmode` and created a server API Key](https://ngdocs.harness.io/article/1j7pdkqh7j-create-a-feature-flag#step_1_create_a_project).
 
-Class can be accessed as Singleton instance.
+
+### Add the SDK to your project
+Add the sdk using dotnet
+```bash
+dotnet add package ff-netF48-server-sdk .
+```
+
+### A Simple Example
+Here is a complete example that will connect to the feature flag service and report the flag value every 10 seconds until the connection is closed.  
+Any time a flag is toggled from the feature flag service you will receive the updated value.
 
 ```c#
 using System;
+using System.Collections.Generic;
 using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.client.api;
 using System.Threading;
-using Serilog;
 
-
-namespace ff_sdk
+namespace getting_started
 {
     class Program
     {
+        public static String apiKey = Environment.GetEnvironmentVariable("FF_API_KEY");
+        public static String flagName = Environment.GetEnvironmentVariable("FF_FLAG_NAME") is string v && v.Length > 0 ? v : "harnessappdemodarkmode";
+        
         static void Main(string[] args)
         {
-            Config config;
-
-            // If you want you can uncoment this configure serilog sink you want and see internal SDK information messages:
-            // Note you will need to add the following nuget packages:
-            //   - Serilog 2.10.0
-            //   - Serilog.Sinks.Console 4.0.1
-            // View Serilog docs for more additional information https://github.com/serilog/serilog/wiki/Getting-Started
-            // Log.Logger = new LoggerConfiguration()
-            //    .MinimumLevel.Debug()
-            //    .WriteTo.Console()
-            //    .CreateLogger();
-
-            // Add your API Key here that you created in Harness
-            String API_KEY = "01ca2527-9f0a-41c4-8ee7-1e150de87f6a";
-            config = Config.Builder()
-                .SetPollingInterval(60000)
-                .SetAnalyticsEnabled()
-                .SetStreamEnabled(true)
-                .Build();
-
-            CfClient.Instance.Initialize(API_KEY, config);
-
-
-            /**
-             * Define you target on which you would like to evaluate 
-             * the featureFlag
-             */
-            Target target = io.harness.cfsdk.client.dto.Target.builder()
-                            .Name("User1") //can change with your target name
-                            .Identifier("user1@example.com") //can change with your target identifier
+            // Create a feature flag client
+            CfClient.Instance.Initialize(apiKey, Config.Builder().Build());
+            
+            // Create a target (different targets can get different results based on rules)
+            Target target = Target.builder()
+                            .Name("DotNetSDK") 
+                            .Identifier("dotnetsdk")
+                            .Attributes(new Dictionary<string, string>(){{"location", "emea"}})
                             .build();
 
-            string yourFlag = "SimpleBool"; // Can change to your flag name
+           // Loop forever reporting the state of the flag
             while (true)
             {
-                // If the flag you created in Harness is a boolean flag then use boolVariation.
-                // If it's a number or string use numberVaraition or stringVariation e.g
-                //double resultNumber = CfClient.Instance.numberVariation(yourFlag, target, -1.0);
-                //string resultString = CfClient.Instance.stringVariation(yourFlag, target, "NO VALUE !!!");
-
-                bool resultBool = CfClient.Instance.boolVariation(yourFlag, target, false);
-                Console.WriteLine("Bool value ---->" + resultBool);
-
+                bool resultBool = CfClient.Instance.boolVariation(flagName, target, false);
+                Console.WriteLine("Flag variation " + resultBool);
                 Thread.Sleep(10 * 1000);
             }
         }
     }
 }
+
 ```
 
-Alternativly user can directly instantiate `CfClient`, pass required configration parameters, and initiate authentication process
-```c#
-// Creates instance of a client
-var client = new CfClient(API_KEY, Config.Builder().Build());
+### Running the example
 
-// Starts authentication and asynchronously wait for initialisation to complete
-await client.InitializeAndWait();
+```bash
+$ export FF_API_KEY=<your key here>
+$ dotnet run --project examples/getting_started/
 ```
 
+### Running with docker
+If you dont have the right version of dotnet installed locally, or dont want to install the dependancies you can
+use docker to quicky get started
 
-`target` represents the desired target for which we want features to be evaluated.
-
-`"YOUR_API_KEY"` is an authentication key, needed for access to Harness services.
-
-**Your Harness SDK is now initialized. Congratulations!**
-
-## Connector
-
-This feature allows you to create or use other connectors.
-Connector is just a proxy to your data. Currently supported connectors:
-* Harness (Used by default)
-* Local (used only in development)
-
-```c#
-LocalConnector connector = new LocalConnector("local");
-client = new CfClient(connector);
+```bash
+docker run -v $(pwd):/app -w /app -e FF_API_KEY=$FF_API_KEY mcr.microsoft.com/dotnet/sdk:5.0 dotnet run --project examples/getting_started/
 ```
 
-## Storage
+### Additional Reading
 
-For offline support and asynchronous startup of SDK user should use storage interface.
-When SDK is used without waiting on async methods, and configuration is provided with file storage, then all flags are loaded from last saved configurations.
-If there is no flag in a storage then they will be evaluated from defaultValue argument.
+Further examples and config options are in the further reading section:
 
-```c#
-FileMapStore fileStore = new FileMapStore("Non-Freemium");
-LocalConnector connector = new LocalConnector("local");
-client = new CfClient(connector, Config.builder().store(fileStore).build());
-```
-
-## Fetch evaluation's value
-
-It is possible to fetch a value for a given evaluation. Evaluation is performed based on a different type. In case there
-is no evaluation with provided id, the default value is returned.
-
-Use the appropriate method to fetch the desired Evaluation of a certain type.
-
-## Listen on events
-
-Library exposes two events for user to subscribe on getting internal notifications.
-
-```c#
-client.InitializationCompleted += (sender, e) =>
-{
-    // fired when authentication is completed and recent configuration is fetched from server
-    Console.WriteLine("Notification Initialization Completed");
-};
-client.EvaluationChanged += (sender, identifier) =>
-{
-    // Fired when flag value changes.
-    Console.WriteLine($"Flag changed for {identifier}");
-};
-```
-
-### Bool variation
-
-* `public bool boolVariation(string key, dto.Target target, bool defaultValue)`
-
-### Number variation
-
-* `public double numberVariation(string key, dto.Target target, int defaultValue)`
-
-### String variation
-
-* `public string stringVariation(string key, dto.Target target, string defaultValue)`
-
-### JSON variation
-
-* `public JObject jsonVariation(string key, dto.Target target, JObject defaultValue)`
+[Further Reading](docs/further_reading.md)
 
 
-## Using feature flags metrics
+-------------------------
+[Harness](https://www.harness.io/) is a feature management platform that helps teams to build better software and to
+test features quicker.
 
-Metrics API endpoint can be changed like this:
-
-```c#
-Config.builder()
-              .EventUrl("METRICS_API_EVENTS_URL")
-              .build();
-```
-
-Otherwise, the default metrics endpoint URL will be used.
-
-
+-------------------------
