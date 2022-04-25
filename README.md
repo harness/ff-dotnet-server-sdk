@@ -19,9 +19,10 @@ Harness Feature Flags (FF) is a feature management solution that enables users t
 ![FeatureFlags](https://github.com/harness/ff-python-server-sdk/raw/main/docs/images/ff-gui.png)
 
 ## Requirements
-
-[dotnet 5.0.104](https://docs.microsoft.com/en-us/nuget/quickstart/install-and-use-a-package-using-the-dotnet-cli) or newer (dotnet --version)<br>
-The library is packaged as multi-target supporting `netstandard2.0` set of API's and additionaly target `net461` for older frameworks.
+[.NET Framework 4.8] 
+or
+[.Net 5.0.104](https://docs.microsoft.com/en-us/nuget/quickstart/install-and-use-a-package-using-the-dotnet-cli) or newer (dotnet --version)<br>
+The library is packaged as multi-target supporting `netstandard2.0` set of API's and additionaly targets `net461` for older frameworks.
 
 
 ## Quickstart
