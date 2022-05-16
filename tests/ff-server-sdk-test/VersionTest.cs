@@ -51,10 +51,12 @@ namespace ff_server_sdk_test
         }
 
         [Test, Category("Version Testing")]
-        public async Task TestVersion()
+        public void TestVersionProperty()
         {
 
             // 1. Version from cache/storage should be the same as on "server"
+
+            Thread.Sleep(500);
 
             Segment storedSegment = GetSegment();
 
@@ -91,10 +93,10 @@ namespace ff_server_sdk_test
             Assert.IsTrue(remoteSegment.Name != storedSegment.Name);
             Assert.IsTrue(remoteSegment.Version != storedSegment.Version);
 
-            // 4. Changes are applied with server has 0 for Version or if Version doesn't exist
+            // 4. Changes are applied when server responce has 0 for Version or if Version doesn't exist
 
             remoteSegment.Version = 0;
-            remoteSegment.Name = "accept_change_because_version_0";
+            remoteSegment.Name = "accept_change_because_0_version";
 
             SaveSegment(remoteSegment);
 
