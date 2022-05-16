@@ -140,7 +140,9 @@ namespace io.harness.cfsdk.client.api
         void IRepository.SetFlag(string identifier, FeatureConfig featureConfig)
         {
             FeatureConfig current = GetFlag(identifier, false);
-            if( current != null && current.Version >= featureConfig.Version )
+            // Update stored value in case if server returned newer version,
+            // or if version is equal 0 (or doesn't exist)
+            if( current != null && featureConfig.Version != 0 && current.Version >= featureConfig.Version )
             {
                 Log.Debug($"Flag {identifier} already exists");
                 return;
@@ -156,7 +158,9 @@ namespace io.harness.cfsdk.client.api
         void IRepository.SetSegment(string identifier, Segment segment)
         {
             Segment current = GetSegment(identifier, false);
-            if (current != null && current.Version >= segment.Version)
+            // Update stored value in case if server returned newer version,
+            // or if version is equal 0 (or doesn't exist)
+            if (current != null && segment.Version != 0 && current.Version >= segment.Version)
             {
                 Log.Debug($"Segment {identifier} already exists");
                 return;

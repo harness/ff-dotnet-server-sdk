@@ -78,8 +78,11 @@ namespace io.harness.cfsdk.client.api
         {
             Log.Information("Stopping PollingProcessor");
             // stop timer
-            pollTimer.Dispose();
-            pollTimer = null;
+            if (pollTimer != null)
+            {
+                pollTimer.Dispose();
+                pollTimer = null;
+            }
 
         }
         private void ProcessFlags()
