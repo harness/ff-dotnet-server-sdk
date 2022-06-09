@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ff-netF48-server-sdk" Version="1.1.1" />
+    <PackageReference Include="ff-netF48-server-sdk" Version="1.1.2" />
   </ItemGroup>
 
 </Project>
