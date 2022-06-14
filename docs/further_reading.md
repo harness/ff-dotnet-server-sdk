@@ -141,3 +141,13 @@ Config.builder()
 
 Otherwise, the default metrics endpoint URL will be used.
 
+## Connect to Relay Proxy
+ When using your Feature Flag SDKs with a [Harness Relay Proxy](https://ngdocs.harness.io/article/q0kvq8nd2o-relay-proxy) you need to change the default URL.
+You can pass the URLs in when creating the client. i.e.
+
+```c#
+        CfClient.Instance.Initialize(apikey, Config.Builder()
+            .ConfigUrl("http://localhost:7000")
+            .EventUrl("http://localhost:7000")
+            .Build());
+```
