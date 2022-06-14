@@ -39,8 +39,11 @@ dotnet add package ff-netF48-server-sdk .
 ```
 
 ### Code Sample
-Here is a complete example that will connect to the feature flag service and report the flag value every 10 seconds until the connection is closed.  
-Any time a flag is toggled from the feature flag service you will receive the updated value.
+The following is a complete code example that you can use to test the `harnessappdemodarkmode` Flag you created on the Harness Platform. When you run the code it will:
+- Connect to the FF service.
+- Report the value of the Flag every 10 seconds until the connection is closed. Every time the `harnessappdemodarkmode` Flag is toggled on or off on the Harness Platform, the updated value is reported. 
+- Close the SDK.
+
 
 ```c#
 using System;
