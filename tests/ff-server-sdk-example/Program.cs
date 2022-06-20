@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace io.harness.example
 {
 
-    class Program 
+    class Program
     {
         static readonly string API_KEY = "70d4d39e-e50f-4cee-99bf-6fd569138c74";
         static ICfClient client;
@@ -126,6 +126,7 @@ namespace io.harness.example
                 .WriteTo.File("log-.txt", rollingInterval: RollingInterval.Day)
                 .CreateLogger();
 
+
             string line = Console.ReadLine();
             switch (line)
             {
@@ -143,7 +144,7 @@ namespace io.harness.example
                 .Name("target1")
                 .IsPrivate(false)
                 .Attributes(new Dictionary<string, string> { { "testKey", "TestValue" } })
-                .Identifier("target1") 
+                .Identifier("target1")
                 .build();
 
             while (true)
