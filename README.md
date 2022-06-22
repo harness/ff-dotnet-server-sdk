@@ -1,4 +1,4 @@
-Harness CF .NET Server SDK
+.NET SDK For Harness Feature Flags
 ========================
 
 ## Table of Contents
@@ -10,11 +10,10 @@ Harness CF .NET Server SDK
 
 
 ## Intro
+Use this README to get started with our Feature Flags (FF) SDK for .NET. This guide outlines the basics of getting started with the SDK and provides a full code sample for you to try out.
+This sample doesn’t include configuration options, for in depth steps and configuring the SDK, for example, disabling streaming or using our Relay Proxy, see the  [.NET SDK Reference](https://ngdocs.harness.io/article/c86rasy39v-net-sdk-reference).
 
-Harness Feature Flags (FF) is a feature management solution that enables users to change the software’s functionality, without deploying new code. FF uses feature flags to hide code or behaviours without having to ship new versions of the software. A feature flag is like a powerful if statement.
-* For more information, see https://harness.io/products/feature-flags/
-* To read more, see https://ngdocs.harness.io/category/vjolt35atg-feature-flags
-* To sign up, https://app.harness.io/auth/#/signup/
+For a sample FF .NET SDK project, see our [test .NET project](examples/getting_started/).
 
 ![FeatureFlags](https://github.com/harness/ff-python-server-sdk/raw/main/docs/images/ff-gui.png)
 
@@ -26,21 +25,25 @@ The library is packaged as multi-target supporting `netstandard2.0` set of API's
 
 
 ## Quickstart
-The Feature Flag SDK provides a client that connects to the feature flag service, and fetches the value
-of featue flags.   The following section provides an example of how to install the SDK and initalize it from
-an application.
-This quickstart assumes you have followed the instructions to [setup a Feature Flag project and have created a flag called `harnessappdemodarkmode` and created a server API Key](https://ngdocs.harness.io/article/1j7pdkqh7j-create-a-feature-flag#step_1_create_a_project).
+To follow along with our test code sample, make sure you’ve:
+
+- [Created a Feature Flag on the Harness Platform](https://ngdocs.harness.io/article/1j7pdkqh7j-create-a-feature-flag) called harnessappdemodarkmode
+- [Created a server SDK key and made a copy of it](https://ngdocs.harness.io/article/1j7pdkqh7j-create-a-feature-flag#step_3_create_an_sdk_key)
 
 
-### Add the SDK to your project
+
+### Install the SDK
 Add the sdk using dotnet
 ```bash
 dotnet add package ff-netF48-server-sdk .
 ```
 
-### A Simple Example
-Here is a complete example that will connect to the feature flag service and report the flag value every 10 seconds until the connection is closed.  
-Any time a flag is toggled from the feature flag service you will receive the updated value.
+### Code Sample
+The following is a complete code example that you can use to test the `harnessappdemodarkmode` Flag you created on the Harness Platform. When you run the code it will:
+- Connect to the FF service.
+- Report the value of the Flag every 10 seconds until the connection is closed. Every time the `harnessappdemodarkmode` Flag is toggled on or off on the Harness Platform, the updated value is reported. 
+- Close the SDK.
+
 
 ```c#
 using System;
@@ -88,7 +91,7 @@ $ export FF_API_KEY=<your key here>
 $ dotnet run --project examples/getting_started/
 ```
 
-### Running with docker
+### Running the example with Docker
 If you dont have the right version of dotnet installed locally, or dont want to install the dependancies you can
 use docker to quicky get started
 
@@ -98,9 +101,10 @@ docker run -v $(pwd):/app -w /app -e FF_API_KEY=$FF_API_KEY mcr.microsoft.com/do
 
 ### Additional Reading
 
-Further examples and config options are in the further reading section:
 
-[Further Reading](docs/further_reading.md)
+For further examples and config options, see the [.NET SDK Reference](https://ngdocs.harness.io/article/c86rasy39v-net-sdk-reference#).
+
+For more information about Feature Flags, see our [Feature Flags documentation](https://ngdocs.harness.io/article/0a2u2ppp8s-getting-started-with-feature-flags).
 
 
 -------------------------
