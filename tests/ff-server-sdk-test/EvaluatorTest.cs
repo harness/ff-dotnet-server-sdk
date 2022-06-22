@@ -63,10 +63,10 @@ namespace ff_server_sdk_test
                 }
             });
         }
- 
+
         private static IEnumerable<TestCaseData> GenerateTestCases()
         {
-  
+
             foreach (var test in testData)
             {
                 foreach (var item in test.expected)

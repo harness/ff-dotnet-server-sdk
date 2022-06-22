@@ -19,7 +19,7 @@ namespace io.harness.cfsdk.client.api
 
         // configurations for Analytics
         public bool AnalyticsEnabled { get => analyticsEnabled; }
-        internal bool analyticsEnabled;
+        internal bool analyticsEnabled = true;
 
         public int Frequency { get => Math.Max(frequency, Config.MIN_FREQUENCY); }
         private int frequency = 60;
@@ -47,15 +47,15 @@ namespace io.harness.cfsdk.client.api
 
 
         /** timeout in milliseconds to connect to CF Server */
-        public int ConnectionTimeout { get =>connectionTimeout;} 
+        public int ConnectionTimeout { get =>connectionTimeout;}
         internal int connectionTimeout = 10000;
 
         /** timeout in milliseconds for reading data from CF Server */
-        public int ReadTimeout { get => readTimeout;  } 
+        public int ReadTimeout { get => readTimeout;  }
         internal int readTimeout { get; set; } = 30000;
 
         /** timeout in milliseconds for writing data to CF Server */
-        public int WriteTimeout { get => WriteTimeout;  } 
+        public int WriteTimeout { get => WriteTimeout;  }
         internal int writeTimeout { get; set; } = 10000;
 
         public bool Debug { get => debug;  }
@@ -114,7 +114,6 @@ namespace io.harness.cfsdk.client.api
         {
             configtobuild = new Config();
         }
-
 
         public Config Build()
         {

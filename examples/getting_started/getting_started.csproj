@@ -3,10 +3,14 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
+
+    <RestoreSources>$(RestoreSources);../../examples/getting_started/bin/Debug;https://api.nuget.org/v3/index.json</RestoreSources>
+
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="ff-netF48-server-sdk" Version="1.1.2" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
   </ItemGroup>
 
 </Project>
