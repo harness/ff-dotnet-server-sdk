@@ -72,7 +72,7 @@ namespace io.harness.cfsdk.client.api
         public void Start()
         {
             Log.Information("Initialize authentication");
-            // Start Authentication flow  
+            // Start Authentication flow
             this.authService.Start();
         }
         public async Task WaitToInitialize()
@@ -108,7 +108,7 @@ namespace io.harness.cfsdk.client.api
         #region Authentication callback
         public void OnAuthenticationSuccess()
         {
-            // after successfull authentication, start 
+            // after successfull authentication, start
             polling.Start();
             update.Start();
             metric.Start();

@@ -126,7 +126,6 @@ namespace io.harness.example
                 .WriteTo.File("log-.txt", rollingInterval: RollingInterval.Day)
                 .CreateLogger();
 
-
             string line = Console.ReadLine();
             switch (line)
             {

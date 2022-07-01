@@ -45,7 +45,7 @@ namespace io.harness.cfsdk.client.connector
             this.apiHttpClient.Timeout = TimeSpan.FromSeconds(config.ConnectionTimeout);
 
             this.metricHttpClient = new HttpClient();
-            this.metricHttpClient.BaseAddress = new Uri(config.eventUrl);
+            this.metricHttpClient.BaseAddress = new Uri(config.EventUrl);
             this.metricHttpClient.Timeout = TimeSpan.FromSeconds(config.ConnectionTimeout);
 
             this.sseHttpClient = new HttpClient();
@@ -157,6 +157,7 @@ namespace io.harness.cfsdk.client.connector
                 Task task = Task.Run(() =>
                 {
                     HarnessOpenMetricsAPIService.Client client = new HarnessOpenMetricsAPIService.Client(this.metricHttpClient);
+                    client.BaseUrl = this.config.EventUrl;
                     return client.MetricsAsync(environment, cluster, metrics, this.cancelToken.Token);
                 });
                 task.Wait();
