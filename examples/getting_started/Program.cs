@@ -19,9 +19,9 @@ namespace getting_started
 
             // Create a target (different targets can get different results based on rules)
             Target target = Target.builder()
-                            .Name("DotNetSDK")
-                            .Identifier("dotnetsdk")
-                            .Attributes(new Dictionary<string, string>(){{"location", "emea"}})
+                            .Name("Harness_Target_1")
+                            .Identifier("HT_1")
+                            .Attributes(new Dictionary<string, string>(){{"email", "demo@harness.io"}})
                             .build();
 
            // Loop forever reporting the state of the flag
