@@ -18,7 +18,7 @@ For a sample FF .NET SDK project, see our [test .NET project](examples/getting_s
 ![FeatureFlags](https://github.com/harness/ff-python-server-sdk/raw/main/docs/images/ff-gui.png)
 
 ## Requirements
-[.NET Framework >= 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48)<br> 
+[.NET Framework >= 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48)<br>
 or<br>
 [.Net 5.0.104](https://docs.microsoft.com/en-us/nuget/quickstart/install-and-use-a-package-using-the-dotnet-cli) or newer (dotnet --version)<br>
 The library is packaged as multi-target supporting `netstandard2.0` set of API's and additionaly targets `net461` for older frameworks.
@@ -35,7 +35,7 @@ To follow along with our test code sample, make sure you’ve:
 ### Install the SDK
 Add the sdk using dotnet
 ```bash
-dotnet add package ff-netF48-server-sdk .
+dotnet add package ff-netF48-server-sdk
 ```
 
 ### Code Sample
@@ -58,15 +58,15 @@ namespace getting_started
     {
         public static String apiKey = Environment.GetEnvironmentVariable("FF_API_KEY");
         public static String flagName = Environment.GetEnvironmentVariable("FF_FLAG_NAME") is string v && v.Length > 0 ? v : "harnessappdemodarkmode";
-        
+
         static void Main(string[] args)
         {
             // Create a feature flag client
             CfClient.Instance.Initialize(apiKey, Config.Builder().Build());
-            
+
             // Create a target (different targets can get different results based on rules)
             Target target = Target.builder()
-                            .Name("Harness_Target_1") 
+                            .Name("Harness_Target_1")
                             .Identifier("HT_1")
                             .Attributes(new Dictionary<string, string>(){{"email", "demo@harness.io"}})
                             .build();
