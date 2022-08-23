@@ -280,7 +280,7 @@ namespace io.harness.cfsdk.client.api
                 case "attrStr":
                     return attrStr.Equals(value);
                 case "in":
-                    return value.Contains(attrStr);
+                    return clause.Values.Contains(attrStr);
                 default:
                     return false;
             }
