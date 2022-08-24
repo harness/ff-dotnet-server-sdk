@@ -35,7 +35,7 @@ To follow along with our test code sample, make sure you’ve:
 ### Install the SDK
 Add the sdk using dotnet
 ```bash
-dotnet add package ff-netF48-server-sdk
+dotnet add package ff-dotnet-server-sdk
 ```
 
 ### Code Sample
