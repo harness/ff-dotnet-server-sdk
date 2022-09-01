@@ -1285,7 +1285,7 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         [Newtonsoft.Json.JsonProperty("prerequisites", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Collections.Generic.ICollection<Prerequisite> Prerequisites { get; set; }
     
-        [Newtonsoft.Json.JsonProperty("variationToTargetMap", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty("variationToTargetMap", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Collections.Generic.ICollection<VariationMap> VariationToTargetMap { get; set; }
     
         [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
@@ -1352,7 +1352,7 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         public System.Collections.Generic.ICollection<Target> Excluded { get; set; }
     
         /// <summary>An array of rules that can cause a user to be included in this segment.</summary>
-        [Newtonsoft.Json.JsonProperty("rules", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty("rules", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Collections.Generic.ICollection<Clause> Rules { get; set; }
     
         [Newtonsoft.Json.JsonProperty("createdAt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
