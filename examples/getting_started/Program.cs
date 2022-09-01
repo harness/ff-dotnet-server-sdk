@@ -14,23 +14,38 @@ namespace getting_started
 
         static void Main(string[] args)
         {
-            // Create a feature flag client
-            CfClient.Instance.Initialize(apiKey, Config.Builder().Build());
+            Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.Console()
+            .CreateLogger();
 
+            // Create a feature flag client
+            CfClient.Instance.Initialize("d4b6ea0a-2dff-4d79-9d6a-e3e2fb8117f8", Config.Builder().ConfigUrl("http://localhost:8000")
+    .EventUrl("http://localhost:8000/api/1.0").SetAnalyticsEnabled(true).Build());
+            
             // Create a target (different targets can get different results based on rules)
             Target target = Target.builder()
-                            .Name("Harness_Target_1")
-                            .Identifier("HT_1")
-                            .Attributes(new Dictionary<string, string>(){{"email", "demo@harness.io"}})
+                            .Name("DotNetSDK")
+                            .Identifier("dotnetsdk")
+                            .Attributes(new Dictionary<string, string>(){{"location", "emea"}})
                             .build();
 
-           // Loop forever reporting the state of the flag
+
             while (true)
             {
-                bool resultBool = CfClient.Instance.boolVariation(flagName, target, false);
+                bool resultBool = CfClient.Instance.boolVariation("flag", target, false);
                 Console.WriteLine("Flag variation " + resultBool);
-                Thread.Sleep(10 * 1000);
+                Thread.Sleep(10000);
             }
+
+
+        //    // Loop forever reporting the state of the flag
+        //     while (true)
+        //     {
+        //         bool resultBool = CfClient.Instance.boolVariation("flag", target, false);
+        //         Console.WriteLine("Flag variation " + resultBool);
+        //         Thread.Sleep(10 * 1000);
+        //     }
         }
     }
 }

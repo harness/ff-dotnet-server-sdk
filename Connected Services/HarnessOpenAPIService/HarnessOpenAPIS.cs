@@ -14,6 +14,7 @@
 namespace io.harness.cfsdk.HarnessOpenAPIService
 {
     using System = global::System;
+    using Serilog;
 
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "13.11.2.0 (NJsonSchema v10.4.4.0 (Newtonsoft.Json v12.0.0.2))")]
     public partial class Client 
@@ -73,6 +74,7 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
             var urlBuilder_ = new System.Text.StringBuilder();
             urlBuilder_.Append(BaseUrl != null ? BaseUrl.TrimEnd('/') : "").Append("/client/env/{environmentUUID}/feature-configs?");
             urlBuilder_.Replace("{environmentUUID}", System.Uri.EscapeDataString(ConvertToString(environmentUUID, System.Globalization.CultureInfo.InvariantCulture)));
+            Log.Information("Client url: " + urlBuilder_);
             if (cluster != null)
             {
                 urlBuilder_.Append(System.Uri.EscapeDataString("cluster") + "=").Append(System.Uri.EscapeDataString(ConvertToString(cluster, System.Globalization.CultureInfo.InvariantCulture))).Append("&");

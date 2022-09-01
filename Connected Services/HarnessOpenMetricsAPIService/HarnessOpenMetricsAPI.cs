@@ -19,7 +19,7 @@ namespace io.harness.cfsdk.HarnessOpenMetricsAPIService
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "13.11.3.0 (NJsonSchema v10.4.4.0 (Newtonsoft.Json v12.0.0.2))")]
     public partial class Client 
     {
-        private string _baseUrl = "/api/1.0";
+        private string _baseUrl = "https://config.ff.harness.io/api/1.0";
         private System.Net.Http.HttpClient _httpClient;
         private System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings;
     
@@ -74,7 +74,7 @@ namespace io.harness.cfsdk.HarnessOpenMetricsAPIService
             var urlBuilder_ = new System.Text.StringBuilder();
             urlBuilder_.Append(BaseUrl != null ? BaseUrl.TrimEnd('/') : "").Append("/metrics/{environment}?cluster=" + cluster);
             urlBuilder_.Replace("{environment}", System.Uri.EscapeDataString(ConvertToString(environment, System.Globalization.CultureInfo.InvariantCulture)));
-    
+            Log.Information("Metrics url: " + urlBuilder_);
             var client_ = _httpClient;
             var disposeClient_ = false;
             try

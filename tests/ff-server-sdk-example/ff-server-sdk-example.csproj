@@ -7,13 +7,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\ff-netF48-server-sdk.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="Serilog.Sinks.File" />
-    <None Remove="Serilog.Sinks.Console" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
   </ItemGroup>
+
 </Project>
