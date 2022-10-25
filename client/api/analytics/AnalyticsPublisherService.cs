@@ -52,6 +52,7 @@ namespace io.harness.cfsdk.client.api.analytics
                     if ((metrics.MetricsData != null && metrics.MetricsData.Count >0)
                         || (metrics.TargetData != null && metrics.TargetData.Count > 0))
                     {
+                        Log.Debug("Sending analytics data :{@a}", metrics);
                         connector.PostMetrics(metrics);
                     }
 
