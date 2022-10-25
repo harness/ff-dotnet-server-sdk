@@ -34,10 +34,6 @@ namespace io.harness.cfsdk.client.api.analytics
                     }
                     break;
                 case EventType.METRICS:
-                    Log.Debug(
-                        "Analytics object received in queue: Target:{@id}, analytics:{@a}",
-                        analytics.Target.Identifier,
-                        analytics);
                     int count = analyticsCache.getIfPresent(analytics);
                     analyticsCache.Put(analytics, count + 1);
                     break;
