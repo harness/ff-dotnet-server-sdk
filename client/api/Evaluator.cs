@@ -86,9 +86,10 @@ namespace io.harness.cfsdk.client.api
         private bool checkPreRequisite(FeatureConfig parentFeatureConfig, dto.Target target)
         {
             bool result = true;
-            List<Prerequisite> prerequisites = parentFeatureConfig.Prerequisites.ToList();
-            if ( prerequisites != null && prerequisites.Count > 0)
+            if (parentFeatureConfig.Prerequisites != null && parentFeatureConfig.Prerequisites.Count > 0)
             {
+                List<Prerequisite> prerequisites = parentFeatureConfig.Prerequisites.ToList();
+
                 foreach (Prerequisite pqs in prerequisites)
                 {
                     FeatureConfig preReqFeatureConfig = this.repository.GetFlag(pqs.Feature);
@@ -105,7 +106,7 @@ namespace io.harness.cfsdk.client.api
                     }
 
                     List<string> validPreReqVariations = pqs.Variations.ToList();
-                    if (!validPreReqVariations.Contains(preReqEvaluatedVariation.Value))
+                    if (!validPreReqVariations.Contains(preReqEvaluatedVariation.Identifier))
                     {
                         return false;
                     }
@@ -227,11 +228,11 @@ namespace io.harness.cfsdk.client.api
                         return true;
                     }
 
-                    // if we have rules, all should pass
+                    // if we have rules, at least one should pass
                     if (segment.Rules != null)
                     {
-                        Clause firstFailure = segment.Rules.FirstOrDefault(r => EvaluateClause(r, target) == false);
-                        return firstFailure == null;
+                        Clause firstSuccess = segment.Rules.FirstOrDefault(r => EvaluateClause(r, target));
+                        return firstSuccess != null;
                     }
                 }
             }
