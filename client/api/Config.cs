@@ -15,7 +15,7 @@ namespace io.harness.cfsdk.client.api
         internal bool streamEnabled = true;
 
         public int PollIntervalInMiliSeconds { get => pollIntervalInSeconds * 1000; }
-        internal int pollIntervalInSeconds = 20;
+        internal int pollIntervalInSeconds = 60;
 
         // configurations for Analytics
         public bool AnalyticsEnabled { get => analyticsEnabled; }
