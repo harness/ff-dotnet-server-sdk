@@ -13,11 +13,11 @@ namespace io.harness.cfsdk.client.connector
 {
     public class EventSource : IService
     {
-        private string url;
-        private Config config;
-        private HttpClient httpClient;
+        private readonly string url;
+        private readonly Config config;
+        private readonly HttpClient httpClient;
+        private readonly IUpdateCallback callback;
         private StreamReader streamReader;
-        private IUpdateCallback callback;
 
         public EventSource(HttpClient httpClient, string url, Config config, IUpdateCallback callback)
         {
@@ -34,16 +34,16 @@ namespace io.harness.cfsdk.client.connector
 
         public void Start()
         {
-            Task.Run(() => StartStreaming());
+            _ = StartStreaming();
         }
 
         public void Stop()
         {
-            if (this.streamReader != null)
+            if (streamReader != null)
             { 
-                this.streamReader.Close();
-                this.streamReader.Dispose();
-                this.streamReader = null;
+                streamReader.Close();
+                streamReader.Dispose();
+                streamReader = null;
             }
 
             Log.Information("Stopping EventSource service.");
@@ -54,38 +54,39 @@ namespace io.harness.cfsdk.client.connector
             try
             {
                 Log.Information("Starting EventSource service.");
-                using (this.streamReader = new StreamReader(await this.httpClient.GetStreamAsync(url)))
+                using (streamReader = new StreamReader(await this.httpClient.GetStreamAsync(url)))
                 {
-                    this.callback.OnStreamConnected();
+                    callback.OnStreamConnected();
 
                     while (!streamReader.EndOfStream)
                     {
-                        string message = await streamReader.ReadLineAsync();
+                        var message = await streamReader.ReadLineAsync();
                         if (!message.Contains("domain")) continue;
 
                         Log.Information($"EventSource message received {message}");
 
                         // parse message
-                        JObject jsommessage = JObject.Parse("{" + message + "}");
-
-                        Message msg = new Message();
-                        msg.Domain = (string)jsommessage["data"]["domain"];
-                        msg.Event = (string)jsommessage["data"]["event"];
-                        msg.Identifier = (string)jsommessage["data"]["identifier"];
-                        msg.Version = long.Parse((string)jsommessage["data"]["version"]);
-
-
-                        this.callback.Update(msg, false);
+                        var jsonMessage = JObject.Parse("{" + message + "}");
+                        var data = jsonMessage["data"];
+                        var msg = new Message
+                        {
+                            Domain = (string) data["domain"],
+                            Event = (string) data["event"],
+                            Identifier = (string) data["identifier"],
+                            Version = long.Parse((string) data["version"])
+                        };
+                        
+                        callback.Update(msg, false);
                     }
                 }
             }
             catch (Exception)
             {
-                Log.Error($"EventSource service throw error. Retrying in {this.config.pollIntervalInSeconds}");
+                Log.Error($"EventSource service throw error. Retrying in {config.pollIntervalInSeconds}");
             }
             finally
             {
-                this.callback.OnStreamDisconnected();
+                callback.OnStreamDisconnected();
             }
 
         }

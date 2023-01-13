@@ -7,6 +7,7 @@ using io.harness.cfsdk.HarnessOpenMetricsAPIService;
 using Newtonsoft.Json;
 using Serilog;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace io.harness.cfsdk.client.connector
 {
@@ -29,23 +30,22 @@ namespace io.harness.cfsdk.client.connector
             Directory.CreateDirectory(this.metricPath);
         }
 
-        public string Authenticate()
+        public Task<string> Authenticate()
         {
-            // there is no authentication so just return any string
-            return "success";
+            return Task.FromResult("success");
         }
         public void Close()
         {
 
         }
 
-        public FeatureConfig GetFlag(string identifier)
+        public Task<FeatureConfig> GetFlag(string identifier)
         {
             string filePath = Path.Combine(flagPath, identifier + ".json");
-            return JsonConvert.DeserializeObject<FeatureConfig>(File.ReadAllText(filePath));
+            return Task.FromResult(JsonConvert.DeserializeObject<FeatureConfig>(File.ReadAllText(filePath)));
         }
 
-        public IEnumerable<FeatureConfig> GetFlags()
+        public Task<IEnumerable<FeatureConfig>> GetFlags()
         {
             var features = new List<FeatureConfig>();
             try
@@ -63,16 +63,16 @@ namespace io.harness.cfsdk.client.connector
             {
                 Log.Error("Error accessing feature files.", ex);
             }
-            return features;
+            return Task.FromResult((IEnumerable<FeatureConfig>)features);
         }
 
-        public Segment GetSegment(string identifier)
+        public Task<Segment> GetSegment(string identifier)
         {
             string filePath =Path.Combine(segmentPath, identifier + ".json");
-            return JsonConvert.DeserializeObject<Segment>(File.ReadAllText(filePath));
+            return Task.FromResult(JsonConvert.DeserializeObject<Segment>(File.ReadAllText(filePath)));
         }
 
-        public IEnumerable<Segment> GetSegments()
+        public Task<IEnumerable<Segment>> GetSegments()
         {
             var segments = new List<Segment>();
             try
@@ -86,16 +86,16 @@ namespace io.harness.cfsdk.client.connector
             {
                 Log.Error("Error accessing segment files.", ex);
             }
-            return segments;
+            return Task.FromResult((IEnumerable<Segment>)segments);
         }
 
-        public void PostMetrics(Metrics metrics)
+        public async Task PostMetrics(Metrics metrics)
         {
-            string fileName = Path.Combine(metricPath, $"{DateTime.Now.ToLongDateString()}.jsonl" );
-            using (StreamWriter w = File.AppendText(fileName))
+            var fileName = Path.Combine(metricPath, $"{DateTime.Now.ToLongDateString()}.jsonl" );
+            using (var w = File.AppendText(fileName))
             {
                 var str = JsonConvert.SerializeObject(metrics);
-                w.WriteLine(str);
+                await w.WriteLineAsync(str);
             }
         }
 

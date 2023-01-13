@@ -7,9 +7,9 @@ namespace io.harness.cfsdk.client.connector
 {
     public class FileWatcher : IDisposable, IService
     {
-        private string domain;
-        private string path;
-        private IUpdateCallback callback;
+        private readonly string domain;
+        private readonly string path;
+        private readonly IUpdateCallback callback;
 
         private FileSystemWatcher watcher;
 
@@ -22,17 +22,17 @@ namespace io.harness.cfsdk.client.connector
 
         private void Watcher_Deleted(object sender, FileSystemEventArgs e)
         {
-            this.callback.Update(new Message() { Domain = this.domain, Event = "delete", Identifier = Path.GetFileNameWithoutExtension(e.Name), Version = 0 }, false);
+            callback.Update(new Message() { Domain = domain, Event = "delete", Identifier = Path.GetFileNameWithoutExtension(e.Name), Version = 0 }, false);
         }
 
         private void Watcher_Created(object sender, FileSystemEventArgs e)
         {
-            this.callback.Update(new Message() { Domain = this.domain, Event = "create", Identifier = Path.GetFileNameWithoutExtension(e.Name), Version = 0 }, false);
+            callback.Update(new Message() { Domain = domain, Event = "create", Identifier = Path.GetFileNameWithoutExtension(e.Name), Version = 0 }, false);
         }
 
         private void Watcher_Changed(object sender, FileSystemEventArgs e)
         {
-            this.callback.Update(new Message() { Domain = this.domain, Event = "patch", Identifier = Path.GetFileNameWithoutExtension(e.Name), Version = 0 }, false);
+            callback.Update(new Message() { Domain = domain, Event = "patch", Identifier = Path.GetFileNameWithoutExtension(e.Name), Version = 0 }, false);
         }
 
         public void Close()
@@ -49,18 +49,20 @@ namespace io.harness.cfsdk.client.connector
         {
             try
             {
-                watcher = new FileSystemWatcher();
-                watcher.Path = this.path;
-                watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
-                watcher.Filter = "*.json";
+                watcher = new FileSystemWatcher
+                {
+                    Path = path,
+                    NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName,
+                    Filter = "*.json",
+                    EnableRaisingEvents = true
+                };
                 watcher.Changed += Watcher_Changed;
                 watcher.Created += Watcher_Created;
                 watcher.Deleted += Watcher_Deleted;
-                watcher.EnableRaisingEvents = true;
             }
             catch(Exception ex)
             {
-                Log.Error($"Error creating fileWatcher at {this.path}", ex);
+                Log.Error($"Error creating fileWatcher at {path}", ex);
             }
         }
 

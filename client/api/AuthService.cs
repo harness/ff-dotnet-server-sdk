@@ -21,10 +21,10 @@ namespace io.harness.cfsdk.client.api
     /// </summary>
     internal class AuthService : IAuthService
     {
-        private IConnector connector;
-        private Config config;
+        private readonly IConnector connector;
+        private readonly Config config;
+        private readonly IAuthCallback callback;
         private Timer authTimer;
-        private IAuthCallback callback;
 
         public AuthService(IConnector connector, Config config, IAuthCallback callback)
         {
@@ -35,21 +35,19 @@ namespace io.harness.cfsdk.client.api
         public void Start()
         {
             // initiate authentication
-            authTimer = new Timer(new TimerCallback(OnTimedEvent), null, 0, this.config.PollIntervalInMiliSeconds);
+            authTimer = new Timer(OnTimedEvent, null, 0, config.PollIntervalInMiliSeconds);
         }
         public void Stop()
         {
-            if (authTimer != null)
-            {
-                authTimer.Dispose();
-                authTimer = null;
-            }
+            if (authTimer == null) return;
+            authTimer.Dispose();
+            authTimer = null;
         }
-        private void OnTimedEvent(object source)
+        private async void OnTimedEvent(object source)
         {
             try
             {
-                connector.Authenticate();
+                await connector.Authenticate();
                 callback.OnAuthenticationSuccess();
                 Stop();
                 Log.Information("Stopping authentication service");

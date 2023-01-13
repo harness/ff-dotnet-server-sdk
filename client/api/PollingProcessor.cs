@@ -49,7 +49,7 @@ namespace io.harness.cfsdk.client.api
         private Timer pollTimer;
         private Config config;
         private bool isInitialized = false;
-        private System.Threading.AutoResetEvent readyEvent;
+        private SemaphoreSlim readyEvent;
 
         public PollingProcessor(IConnector connector, IRepository repository, Config config, IPollCallback callback)
         {
@@ -57,42 +57,37 @@ namespace io.harness.cfsdk.client.api
             this.repository = repository;
             this.connector = connector;
             this.config = config;
-            this.readyEvent = new System.Threading.AutoResetEvent(false);
+            this.readyEvent = new SemaphoreSlim(0, 3);
         }
         public async Task<bool> ReadyAsync()
         {
-            return await Task.Run(() =>
-            {
-                this.readyEvent.WaitOne();
-                return true;
-            });
+            await readyEvent.WaitAsync();
+            return true;
         }
 
         public void Start()
         {
-            Log.Information($"Starting PollingProcessor with request interval: {this.config.pollIntervalInSeconds}");
+            Log.Information($"Starting PollingProcessor with request interval: {config.pollIntervalInSeconds}");
             // start timer which will initiate periodic reading of flags and segments
-            pollTimer = new Timer(new TimerCallback(OnTimedEventAsync), null, 0, this.config.PollIntervalInMiliSeconds);
+            pollTimer = new Timer(OnTimedEventAsync, null, 0, config.PollIntervalInMiliSeconds);
         }
         public void Stop()
         {
             Log.Information("Stopping PollingProcessor");
             // stop timer
-            if (pollTimer != null)
-            {
-                pollTimer.Dispose();
-                pollTimer = null;
-            }
+            if (pollTimer == null) return;
+            pollTimer.Dispose();
+            pollTimer = null;
 
         }
-        private void ProcessFlags()
+        private async Task ProcessFlags()
         {
             try
             {
                 Log.Debug("Fetching flags started");
-                IEnumerable<FeatureConfig> flags = this.connector.GetFlags();
+                var flags = await this.connector.GetFlags();
                 Log.Debug("Fetching flags finished");
-                foreach (FeatureConfig item in flags)
+                foreach (var item in flags)
                 {
                     repository.SetFlag(item.Feature, item);
                 }
@@ -101,15 +96,15 @@ namespace io.harness.cfsdk.client.api
             catch (CfClientException ex)
             {
                 Log.Error($"Exception was raised when fetching flags data with the message {ex.Message}");
-                throw ex;
+                throw;
             }
         }
-        private void ProcessSegments()
+        private async Task ProcessSegments()
         {
             try
             {
                 Log.Debug("Fetching segments started");
-                IEnumerable<Segment> segments = this.connector.GetSegments();
+                IEnumerable<Segment> segments = await connector.GetSegments();
                 Log.Debug("Fetching segments finished");
                 foreach (Segment item in segments)
                 {
@@ -119,31 +114,25 @@ namespace io.harness.cfsdk.client.api
             catch (CfClientException ex)
             {
                 Log.Error($"Exception was raised when fetching segments data with the message {ex.Message}");
-                throw ex;
+                throw;
             }
         }
-        private void OnTimedEventAsync(object source)
+        private async void OnTimedEventAsync(object source)
         {
             try
             {
                 Log.Debug("Running polling iteration");
-                var tasks = new List<Task>();
-                tasks.Add(Task.Run(() => ProcessFlags()));
-                tasks.Add(Task.Run(() => ProcessSegments()));
+                await Task.WhenAll(new List<Task> { ProcessFlags(), ProcessSegments() });
 
-                Task.WaitAll(tasks.ToArray());
-
-                if (!isInitialized)
-                {
-                    this.isInitialized = true;
-                    this.callback.OnPollerReady();
-                    this.readyEvent.Set();
-                }
+                if (isInitialized) return;
+                isInitialized = true;
+                callback.OnPollerReady();
+                readyEvent.Release();
             }
             catch(Exception ex)
             {
-                Log.Information($"Polling will retry in {this.config.pollIntervalInSeconds}");
-                this.callback.OnPollError(ex.Message);
+                Log.Information($"Polling will retry in {config.pollIntervalInSeconds}");
+                callback.OnPollError(ex.Message);
             }
         }
     }
