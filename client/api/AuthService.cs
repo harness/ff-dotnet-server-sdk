@@ -25,6 +25,7 @@ namespace io.harness.cfsdk.client.api
         private readonly Config config;
         private readonly IAuthCallback callback;
         private Timer authTimer;
+        private int retries = 0;
 
         public AuthService(IConnector connector, Config config, IAuthCallback callback)
         {
@@ -34,6 +35,7 @@ namespace io.harness.cfsdk.client.api
         }
         public void Start()
         {
+            this.retries = 0;
             // initiate authentication
             authTimer = new Timer(OnTimedEvent, null, 0, config.PollIntervalInMiliSeconds);
         }
@@ -55,7 +57,15 @@ namespace io.harness.cfsdk.client.api
             catch
             {
                 // Exception thrown on Authentication. Timer will retry authentication.
-                Log.Error($"Exception while authenticating, retry in {this.config.pollIntervalInSeconds}");
+                if (retries++ >= config.MaxAuthRetries)
+                {
+                    Log.Error($"Max authentication retries reached {retries}");
+                    Stop();
+                }
+                else
+                {
+                    Log.Error($"Exception while authenticating, retry ({retries}) in {config.pollIntervalInSeconds}");
+                }
             }
         }
     }

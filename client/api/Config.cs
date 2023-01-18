@@ -16,6 +16,9 @@ namespace io.harness.cfsdk.client.api
 
         public int PollIntervalInMiliSeconds { get => pollIntervalInSeconds * 1000; }
         internal int pollIntervalInSeconds = 60;
+        
+        public int MaxAuthRetries { get => maxAuthRetries; }
+        internal int maxAuthRetries = 10;
 
         // configurations for Analytics
         public bool AnalyticsEnabled { get => analyticsEnabled; }

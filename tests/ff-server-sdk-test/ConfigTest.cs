@@ -27,6 +27,7 @@ namespace ff_server_sdk_test
           Assert.IsFalse(config.Debug);
           Assert.IsTrue(config.ConfigUrl == "https://config.ff.harness.io/api/1.0");
           Assert.IsTrue(config.EventUrl == "https://events.ff.harness.io/api/1.0");
+          Assert.AreEqual(config.MaxAuthRetries, 10);
 
           //Check analytics setter
           Config configset = Config.Builder().SetAnalyticsEnabled(false).SetStreamEnabled(false).Build();
