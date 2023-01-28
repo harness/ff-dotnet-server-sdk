@@ -12,12 +12,14 @@ namespace io.harness.cfsdk.client.connector
         private IUpdateCallback callback;
 
         private FileSystemWatcher watcher;
+        private readonly ILogger logger;
 
-        public FileWatcher(string domain, string path, IUpdateCallback callback)
+        public FileWatcher(string domain, string path, IUpdateCallback callback, ILogger logger = null)
         {
             this.domain = domain;
             this.callback = callback;
             this.path = path;
+            this.logger = logger ?? Log.Logger;
         }
 
         private void Watcher_Deleted(object sender, FileSystemEventArgs e)
@@ -58,9 +60,9 @@ namespace io.harness.cfsdk.client.connector
                 watcher.Deleted += Watcher_Deleted;
                 watcher.EnableRaisingEvents = true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                Log.Error($"Error creating fileWatcher at {this.path}", ex);
+                logger.Error(ex, "Error creating fileWatcher at {Path}", this.path);
             }
         }
 

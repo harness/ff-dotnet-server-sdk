@@ -25,12 +25,14 @@ namespace io.harness.cfsdk.client.api
         private Config config;
         private Timer authTimer;
         private IAuthCallback callback;
+        private readonly ILogger logger;
 
-        public AuthService(IConnector connector, Config config, IAuthCallback callback)
+        public AuthService(IConnector connector, Config config, IAuthCallback callback, ILogger logger = null)
         {
             this.connector = connector;
             this.config = config;
             this.callback = callback;
+            this.logger = logger ?? Log.Logger;
         }
         public void Start()
         {
@@ -52,12 +54,12 @@ namespace io.harness.cfsdk.client.api
                 connector.Authenticate();
                 callback.OnAuthenticationSuccess();
                 Stop();
-                Log.Information("Stopping authentication service");
+                logger.Information("Stopping authentication service");
             }
             catch
             {
                 // Exception thrown on Authentication. Timer will retry authentication.
-                Log.Error($"Exception while authenticating, retry in {this.config.pollIntervalInSeconds}");
+                logger.Error("Exception while authenticating, retry in {PollIntervalInSeconds}", this.config.pollIntervalInSeconds);
             }
         }
     }

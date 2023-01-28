@@ -11,22 +11,23 @@ namespace io.harness.cfsdk.client.polling
         private static int MINIMUM_POLLING_INTERVAL = 10000;
         private long pollingInterval;
         private Timer timer;
+        private readonly ILogger logger;
 
-        public ShortTermPolling(int time)
+        public ShortTermPolling(int time, ILogger logger = null)
         {
             pollingInterval = Math.Max(time, MINIMUM_POLLING_INTERVAL);
-
+            this.logger = logger ?? Log.Logger;
         }
 
         public void start(Action<object, ElapsedEventArgs> runnable)
         {
             if (timer != null)
             {
-                Log.Information("POLLING timer - stopping before start");
+                logger.Information("POLLING timer - stopping before start");
                 timer.Stop();
                 timer.Dispose();
             }
-            Log.Information("POLLING timer - scheduling new one");
+            logger.Information("POLLING timer - scheduling new one");
             timer = new Timer(pollingInterval);
             timer.Elapsed += new ElapsedEventHandler(runnable);
             timer.AutoReset = true;
@@ -38,11 +39,11 @@ namespace io.harness.cfsdk.client.polling
         {
             if (timer != null)
             {
-                Log.Information("POLLING timer - stopping on exit");
+                logger.Information("POLLING timer - stopping on exit");
                 timer.Stop();
                 timer.Dispose();
             }
-            Log.Information("POLLING timer - stoped");
+            logger.Information("POLLING timer - stoped");
         }
     }
 }

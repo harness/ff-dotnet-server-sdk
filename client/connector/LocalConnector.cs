@@ -16,9 +16,12 @@ namespace io.harness.cfsdk.client.connector
         private string segmentPath;
         private string metricPath;
         private string source;
-        public LocalConnector(string source)
+        private readonly ILogger logger;
+
+        public LocalConnector(string source, ILogger logger = null)
         {
             this.source = source;
+            this.logger = logger ?? Log.Logger;
 
             this.flagPath = Path.Combine(source, "flags");
             this.segmentPath = Path.Combine(source, "segments");
@@ -61,14 +64,14 @@ namespace io.harness.cfsdk.client.connector
             }
             catch (Exception ex)
             {
-                Log.Error("Error accessing feature files.", ex);
+                logger.Error(ex, "Error accessing feature files.");
             }
             return features;
         }
 
         public Segment GetSegment(string identifier)
         {
-            string filePath =Path.Combine(segmentPath, identifier + ".json");
+            string filePath = Path.Combine(segmentPath, identifier + ".json");
             return JsonConvert.DeserializeObject<Segment>(File.ReadAllText(filePath));
         }
 
@@ -82,16 +85,16 @@ namespace io.harness.cfsdk.client.connector
                                   where segment != null
                                   select segment);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                Log.Error("Error accessing segment files.", ex);
+                logger.Error(ex, "Error accessing segment files.");
             }
             return segments;
         }
 
         public void PostMetrics(Metrics metrics)
         {
-            string fileName = Path.Combine(metricPath, $"{DateTime.Now.ToLongDateString()}.jsonl" );
+            string fileName = Path.Combine(metricPath, $"{DateTime.Now.ToLongDateString()}.jsonl");
             using (StreamWriter w = File.AppendText(fileName))
             {
                 var str = JsonConvert.SerializeObject(metrics);

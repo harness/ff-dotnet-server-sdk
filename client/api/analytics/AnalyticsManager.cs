@@ -29,13 +29,16 @@ namespace io.harness.cfsdk.client.api.analytics
         private AnalyticsPublisherService analyticsPublisherService;
         private IMetricCallback callback;
         private Config config;
-        public MetricsProcessor(IConnector connector, Config config, IMetricCallback callback)
+        private readonly ILogger logger;
+
+        public MetricsProcessor(IConnector connector, Config config, IMetricCallback callback, ILogger logger = null)
         {
             this.analyticsCache = new AnalyticsCache();
             this.callback = callback;
             this.config = config;
             this.analyticsPublisherService = new AnalyticsPublisherService(connector, analyticsCache);
             this.ringBuffer = createRingBuffer(config.getBufferSize(), analyticsPublisherService);
+            this.logger = logger ?? Log.Logger;
         }
 
         public void Start()
@@ -53,7 +56,7 @@ namespace io.harness.cfsdk.client.api.analytics
 
         public void Stop()
         {
-            if(config.analyticsEnabled && this.timer != null)
+            if (config.analyticsEnabled && this.timer != null)
             {
                 this.timer.Stop();
                 this.timer = null;
@@ -66,7 +69,7 @@ namespace io.harness.cfsdk.client.api.analytics
             long sequence = -1;
             if (!ringBuffer.TryNext(out sequence)) // Grab the next sequence if we can
             {
-                Log.Warning("Insufficient capacity in the analytics ringBuffer");
+                logger.Warning("Insufficient capacity in the analytics ringBuffer");
             }
             else
             {
@@ -104,11 +107,11 @@ namespace io.harness.cfsdk.client.api.analytics
             long sequence = -1;
             if (!ringBuffer.TryNext(out sequence)) // Grab the next sequence if we can
             {
-                Log.Warning("Insufficient capacity in the analytics ringBuffer");
+                logger.Warning("Insufficient capacity in the analytics ringBuffer");
             }
             else
             {
-                Log.Information("Publishing timerInfo to ringBuffer");
+                logger.Information("Publishing timerInfo to ringBuffer");
                 ringBuffer[sequence].EventType = EventType.TIMER; // Get the entry in the Disruptor for the sequence
             }
 

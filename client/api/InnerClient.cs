@@ -41,16 +41,22 @@ namespace io.harness.cfsdk.client.api
         public event EventHandler<string> EvaluationChanged;
 
         private CfClient parent;
-        public InnerClient(CfClient parent) { this.parent = parent; }
-        public InnerClient(string apiKey, Config config, CfClient parent)
+        private readonly ILogger logger;
+
+        public InnerClient(CfClient parent, ILogger logger = null)
         {
             this.parent = parent;
+            this.logger = logger ?? Log.Logger;
+        }
+        public InnerClient(string apiKey, Config config, CfClient parent, ILogger logger = null)
+            : this(parent, logger)
+        {
             Initialize(apiKey, config);
         }
 
-        public InnerClient(IConnector connector, Config config, CfClient parent)
+        public InnerClient(IConnector connector, Config config, CfClient parent, ILogger logger = null)
+            : this(parent, logger)
         {
-            this.parent = parent;
             Initialize(connector, config);
         }
 
@@ -71,7 +77,7 @@ namespace io.harness.cfsdk.client.api
         }
         public void Start()
         {
-            Log.Information("Initialize authentication");
+            logger.Information("Initialize authentication");
             // Start Authentication flow
             this.authService.Start();
         }
@@ -152,14 +158,16 @@ namespace io.harness.cfsdk.client.api
 
         public void OnSegmentStored(string identifier)
         {
-            repository.FindFlagsBySegment(identifier).ToList().ForEach(i => {
+            repository.FindFlagsBySegment(identifier).ToList().ForEach(i =>
+            {
                 OnNotifyEvaluationChanged(i);
             });
         }
 
         public void OnSegmentDeleted(string identifier)
         {
-            repository.FindFlagsBySegment(identifier).ToList().ForEach(i => {
+            repository.FindFlagsBySegment(identifier).ToList().ForEach(i =>
+            {
                 OnNotifyEvaluationChanged(i);
             });
         }

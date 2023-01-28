@@ -28,10 +28,13 @@ namespace io.harness.cfsdk.client.api
     {
         private IRepository repository;
         private IEvaluatorCallback callback;
-        public Evaluator(IRepository repository, IEvaluatorCallback callback)
+        private readonly ILogger logger;
+
+        public Evaluator(IRepository repository, IEvaluatorCallback callback, ILogger logger = null)
         {
             this.repository = repository;
             this.callback = callback;
+            this.logger = logger ?? Log.Logger;
         }
         private Variation EvaluateVariation(string key, dto.Target target, FeatureConfigKind kind)
         {
@@ -43,14 +46,14 @@ namespace io.harness.cfsdk.client.api
             if (prerequisites != null && prerequisites.Count > 0)
             {
                 bool prereq = checkPreRequisite(featureConfig, target);
-                if( !prereq)
+                if (!prereq)
                 {
                     return featureConfig.Variations.FirstOrDefault(v => v.Identifier.Equals(featureConfig.OffVariation));
                 }
             }
 
             Variation var = Evaluate(featureConfig, target);
-            if(var != null && callback != null)
+            if (var != null && callback != null)
             {
                 this.callback.evaluationProcessed(featureConfig, target, var);
             }
@@ -100,7 +103,7 @@ namespace io.harness.cfsdk.client.api
 
                     // Pre requisite variation value evaluated below
                     Variation preReqEvaluatedVariation = Evaluate(preReqFeatureConfig, target);
-                    if(preReqEvaluatedVariation == null)
+                    if (preReqEvaluatedVariation == null)
                     {
                         return true;
                     }
@@ -142,7 +145,7 @@ namespace io.harness.cfsdk.client.api
                 }
             }
 
-            if(variation != null && featureConfig.Variations != null)
+            if (variation != null && featureConfig.Variations != null)
             {
                 return featureConfig.Variations.FirstOrDefault(var => var.Identifier.Equals(variation));
             }
@@ -158,11 +161,11 @@ namespace io.harness.cfsdk.client.api
             }
             foreach (VariationMap variationMap in variationMaps)
             {
-                if (variationMap.Targets != null && variationMap.Targets.ToList().Any(t => t != null && t.Identifier.Equals(target.Identifier)) )
+                if (variationMap.Targets != null && variationMap.Targets.ToList().Any(t => t != null && t.Identifier.Equals(target.Identifier)))
                 {
                     return variationMap.Variation;
                 }
-                if( variationMap.TargetSegments != null && IsTargetIncludedOrExcludedInSegment(variationMap.TargetSegments.ToList(), target))
+                if (variationMap.TargetSegments != null && IsTargetIncludedOrExcludedInSegment(variationMap.TargetSegments.ToList(), target))
                 {
                     return variationMap.Variation;
                 }
@@ -184,14 +187,14 @@ namespace io.harness.cfsdk.client.api
                     continue;
                 }
 
-                if( servingRule.Serve != null)
+                if (servingRule.Serve != null)
                 {
-                    if(servingRule.Serve.Distribution != null)
+                    if (servingRule.Serve.Distribution != null)
                     {
                         DistributionProcessor distributionProcessor = new DistributionProcessor(servingRule.Serve);
                         return distributionProcessor.loadKeyName(target);
                     }
-                    if( servingRule.Serve.Variation != null)
+                    if (servingRule.Serve.Variation != null)
                     {
                         return servingRule.Serve.Variation;
                     }
@@ -200,7 +203,7 @@ namespace io.harness.cfsdk.client.api
             return null;
         }
 
-       
+
 
         private string EvaluateDistribution(FeatureConfig featureConfig, dto.Target target)
         {
@@ -217,14 +220,14 @@ namespace io.harness.cfsdk.client.api
                     // check exclude list
                     if (segment.Excluded != null && segment.Excluded.Any(t => t.Identifier.Equals(target.Identifier)))
                     {
-                        Log.Debug($"Target {target.Name} excluded from segment {segment.Name} via exclude list");
+                        logger.Debug("Target {TargetName} excluded from segment {SegmentName} via exclude list", target.Name, segment.Name);
                         return false;
                     }
 
                     // check include list
                     if (segment.Included != null && segment.Included.Any(t => t.Identifier.Equals(target.Identifier)))
                     {
-                        Log.Debug($"Target {target.Name} included in segment {segment.Name} via include list");
+                        logger.Debug("Target {TargetName} included in segment {SegmentName} via include list", target.Name, segment.Name);
                         return true;
                     }
 
@@ -257,7 +260,7 @@ namespace io.harness.cfsdk.client.api
             }
 
             object attrValue = getAttrValue(target, clause.Attribute);
-            if(attrValue == null)
+            if (attrValue == null)
             {
                 return false;
             }

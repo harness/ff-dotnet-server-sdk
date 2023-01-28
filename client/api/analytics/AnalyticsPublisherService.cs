@@ -30,17 +30,18 @@ namespace io.harness.cfsdk.client.api.analytics
 
         private AnalyticsCache analyticsCache;
         private IConnector connector;
+        private readonly ILogger logger;
 
-
-        public AnalyticsPublisherService(IConnector connector, AnalyticsCache analyticsCache)
+        public AnalyticsPublisherService(IConnector connector, AnalyticsCache analyticsCache, ILogger logger = null)
         {
             this.analyticsCache = analyticsCache;
             this.connector = connector;
+            this.logger = logger ?? Log.Logger;
         }
 
         public void sendDataAndResetCache()
         {
-            Log.Information("Reading from queue and building cache, SDL version: " + sdkVersion);
+            logger.Information("Reading from queue and building cache, SDL version: {SdkVersion}", sdkVersion);
 
             IDictionary<Analytics, int> all = analyticsCache.GetAllElements();
 
@@ -49,23 +50,23 @@ namespace io.harness.cfsdk.client.api.analytics
                 try
                 {
                     Metrics metrics = prepareMessageBody(all);
-                    if ((metrics.MetricsData != null && metrics.MetricsData.Count >0)
+                    if ((metrics.MetricsData != null && metrics.MetricsData.Count > 0)
                         || (metrics.TargetData != null && metrics.TargetData.Count > 0))
                     {
-                        Log.Debug("Sending analytics data :{@a}", metrics);
+                        logger.Debug("Sending analytics data: {@Metrics}", metrics);
                         connector.PostMetrics(metrics);
                     }
 
                     stagingTargetSet.ToList().ForEach(element => globalTargetSet.Add(element));
                     stagingTargetSet.Clear();
-                    Log.Information("Successfully sent analytics data to the server");
+                    logger.Information("Successfully sent analytics data to the server");
                     analyticsCache.resetCache();
                 }
                 catch (CfClientException ex)
                 {
                     // Clear the set because the cache is only invalidated when there is no
                     // exception, so the targets will reappear in the next iteration
-                    Log.Error("Failed to send metricsData {@e}", ex);
+                    logger.Error(ex, "Failed to send metricsData: {Error}", ex.Message);
                 }
             }
         }
@@ -83,7 +84,7 @@ namespace io.harness.cfsdk.client.api.analytics
                 TargetData targetData = new TargetData();
                 // Set Metrics data
                 MetricsData metricsData = new MetricsData();
-             
+
                 Analytics analytics = entry.Key;
                 HashSet<string> privateAttributes = analytics.Target.PrivateAttributes;
                 dto.Target target = analytics.Target;
@@ -133,7 +134,7 @@ namespace io.harness.cfsdk.client.api.analytics
                 setMetricsAttriutes(metricsData, SDK_TYPE, SERVER);
 
                 setMetricsAttriutes(metricsData, SDK_LANGUAGE, ".NET");
-                setMetricsAttriutes(metricsData, SDK_VERSION, sdkVersion.ToString() );
+                setMetricsAttriutes(metricsData, SDK_VERSION, sdkVersion.ToString());
                 metrics.MetricsData.Add(metricsData);
             }
 

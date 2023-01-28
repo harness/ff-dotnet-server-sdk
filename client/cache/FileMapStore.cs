@@ -12,16 +12,19 @@ namespace io.harness.cfsdk.client.api
     public class FileMapStore : IStore
     {
         private string storeName;
-        public FileMapStore(string name)
+        private readonly ILogger logger;
+
+        public FileMapStore(string name, ILogger logger = null)
         {
             storeName = name;
+            this.logger = logger ?? Log.Logger;
             Directory.CreateDirectory(name);
             Array.ForEach(Directory.EnumerateFiles(name).ToArray(), f => File.Delete(f));
         }
 
         public void Close()
         {
-            
+
         }
 
         public void Delete(string key)
@@ -41,21 +44,22 @@ namespace io.harness.cfsdk.client.api
                 }
                 return null;
             }
-            catch( Exception ex)
+            catch (Exception ex)
             {
-                Log.Error("Failure to deserialize data from file storage", ex);
+                logger.Error(ex, "Failure to deserialize data from file storage");
                 return null;
             }
         }
 
         public ICollection<string> Keys()
         {
-            return Directory.EnumerateFiles(storeName).Select( f => Path.GetFileName(f)).ToList();
+            return Directory.EnumerateFiles(storeName).Select(f => Path.GetFileName(f)).ToList();
         }
 
         public void Set(string key, object value)
         {
-            var str = JsonConvert.SerializeObject(value, Formatting.Indented, new JsonSerializerSettings {
+            var str = JsonConvert.SerializeObject(value, Formatting.Indented, new JsonSerializerSettings
+            {
                 ContractResolver = new IncludeNullPropertiesContractResolver()
             });
             File.WriteAllText(Path.Combine(storeName, key), str);

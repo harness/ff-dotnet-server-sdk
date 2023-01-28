@@ -13,11 +13,13 @@ namespace io.harness.cfsdk.client.api.analytics
     {
         private AnalyticsCache analyticsCache;
         private AnalyticsPublisherService analyticsPublisherService;
+        private readonly ILogger logger;
 
-        public AnalyticsEventHandler( AnalyticsCache analyticsCache, AnalyticsPublisherService analyticsPublisherService)
+        public AnalyticsEventHandler(AnalyticsCache analyticsCache, AnalyticsPublisherService analyticsPublisherService, ILogger logger = null)
         {
             this.analyticsCache = analyticsCache;
             this.analyticsPublisherService = analyticsPublisherService;
+            this.logger = logger ?? Log.Logger;
         }
         public void OnEvent(Analytics analytics, long sequence, bool endOfBatch)
         {
@@ -30,7 +32,7 @@ namespace io.harness.cfsdk.client.api.analytics
                     }
                     catch (CfClientException e)
                     {
-                        Log.Warning("Failed to send analytics data to server", e);
+                        logger.Warning(e, "Failed to send analytics data to server");
                     }
                     break;
                 case EventType.METRICS:

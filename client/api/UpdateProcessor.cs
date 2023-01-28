@@ -32,13 +32,15 @@ namespace io.harness.cfsdk.client.api
 
         private IService service;
         private Config config;
+        private readonly ILogger logger;
 
-        public UpdateProcessor(IConnector connector, IRepository repository, Config config, IUpdateCallback callback)
+        public UpdateProcessor(IConnector connector, IRepository repository, Config config, IUpdateCallback callback, ILogger logger = null)
         {
             this.callback = callback;
             this.repository = repository;
             this.connector = connector;
             this.config = config;
+            this.logger = logger ?? Log.Logger;
         }
 
         public void Start()
@@ -60,9 +62,9 @@ namespace io.harness.cfsdk.client.api
 
         public void Update(Message message, bool manual)
         {
-            if( manual && this.config.StreamEnabled)
+            if (manual && this.config.StreamEnabled)
             {
-                Log.Information("You run the update method manually with the stream enabled. Please turn off the stream in this case.");
+                logger.Information("You run the update method manually with the stream enabled. Please turn off the stream in this case.");
             }
             //we got a message from server. Dispatch in separate thread.
             Task.Run(() => ProcessMessage(message));
@@ -75,7 +77,7 @@ namespace io.harness.cfsdk.client.api
         {
             this.callback.OnStreamDisconnected();
             Stop();
-            Task.Run( () =>
+            Task.Run(() =>
             {
                 Task.Delay(TimeSpan.FromSeconds(this.config.pollIntervalInSeconds)).Wait();
                 Start();
@@ -97,9 +99,9 @@ namespace io.harness.cfsdk.client.api
                         this.repository.SetFlag(message.Identifier, feature);
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
-                    Log.Error($"Error processing flag: {message.Identifier} event: {message.Event}.", ex);
+                    logger.Error(ex, "Error processing flag: {Identifier} event: {Event}.", message.Identifier, message.Event);
                 }
             }
             else if (message.Domain.Equals("target-segment"))
@@ -116,9 +118,9 @@ namespace io.harness.cfsdk.client.api
                         this.repository.SetSegment(message.Identifier, segment);
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
-                    Log.Error($"Error processing segment: {message.Identifier} event: {message.Event}.", ex);
+                    logger.Error(ex, "Error processing segment: {Identifier} event: {Event}.", message.Identifier, message.Event);
                 }
             }
         }

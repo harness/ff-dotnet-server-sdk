@@ -18,13 +18,15 @@ namespace io.harness.cfsdk.client.connector
         private HttpClient httpClient;
         private StreamReader streamReader;
         private IUpdateCallback callback;
+        private readonly ILogger logger;
 
-        public EventSource(HttpClient httpClient, string url, Config config, IUpdateCallback callback)
+        public EventSource(HttpClient httpClient, string url, Config config, IUpdateCallback callback, ILogger logger = null)
         {
             this.httpClient = httpClient;
             this.url = url;
             this.config = config;
             this.callback = callback;
+            this.logger = logger ?? Log.Logger;
         }
 
         public void Close()
@@ -40,20 +42,20 @@ namespace io.harness.cfsdk.client.connector
         public void Stop()
         {
             if (this.streamReader != null)
-            { 
+            {
                 this.streamReader.Close();
                 this.streamReader.Dispose();
                 this.streamReader = null;
             }
 
-            Log.Information("Stopping EventSource service.");
+            logger.Information("Stopping EventSource service.");
         }
 
         private async Task StartStreaming()
         {
             try
             {
-                Log.Information("Starting EventSource service.");
+                logger.Information("Starting EventSource service.");
                 using (this.streamReader = new StreamReader(await this.httpClient.GetStreamAsync(url)))
                 {
                     this.callback.OnStreamConnected();
@@ -63,7 +65,7 @@ namespace io.harness.cfsdk.client.connector
                         string message = await streamReader.ReadLineAsync();
                         if (!message.Contains("domain")) continue;
 
-                        Log.Information($"EventSource message received {message}");
+                        logger.Information("EventSource message received {Message}", message);
 
                         // parse message
                         JObject jsommessage = JObject.Parse("{" + message + "}");
@@ -81,7 +83,7 @@ namespace io.harness.cfsdk.client.connector
             }
             catch (Exception)
             {
-                Log.Error($"EventSource service throw error. Retrying in {this.config.pollIntervalInSeconds}");
+                logger.Error("EventSource service throw error. Retrying in {PollIntervalInSeconds}", this.config.pollIntervalInSeconds);
             }
             finally
             {

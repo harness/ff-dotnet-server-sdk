@@ -31,14 +31,16 @@ namespace io.harness.cfsdk.client.connector
         private string apiKey;
         private Config config;
         private IConnectionCallback callback;
+        private readonly ILogger logger;
 
         private IService currentStream;
         private CancellationTokenSource cancelToken = new CancellationTokenSource();
-        public HarnessConnector(String apiKey, Config config, IConnectionCallback callback)
+        public HarnessConnector(String apiKey, Config config, IConnectionCallback callback, ILogger logger = null)
         {
             this.config = config;
             this.apiKey = apiKey;
             this.callback = callback;
+            this.logger = logger ?? Log.Logger;
 
             this.apiHttpClient = new HttpClient();
             this.apiHttpClient.BaseAddress = new Uri(config.ConfigUrl);
@@ -49,7 +51,7 @@ namespace io.harness.cfsdk.client.connector
             this.metricHttpClient.Timeout = TimeSpan.FromSeconds(config.ConnectionTimeout);
 
             this.sseHttpClient = new HttpClient();
-            this.sseHttpClient.BaseAddress = new Uri(this.config.ConfigUrl.EndsWith("/") ? this.config.ConfigUrl : this.config.ConfigUrl + "/" );
+            this.sseHttpClient.BaseAddress = new Uri(this.config.ConfigUrl.EndsWith("/") ? this.config.ConfigUrl : this.config.ConfigUrl + "/");
             this.sseHttpClient.DefaultRequestHeaders.Add("API-Key", this.apiKey);
             this.sseHttpClient.DefaultRequestHeaders.Add("Accept", "text /event-stream");
             this.sseHttpClient.Timeout = Timeout.InfiniteTimeSpan;
@@ -141,12 +143,12 @@ namespace io.harness.cfsdk.client.connector
         }
         public IService Stream(IUpdateCallback updater)
         {
-            if(currentStream != null)
+            if (currentStream != null)
             {
                 currentStream.Close();
             }
             string url = $"stream?cluster={this.cluster}";
-            this.currentStream =  new EventSource(this.sseHttpClient, url, this.config, updater);
+            this.currentStream = new EventSource(this.sseHttpClient, url, this.config, updater);
             return currentStream;
         }
         public void PostMetrics(HarnessOpenMetricsAPIService.Metrics metrics)
@@ -165,7 +167,7 @@ namespace io.harness.cfsdk.client.connector
                 DateTime endTime = DateTime.Now;
                 if ((endTime - startTime).TotalMilliseconds > config.MetricsServiceAcceptableDuration)
                 {
-                    Log.Warning($"Metrics service API duration=[{endTime - startTime}]");
+                    logger.Warning("Metrics service API duration=[{Duration}]", endTime - startTime);
                 }
             }
             catch (AggregateException ex)
@@ -212,15 +214,14 @@ namespace io.harness.cfsdk.client.connector
             {
                 foreach (var e in ex.InnerExceptions)
                 {
-                    Log.Error($"Failed to get auth token {e.Message}");
-                    ApiException apiEx = e as ApiException;
-                    if (apiEx != null)
+                    logger.Error(e, "Failed to get auth token {Error}", e.Message);
+                    if (e is ApiException apiEx)
                     {
 
                         if (apiEx.StatusCode == (int)HttpStatusCode.Unauthorized || apiEx.StatusCode == (int)HttpStatusCode.Forbidden)
                         {
                             string errorMsg = $"Invalid apiKey {apiKey}. Serving default value.";
-                            Log.Error(errorMsg);
+                            logger.Error(errorMsg);
                             throw new CfClientException(errorMsg);
                         }
                         throw new CfClientException(apiEx.Message);
@@ -234,10 +235,9 @@ namespace io.harness.cfsdk.client.connector
         {
             foreach (var e in ex.InnerExceptions)
             {
-                ApiException apiEx = e as ApiException;
-                if (apiEx != null && apiEx.StatusCode == (int)HttpStatusCode.Forbidden)
+                if (e is ApiException apiEx && apiEx.StatusCode == (int)HttpStatusCode.Forbidden)
                 {
-                    Log.Error("Initiate reauthentication");
+                    logger.Error("Initiate reauthentication");
                     callback.OnReauthenticateRequested();
                     return;
                 }

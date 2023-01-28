@@ -37,14 +37,17 @@ namespace io.harness.cfsdk.client.api
         private ICache cache;
         private IStore store;
         private IRepositoryCallback callback;
-        public StorageRepository(ICache cache, IStore store, IRepositoryCallback callback)
+        private readonly ILogger logger;
+
+        public StorageRepository(ICache cache, IStore store, IRepositoryCallback callback, ILogger logger = null)
         {
             this.cache = cache;
             this.store = store;
             this.callback = callback;
+            this.logger = logger ?? Log.Logger;
         }
 
-        private string FlagKey(string identifier) {  return "flags_" + identifier; }
+        private string FlagKey(string identifier) { return "flags_" + identifier; }
         private string SegmentKey(string identifier) { return "segments_" + identifier; }
 
         public FeatureConfig GetFlag(string identifier)
@@ -59,16 +62,16 @@ namespace io.harness.cfsdk.client.api
         {
             List<string> features = new List<string>();
             ICollection<string> keys = this.store != null ? this.store.Keys() : this.cache.Keys();
-            foreach( string key in keys)
+            foreach (string key in keys)
             {
                 FeatureConfig flag = GetFlag(key);
-                if(flag != null && flag.Rules != null)
+                if (flag != null && flag.Rules != null)
                 {
-                    foreach( ServingRule rule in flag.Rules)
+                    foreach (ServingRule rule in flag.Rules)
                     {
                         foreach (Clause clause in rule.Clauses)
                         {
-                            if(clause.Op.Equals("segmentMatch") && clause.Values.Contains(segment))
+                            if (clause.Op.Equals("segmentMatch") && clause.Values.Contains(segment))
                             {
                                 features.Add(flag.Feature);
                             }
@@ -84,11 +87,11 @@ namespace io.harness.cfsdk.client.api
             string key = FlagKey(identifier);
             if (store != null)
             {
-                Log.Debug($"Flag {identifier} successfully deleted from store");
+                logger.Debug("Flag {Identifier} successfully deleted from store", identifier);
                 store.Delete(key);
             }
             this.cache.Delete(key);
-            Log.Debug($"Flag {identifier} successfully deleted from cache");
+            logger.Debug("Flag {Identifier} successfully deleted from cache", identifier);
             if (this.callback != null)
             {
                 this.callback.OnFlagDeleted(identifier);
@@ -100,11 +103,11 @@ namespace io.harness.cfsdk.client.api
             string key = SegmentKey(identifier);
             if (store != null)
             {
-                Log.Debug($"Segment {identifier} successfully deleted from store");
+                logger.Debug("Segment {Identifier} successfully deleted from store", identifier);
                 store.Delete(key);
             }
             this.cache.Delete(key);
-            Log.Debug($"Segment {identifier} successfully deleted from cache");
+            logger.Debug("Segment {Identifier} successfully deleted from cache", identifier);
             if (this.callback != null)
             {
                 this.callback.OnSegmentDeleted(identifier);
@@ -127,7 +130,7 @@ namespace io.harness.cfsdk.client.api
             }
             return (T)item;
         }
-        private FeatureConfig GetFlag( string identifer, bool updateCache)
+        private FeatureConfig GetFlag(string identifer, bool updateCache)
         {
             string key = FlagKey(identifer);
             return GetCache<FeatureConfig>(key, updateCache);
@@ -142,9 +145,9 @@ namespace io.harness.cfsdk.client.api
             FeatureConfig current = GetFlag(identifier, false);
             // Update stored value in case if server returned newer version,
             // or if version is equal 0 (or doesn't exist)
-            if( current != null && featureConfig.Version != 0 && current.Version >= featureConfig.Version )
+            if (current != null && featureConfig.Version != 0 && current.Version >= featureConfig.Version)
             {
-                Log.Debug($"Flag {identifier} already exists");
+                logger.Debug("Flag {Identifier} already exists", identifier);
                 return;
             }
 
@@ -162,7 +165,7 @@ namespace io.harness.cfsdk.client.api
             // or if version is equal 0 (or doesn't exist)
             if (current != null && segment.Version != 0 && current.Version >= segment.Version)
             {
-                Log.Debug($"Segment {identifier} already exists");
+                logger.Debug("Segment {Identifier} already exists", identifier);
                 return;
             }
 
@@ -178,12 +181,12 @@ namespace io.harness.cfsdk.client.api
         {
             if (this.store == null)
             {
-                Log.Debug($"Item {identifier} successfully cached");
+                logger.Debug("Item {Identifier} successfully cached", identifier);
                 cache.Set(key, value);
             }
             else
             {
-                Log.Debug($"Item {identifier} successfully stored and cache invalidated");
+                logger.Debug("Item {Identifier} successfully stored and cache invalidated", identifier);
                 store.Set(key, value);
                 cache.Delete(key);
             }
@@ -191,7 +194,7 @@ namespace io.harness.cfsdk.client.api
 
         public void Close()
         {
-            if(this.store != null)
+            if (this.store != null)
             {
                 this.store.Close();
             }
