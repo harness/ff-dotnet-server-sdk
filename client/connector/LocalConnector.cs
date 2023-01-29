@@ -1,27 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using io.harness.cfsdk.client.api;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using io.harness.cfsdk.HarnessOpenMetricsAPIService;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Serilog;
-using System.Linq;
 
 namespace io.harness.cfsdk.client.connector
 {
     public class LocalConnector : IConnector
     {
-        private string flagPath;
-        private string segmentPath;
-        private string metricPath;
-        private string source;
+        private readonly string flagPath;
+        private readonly string segmentPath;
+        private readonly string metricPath;
+        private readonly string source;
         private readonly ILogger logger;
 
-        public LocalConnector(string source, ILogger logger = null)
+        public LocalConnector(string source, ILogger<LocalConnector> logger = null)
         {
             this.source = source;
-            this.logger = logger ?? Log.Logger;
+            this.logger = logger ?? Config.DefaultLogger;
 
             this.flagPath = Path.Combine(source, "flags");
             this.segmentPath = Path.Combine(source, "segments");
@@ -64,7 +64,7 @@ namespace io.harness.cfsdk.client.connector
             }
             catch (Exception ex)
             {
-                logger.Error(ex, "Error accessing feature files.");
+                logger.LogError(ex, "Error accessing feature files.");
             }
             return features;
         }
@@ -87,7 +87,7 @@ namespace io.harness.cfsdk.client.connector
             }
             catch (Exception ex)
             {
-                logger.Error(ex, "Error accessing segment files.");
+                logger.LogError(ex, "Error accessing segment files.");
             }
             return segments;
         }
@@ -104,19 +104,19 @@ namespace io.harness.cfsdk.client.connector
 
         public IService Stream(IUpdateCallback updater)
         {
-            return new FileWatcherService(this.flagPath, this.segmentPath, updater);
+            return new FileWatcherService(this.flagPath, this.segmentPath, updater, logger);
         }
 
 
-        private class FileWatcherService : IService, IDisposable
+        private sealed class FileWatcherService : IService, IDisposable
         {
             private FileWatcher flagWatcher;
             private FileWatcher segmentWatcher;
             private IUpdateCallback callback;
-            public FileWatcherService(string flagPath, string segmentPath, IUpdateCallback callback)
+            public FileWatcherService(string flagPath, string segmentPath, IUpdateCallback callback, ILogger logger = null)
             {
-                this.flagWatcher = new FileWatcher("flag", flagPath, callback);
-                this.segmentWatcher = new FileWatcher("target-segment", segmentPath, callback);
+                this.flagWatcher = new FileWatcher("flag", flagPath, callback, logger);
+                this.segmentWatcher = new FileWatcher("target-segment", segmentPath, callback, logger);
                 this.callback = callback;
             }
             public void Close()

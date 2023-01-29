@@ -3,6 +3,7 @@
 Covers advanced topics (different config options and scenarios)
 
 ## Configuration Options
+
 The following configuration options are available to control the behaviour of the SDK.
 You can provide options by passing them in when the client is created e.g.
 
@@ -13,6 +14,7 @@ CfClient.Instance.Initialize(apiKey, Config.Builder()
     .SetPollingInterval(60)
     .SetStreamEnabled(true)
     .SetAnalyticsEnabled(true)
+    .SetLoggerFactory(loggerFactory)
     .Build());
 ```
 
@@ -23,23 +25,16 @@ CfClient.Instance.Initialize(apiKey, Config.Builder()
 | pollInterval    | SetPollingInterval(60)                            | when running in stream mode, the interval in seconds that we poll for changes.                                                                   | 60                                   |
 | enableStream    | SetStreamEnabled(true)                            | Enable streaming mode.                                                                                                                           | true                                 |
 | enableAnalytics | SetAnalyticsEnabled(true)                         | Enable analytics.  Metrics data is posted every 60s                                                                                              | true                                 |
+| loggerFactory   | SetLoggerFactory(loggerFactory)                   | Enable logging via the app's `ILoggerFactory`. See [Logging](#logging) section for more information.                                             | null (no logs)                       |
 
-## Logging Configuration
-You can configure the logger using Serilog.
-Add Serilog to your project with the following commands
+## Logging
 
-```shell
-dotnet add package Serilog
-```
+The Feature Flag Client can be configured to write logs using your app's `ILoggerFactory`,
+leveraging the standard `Microsoft.Extensions.Logging` abstractions which are supported
+my most logging providers such as Serilog or ASP.Net.
 
-You can then configure the logger to write to the console with debug using the following
-```c#
-// Logger
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Debug()
-    .WriteTo.Console()
-    .CreateLogger();
-```
+See the [getting_started](../examples/getting_started/Program.cs) project for an
+example of using Serilog in a console app.
 
 ## Recommended reading
 
@@ -69,10 +64,10 @@ Log.Logger = new LoggerConfiguration()
 
 * `public JObject jsonVariation(string key, dto.Target target, JObject defaultValue)`
 
-
 ## Waiting for Initialization
 
 The user can call InitializeAndWait to block and wait for the SDK
+
 ```c#
 // Creates instance of a client
 var client = new CfClient(API_KEY, Config.Builder().Build());
@@ -85,6 +80,7 @@ await client.InitializeAndWait();
 
 This feature allows you to create or use other connectors.
 Connector is just a proxy to your data. Currently supported connectors:
+
 * Harness (Used by default)
 * Local (used only in development)
 

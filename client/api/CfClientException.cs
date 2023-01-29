@@ -1,12 +1,13 @@
-﻿using System;
-
-namespace io.harness.cfsdk.client.api
+﻿namespace io.harness.cfsdk.client.api
 {
-    public class CfClientException : Exception
+    [System.Serializable]
+    public class CfClientException : System.Exception
     {
-        public CfClientException(string  errorMessage) : base(errorMessage)
-        {
-          
-        }
+        public CfClientException() { }
+        public CfClientException(string message) : base(message) { }
+        public CfClientException(string message, System.Exception inner) : base(message, inner) { }
+        protected CfClientException(
+            System.Runtime.Serialization.SerializationInfo info,
+            System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 }

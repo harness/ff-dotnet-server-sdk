@@ -1,13 +1,13 @@
-﻿using Disruptor;
+﻿using System;
+using System.Threading.Tasks;
+using System.Timers;
+using Disruptor;
 using Disruptor.Dsl;
 using io.harness.cfsdk.client.cache;
 using io.harness.cfsdk.client.connector;
 using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.HarnessOpenAPIService;
-using Serilog;
-using System;
-using System.Threading.Tasks;
-using System.Timers;
+using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.api.analytics
 {
@@ -21,29 +21,30 @@ namespace io.harness.cfsdk.client.api.analytics
         void Stop();
         void PushToQueue(dto.Target target, FeatureConfig featureConfig, Variation variation);
     }
-    internal class MetricsProcessor : IMetricsProcessor
+    internal sealed class MetricsProcessor : IMetricsProcessor
     {
-        private AnalyticsCache analyticsCache;
-        private RingBuffer<Analytics> ringBuffer;
-        private Timer timer;
-        private AnalyticsPublisherService analyticsPublisherService;
-        private IMetricCallback callback;
-        private Config config;
+        private readonly AnalyticsCache analyticsCache;
+        private readonly RingBuffer<Analytics> ringBuffer;
+        private readonly AnalyticsPublisherService analyticsPublisherService;
+        private readonly IMetricCallback callback;
+        private readonly Config config;
         private readonly ILogger logger;
+        private Timer timer;
 
-        public MetricsProcessor(IConnector connector, Config config, IMetricCallback callback, ILogger logger = null)
+        public MetricsProcessor(IConnector connector, Config config, IMetricCallback callback = null)
         {
             this.analyticsCache = new AnalyticsCache();
             this.callback = callback;
-            this.config = config;
-            this.analyticsPublisherService = new AnalyticsPublisherService(connector, analyticsCache);
-            this.ringBuffer = createRingBuffer(config.getBufferSize(), analyticsPublisherService);
-            this.logger = logger ?? Log.Logger;
+            this.config = config ?? throw new ArgumentNullException(nameof(config));
+            this.logger = config.CreateLogger<MetricsProcessor>();
+
+            this.analyticsPublisherService = new AnalyticsPublisherService(connector, analyticsCache, config);
+            this.ringBuffer = createRingBuffer(config, analyticsPublisherService);
         }
 
         public void Start()
         {
-            if (config.analyticsEnabled)
+            if (config.AnalyticsEnabled)
             {
                 this.timer = new Timer((long)config.Frequency * 1000);
                 this.timer.Elapsed += Timer_Elapsed;
@@ -56,7 +57,7 @@ namespace io.harness.cfsdk.client.api.analytics
 
         public void Stop()
         {
-            if (config.analyticsEnabled && this.timer != null)
+            if (config.AnalyticsEnabled && this.timer != null)
             {
                 this.timer.Stop();
                 this.timer = null;
@@ -69,7 +70,7 @@ namespace io.harness.cfsdk.client.api.analytics
             long sequence = -1;
             if (!ringBuffer.TryNext(out sequence)) // Grab the next sequence if we can
             {
-                logger.Warning("Insufficient capacity in the analytics ringBuffer");
+                logger.LogWarning("Insufficient capacity in the analytics ringBuffer");
             }
             else
             {
@@ -83,18 +84,18 @@ namespace io.harness.cfsdk.client.api.analytics
                 ringBuffer.Publish(sequence);
             }
         }
-        private RingBuffer<Analytics> createRingBuffer(int bufferSize, AnalyticsPublisherService analyticsPublisherService)
+        private RingBuffer<Analytics> createRingBuffer(Config config, AnalyticsPublisherService analyticsPublisherService)
         {
             // The factory for the event
             //AnalyticsEventFactory factory = new AnalyticsEventFactory();
 
             // Construct the Disruptor
             Disruptor<Analytics> disruptor =
-                new Disruptor<Analytics>(() => new Analytics(), bufferSize, TaskScheduler.Default);
+                new Disruptor<Analytics>(() => new Analytics(), config.BufferSize, TaskScheduler.Default);
 
             // Connect the handler
             disruptor.HandleEventsWith(
-                new AnalyticsEventHandler(analyticsCache, analyticsPublisherService));
+                new AnalyticsEventHandler(analyticsCache, analyticsPublisherService, config.CreateLogger<AnalyticsEventHandler>()));
 
             // Start the Disruptor, starts all threads running
             disruptor.Start();
@@ -107,11 +108,11 @@ namespace io.harness.cfsdk.client.api.analytics
             long sequence = -1;
             if (!ringBuffer.TryNext(out sequence)) // Grab the next sequence if we can
             {
-                logger.Warning("Insufficient capacity in the analytics ringBuffer");
+                logger.LogWarning("Insufficient capacity in the analytics ringBuffer");
             }
             else
             {
-                logger.Information("Publishing timerInfo to ringBuffer");
+                logger.LogInformation("Publishing timerInfo to ringBuffer");
                 ringBuffer[sequence].EventType = EventType.TIMER; // Get the entry in the Disruptor for the sequence
             }
 

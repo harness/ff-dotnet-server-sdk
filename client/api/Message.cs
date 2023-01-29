@@ -1,4 +1,3 @@
-﻿using System;
 namespace io.harness.cfsdk.client.api
 {
     public class Message

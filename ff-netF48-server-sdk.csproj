@@ -5,11 +5,11 @@
     <PackageId>ff-dotnet-server-sdk</PackageId>
     <RootNamespace>io.harness.cfsdk</RootNamespace>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <Version>1.1.6</Version>
+    <Version>1.2.0</Version>
     <PackOnBuild>true</PackOnBuild>
-    <PackageVersion>1.1.6</PackageVersion>
+    <PackageVersion>1.2.0</PackageVersion>
     <Authors>support@harness.io</Authors>
-    <Copyright>Copyright © 2022 </Copyright>
+    <Copyright>Copyright © 2023 </Copyright>
     <PackageIconUrl>https://harness.io/icon-ff.svg</PackageIconUrl>
     <PackageLicenseUrl>https://github.com/drone/ff-dotnet-server-sdk/blob/main/LICENSE</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
@@ -32,6 +32,7 @@
   <ItemGroup>
     <PackageReference Include="Disruptor" Version="4.0.0" />
     <PackageReference Include="JUnitTestLogger" Version="1.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.3" />
     <PackageReference Include="murmurhash" Version="1.0.3" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Serilog" Version="2.10.0" />

@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.client.api;
-using System.Threading;
+using Microsoft.Extensions.Logging;
 using Serilog;
 
 namespace getting_started
@@ -14,17 +15,32 @@ namespace getting_started
 
         static void Main(string[] args)
         {
-            // Create a feature flag client
-            CfClient.Instance.Initialize(apiKey, Config.Builder().Build());
+            // Configure Serilog...
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.Console()
+                .CreateLogger();
+
+            // Get the ILoggerFactory. Real world apps will typically get this from
+            // their Service Container...
+            using var loggerFactory = LoggerFactory.Create(b => b.AddSerilog(dispose: true));
+
+            // Initialize the feature flag client
+            var config = Config
+                .Builder()
+                .SetLoggerFactory(loggerFactory)
+                .Build();
+
+            CfClient.Instance.Initialize(apiKey, config);
 
             // Create a target (different targets can get different results based on rules)
             Target target = Target.builder()
                             .Name("Harness_Target_1")
                             .Identifier("HT_1")
-                            .Attributes(new Dictionary<string, string>(){{"email", "demo@harness.io"}})
+                            .Attributes(new Dictionary<string, string>() { { "email", "demo@harness.io" } })
                             .build();
 
-           // Loop forever reporting the state of the flag
+            // Loop forever reporting the state of the flag
             while (true)
             {
                 bool resultBool = CfClient.Instance.boolVariation(flagName, target, false);

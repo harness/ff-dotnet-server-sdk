@@ -10,25 +10,25 @@ namespace ff_server_sdk_test
     public class LenientContractResolver : DefaultContractResolver
     {
         protected override JsonProperty CreateProperty(System.Reflection.MemberInfo member, MemberSerialization memberSerialization)
-       {
-           var property = base.CreateProperty(member, memberSerialization);
-           property.Required = Required.Default;
-           return property;
-       }
+        {
+            var property = base.CreateProperty(member, memberSerialization);
+            property.Required = Required.Default;
+            return property;
+        }
 
-       protected override JsonObjectContract CreateObjectContract(Type objectType)
-       {
-           var contract = base.CreateObjectContract(objectType);
-           contract.ItemRequired = Required.Default;
-           return contract;
-       }
+        protected override JsonObjectContract CreateObjectContract(Type objectType)
+        {
+            var contract = base.CreateObjectContract(objectType);
+            contract.ItemRequired = Required.Default;
+            return contract;
+        }
 
-       protected override JsonProperty CreatePropertyFromConstructorParameter(JsonProperty matchingMemberProperty, ParameterInfo parameterInfo)
-       {
-           var property = base.CreatePropertyFromConstructorParameter(matchingMemberProperty, parameterInfo);
-           property.Required = Required.Default;
-           return property;
-       }
+        protected override JsonProperty CreatePropertyFromConstructorParameter(JsonProperty matchingMemberProperty, ParameterInfo parameterInfo)
+        {
+            var property = base.CreatePropertyFromConstructorParameter(matchingMemberProperty, parameterInfo);
+            property.Required = Required.Default;
+            return property;
+        }
     }
 
     public class TestModel

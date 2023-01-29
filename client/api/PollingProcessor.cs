@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using io.harness.cfsdk.client.connector;
 using io.harness.cfsdk.HarnessOpenAPIService;
-using Serilog;
+using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.api
 {
@@ -41,25 +41,25 @@ namespace io.harness.cfsdk.client.api
     /// PollingProcessor will be always started after library is initialized, and continue to
     /// read periodically date in case if SSE is turned off, or unavailable.  
     /// </summary>
-    internal class PollingProcessor : IPollingProcessor
+    internal sealed class PollingProcessor : IPollingProcessor
     {
-        private IConnector connector;
-        private IRepository repository;
-        private IPollCallback callback;
-        private Timer pollTimer;
-        private Config config;
-        private bool isInitialized = false;
-        private System.Threading.AutoResetEvent readyEvent;
+        private readonly IConnector connector;
+        private readonly IRepository repository;
+        private readonly IPollCallback callback;
+        private readonly Config config;
+        private readonly System.Threading.AutoResetEvent readyEvent;
         private readonly ILogger logger;
+        private Timer pollTimer;
+        private bool isInitialized = false;
 
-        public PollingProcessor(IConnector connector, IRepository repository, Config config, IPollCallback callback, ILogger logger = null)
+        public PollingProcessor(IConnector connector, IRepository repository, Config config, IPollCallback callback = null)
         {
             this.callback = callback;
-            this.repository = repository;
-            this.connector = connector;
-            this.config = config;
+            this.repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            this.connector = connector ?? throw new ArgumentNullException(nameof(connector));
+            this.config = config ?? throw new ArgumentNullException(nameof(config));
             this.readyEvent = new System.Threading.AutoResetEvent(false);
-            this.logger = logger ?? Log.Logger;
+            this.logger = config.CreateLogger<PollingProcessor>();
         }
         public async Task<bool> ReadyAsync()
         {
@@ -72,13 +72,13 @@ namespace io.harness.cfsdk.client.api
 
         public void Start()
         {
-            logger.Information("Starting PollingProcessor with request interval: {PollIntervalInSeconds}", this.config.pollIntervalInSeconds);
+            logger.LogInformation("Starting PollingProcessor with request interval: {PollIntervalInSeconds}", this.config.PollIntervalInSeconds);
             // start timer which will initiate periodic reading of flags and segments
             pollTimer = new Timer(new TimerCallback(OnTimedEventAsync), null, 0, this.config.PollIntervalInMiliSeconds);
         }
         public void Stop()
         {
-            logger.Information("Stopping PollingProcessor");
+            logger.LogInformation("Stopping PollingProcessor");
             // stop timer
             if (pollTimer != null)
             {
@@ -91,9 +91,9 @@ namespace io.harness.cfsdk.client.api
         {
             try
             {
-                logger.Debug("Fetching flags started");
+                logger.LogDebug("Fetching flags started");
                 IEnumerable<FeatureConfig> flags = this.connector.GetFlags();
-                logger.Debug("Fetching flags finished");
+                logger.LogDebug("Fetching flags finished");
                 foreach (FeatureConfig item in flags)
                 {
                     repository.SetFlag(item.Feature, item);
@@ -102,7 +102,7 @@ namespace io.harness.cfsdk.client.api
             }
             catch (CfClientException ex)
             {
-                logger.Error(ex, "Exception was raised when fetching flags data with the message {Error}", ex.Message);
+                logger.LogError(ex, "Exception was raised when fetching flags data with the message {Error}", ex.Message);
                 throw ex;
             }
         }
@@ -110,9 +110,9 @@ namespace io.harness.cfsdk.client.api
         {
             try
             {
-                logger.Debug("Fetching segments started");
+                logger.LogDebug("Fetching segments started");
                 IEnumerable<Segment> segments = this.connector.GetSegments();
-                logger.Debug("Fetching segments finished");
+                logger.LogDebug("Fetching segments finished");
                 foreach (Segment item in segments)
                 {
                     repository.SetSegment(item.Identifier, item);
@@ -120,7 +120,7 @@ namespace io.harness.cfsdk.client.api
             }
             catch (CfClientException ex)
             {
-                logger.Error(ex, "Exception was raised when fetching segments data with the message {Message}", ex.Message);
+                logger.LogError(ex, "Exception was raised when fetching segments data with the message {Message}", ex.Message);
                 throw ex;
             }
         }
@@ -128,7 +128,7 @@ namespace io.harness.cfsdk.client.api
         {
             try
             {
-                logger.Debug("Running polling iteration");
+                logger.LogDebug("Running polling iteration");
                 var tasks = new List<Task>();
                 tasks.Add(Task.Run(() => ProcessFlags()));
                 tasks.Add(Task.Run(() => ProcessSegments()));
@@ -138,14 +138,14 @@ namespace io.harness.cfsdk.client.api
                 if (!isInitialized)
                 {
                     this.isInitialized = true;
-                    this.callback.OnPollerReady();
+                    this.callback?.OnPollerReady();
                     this.readyEvent.Set();
                 }
             }
             catch (Exception ex)
             {
-                logger.Information("Polling will retry in {PollIntervalInSeconds}", this.config.pollIntervalInSeconds);
-                this.callback.OnPollError(ex.Message);
+                logger.LogInformation("Polling will retry in {PollIntervalInSeconds}", this.config.PollIntervalInSeconds);
+                this.callback?.OnPollError(ex.Message);
             }
         }
     }

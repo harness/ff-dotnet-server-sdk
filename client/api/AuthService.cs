@@ -1,8 +1,7 @@
-﻿using io.harness.cfsdk.client.connector;
-using io.harness.cfsdk.HarnessOpenAPIService;
-using Serilog;
+﻿using System;
 using System.Threading;
-using System.Threading.Tasks;
+using io.harness.cfsdk.client.connector;
+using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.api
 {
@@ -19,20 +18,20 @@ namespace io.harness.cfsdk.client.api
     /// <summary>
     /// The class is in charge of initiating authentication requests and retry until successful authentication.
     /// </summary>
-    internal class AuthService : IAuthService
+    internal sealed class AuthService : IAuthService
     {
-        private IConnector connector;
-        private Config config;
-        private Timer authTimer;
-        private IAuthCallback callback;
+        private readonly IConnector connector;
+        private readonly Config config;
+        private readonly IAuthCallback callback;
         private readonly ILogger logger;
+        private Timer authTimer;
 
-        public AuthService(IConnector connector, Config config, IAuthCallback callback, ILogger logger = null)
+        public AuthService(IConnector connector, Config config, IAuthCallback callback = null)
         {
-            this.connector = connector;
-            this.config = config;
+            this.connector = connector ?? throw new ArgumentNullException(nameof(connector));
+            this.config = config ?? throw new ArgumentNullException(nameof(config));
             this.callback = callback;
-            this.logger = logger ?? Log.Logger;
+            this.logger = config.CreateLogger<AuthService>();
         }
         public void Start()
         {
@@ -52,14 +51,14 @@ namespace io.harness.cfsdk.client.api
             try
             {
                 connector.Authenticate();
-                callback.OnAuthenticationSuccess();
+                callback?.OnAuthenticationSuccess();
                 Stop();
-                logger.Information("Stopping authentication service");
+                logger.LogInformation("Stopping authentication service");
             }
             catch
             {
                 // Exception thrown on Authentication. Timer will retry authentication.
-                logger.Error("Exception while authenticating, retry in {PollIntervalInSeconds}", this.config.pollIntervalInSeconds);
+                logger.LogError("Exception while authenticating, retry in {PollIntervalInSeconds}", this.config.PollIntervalInSeconds);
             }
         }
     }

@@ -1,47 +1,45 @@
-﻿using io.harness.cfsdk.client.cache;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using io.harness.cfsdk.client.cache;
 using io.harness.cfsdk.client.connector;
 using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using io.harness.cfsdk.HarnessOpenMetricsAPIService;
-using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.api.analytics
 {
-    internal class AnalyticsPublisherService
+    internal sealed class AnalyticsPublisherService
     {
-        private static string FEATURE_NAME_ATTRIBUTE = "featureName";
-        private static string VARIATION_VALUE_ATTRIBUTE = "featureValue";
-        private static string VARIATION_IDENTIFIER_ATTRIBUTE = "variationIdentifier";
-        private static string TARGET_ATTRIBUTE = "target";
-        private static HashSet<dto.Target> globalTargetSet = new HashSet<dto.Target>();
-        private static HashSet<dto.Target> stagingTargetSet = new HashSet<dto.Target>();
-        private static string SDK_TYPE = "SDK_TYPE";
-        private static string ANONYMOUS_TARGET = "anonymous";
-        private static string SERVER = "server";
-        private static string SDK_LANGUAGE = "SDK_LANGUAGE";
-        private static string SDK_VERSION = "SDK_VERSION";
+        private static readonly string FEATURE_NAME_ATTRIBUTE = "featureName";
+        private static readonly string VARIATION_VALUE_ATTRIBUTE = "featureValue";
+        private static readonly string VARIATION_IDENTIFIER_ATTRIBUTE = "variationIdentifier";
+        private static readonly string TARGET_ATTRIBUTE = "target";
+        private static readonly HashSet<dto.Target> globalTargetSet = new HashSet<dto.Target>();
+        private static readonly HashSet<dto.Target> stagingTargetSet = new HashSet<dto.Target>();
+        private static readonly string SDK_TYPE = "SDK_TYPE";
+        private static readonly string ANONYMOUS_TARGET = "anonymous";
+        private static readonly string SERVER = "server";
+        private static readonly string SDK_LANGUAGE = "SDK_LANGUAGE";
+        private static readonly string SDK_VERSION = "SDK_VERSION";
+        private static readonly Version sdkVersion = typeof(AnalyticsPublisherService).Assembly.GetName().Version;
 
-
-        private Version sdkVersion = typeof(AnalyticsPublisherService).Assembly.GetName().Version;
-
-        private AnalyticsCache analyticsCache;
-        private IConnector connector;
+        private readonly AnalyticsCache analyticsCache;
+        private readonly IConnector connector;
         private readonly ILogger logger;
 
-        public AnalyticsPublisherService(IConnector connector, AnalyticsCache analyticsCache, ILogger logger = null)
+        public AnalyticsPublisherService(IConnector connector, AnalyticsCache analyticsCache, Config config)
         {
-            this.analyticsCache = analyticsCache;
-            this.connector = connector;
-            this.logger = logger ?? Log.Logger;
+            _ = config ?? throw new ArgumentNullException(nameof(config));
+            this.analyticsCache = analyticsCache ?? throw new ArgumentNullException(nameof(analyticsCache));
+            this.connector = connector ?? throw new ArgumentNullException(nameof(connector));
+            this.logger = config.CreateLogger<AnalyticsPublisherService>();
         }
 
         public void sendDataAndResetCache()
         {
-            logger.Information("Reading from queue and building cache, SDL version: {SdkVersion}", sdkVersion);
+            logger.LogInformation("Reading from queue and building cache, SDL version: {SdkVersion}", sdkVersion);
 
             IDictionary<Analytics, int> all = analyticsCache.GetAllElements();
 
@@ -53,20 +51,20 @@ namespace io.harness.cfsdk.client.api.analytics
                     if ((metrics.MetricsData != null && metrics.MetricsData.Count > 0)
                         || (metrics.TargetData != null && metrics.TargetData.Count > 0))
                     {
-                        logger.Debug("Sending analytics data: {@Metrics}", metrics);
+                        logger.LogDebug("Sending analytics data: {@Metrics}", metrics);
                         connector.PostMetrics(metrics);
                     }
 
                     stagingTargetSet.ToList().ForEach(element => globalTargetSet.Add(element));
                     stagingTargetSet.Clear();
-                    logger.Information("Successfully sent analytics data to the server");
+                    logger.LogInformation("Successfully sent analytics data to the server");
                     analyticsCache.resetCache();
                 }
                 catch (CfClientException ex)
                 {
                     // Clear the set because the cache is only invalidated when there is no
                     // exception, so the targets will reappear in the next iteration
-                    logger.Error(ex, "Failed to send metricsData: {Error}", ex.Message);
+                    logger.LogError(ex, "Failed to send metricsData: {Error}", ex.Message);
                 }
             }
         }

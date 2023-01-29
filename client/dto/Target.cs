@@ -1,17 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace io.harness.cfsdk.client.dto
 {
     public class Target
     {
-        private string identifier;
-        private string name;
-        private Dictionary<string, string> attributes = new Dictionary<string, string>();
-        private bool isPrivate; // If the target is private
-        private HashSet<string> privateAttributes = new HashSet<string>(); // Custom set to set the attributes which are private
-
         public static TargetBuilder builder()
         {
             return new TargetBuilder();
@@ -19,40 +12,33 @@ namespace io.harness.cfsdk.client.dto
 
         public Target()
         {
-            attributes = new Dictionary<string, string>();
+            Attributes = new Dictionary<string, string>();
+            PrivateAttributes = new HashSet<string>();
         }
 
         public Target(string identifier, string name, Dictionary<string, string> attributes, bool isPrivate, HashSet<string> privateAttributes)
         {
-            if (attributes == null)
-            {
-                Attributes = new Dictionary<string, string>();
-            }
-            else
-            {
-                Attributes = attributes;
-            }
-
+            Attributes = attributes ?? new Dictionary<string, string>();
             Identifier = identifier;
             Name = name;
             IsPrivate = isPrivate;
-            PrivateAttributes = privateAttributes;
+            PrivateAttributes = privateAttributes ?? new HashSet<string>();
         }
 
-        public string Name { get => name; set => name = value; }
-        public string Identifier { get => identifier; set => identifier = value; }
-        public Dictionary<string, string> Attributes { get => attributes; set => attributes = value; }
-        public bool IsPrivate { get => isPrivate; set => isPrivate = value; }
-        public HashSet<string> PrivateAttributes { get => privateAttributes; set => privateAttributes = value; }
+        public string Name { get; set; }
+        public string Identifier { get; set; }
+        public Dictionary<string, string> Attributes { get; set; }
+        public bool IsPrivate { get; set; }
+        public HashSet<string> PrivateAttributes { get; set; }
 
         public override string ToString()
         {
-            return "TargetId: " + identifier;
+            return "TargetId: " + Identifier;
         }
 
         public bool isValid()
         {
-            return !string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(identifier);
+            return !string.IsNullOrEmpty(Name) && !string.IsNullOrEmpty(Identifier);
         }
     }
 

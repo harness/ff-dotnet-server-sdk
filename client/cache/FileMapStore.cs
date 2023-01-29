@@ -1,23 +1,23 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.IO;
 using System.Collections.Generic;
 using io.harness.cfsdk.client.cache;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using Serilog;
 
 namespace io.harness.cfsdk.client.api
 {
     public class FileMapStore : IStore
     {
-        private string storeName;
+        private readonly string storeName;
         private readonly ILogger logger;
 
-        public FileMapStore(string name, ILogger logger = null)
+        public FileMapStore(string name, ILogger<FileMapStore> logger = null)
         {
-            storeName = name;
-            this.logger = logger ?? Log.Logger;
+            this.storeName = name;
+            this.logger = logger ?? Config.DefaultLogger;
             Directory.CreateDirectory(name);
             Array.ForEach(Directory.EnumerateFiles(name).ToArray(), f => File.Delete(f));
         }
@@ -46,7 +46,7 @@ namespace io.harness.cfsdk.client.api
             }
             catch (Exception ex)
             {
-                logger.Error(ex, "Failure to deserialize data from file storage");
+                logger.LogError(ex, "Failure to deserialize data from file storage");
                 return null;
             }
         }

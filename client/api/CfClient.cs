@@ -1,9 +1,7 @@
-﻿using io.harness.cfsdk.client.connector;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System;
 using System.Threading.Tasks;
+using io.harness.cfsdk.client.connector;
+using Newtonsoft.Json.Linq;
 
 namespace io.harness.cfsdk.client.api
 {
@@ -33,14 +31,14 @@ namespace io.harness.cfsdk.client.api
     {
         // Singleton implementation
         private static readonly Lazy<CfClient> lazy = new Lazy<CfClient>(() => new CfClient());
-        public static ICfClient Instance { get { return lazy.Value; } }
+        public static ICfClient Instance => lazy.Value;
 
         private readonly InnerClient client = null;
 
         public event EventHandler InitializationCompleted
         {
             add { client.InitializationCompleted += value; }
-            remove { client.InitializationCompleted -= value;    }
+            remove { client.InitializationCompleted -= value; }
         }
         public event EventHandler<string> EvaluationChanged
         {
@@ -49,7 +47,7 @@ namespace io.harness.cfsdk.client.api
         }
 
         // alternative client creation
-        public CfClient(string apiKey) : this(apiKey, Config.Builder().Build()) {}
+        public CfClient(string apiKey) : this(apiKey, Config.Builder().Build()) { }
         public CfClient(IConnector connector) : this(connector, Config.Builder().Build()) { }
         public CfClient()
         {
@@ -75,7 +73,7 @@ namespace io.harness.cfsdk.client.api
         }
         public async Task Initialize(IConnector connector)
         {
-           await Initialize(connector, Config.Builder().Build());
+            await Initialize(connector, Config.Builder().Build());
         }
         public async Task Initialize(string apiKey, Config config)
         {
@@ -89,15 +87,15 @@ namespace io.harness.cfsdk.client.api
         }
 
         // read values
-        public bool boolVariation(string key, dto.Target target, bool defaultValue) { return client.BoolVariation(key, target, defaultValue);  }
+        public bool boolVariation(string key, dto.Target target, bool defaultValue) { return client.BoolVariation(key, target, defaultValue); }
         public string stringVariation(string key, dto.Target target, string defaultValue) { return client.StringVariation(key, target, defaultValue); }
         public double numberVariation(string key, dto.Target target, double defaultValue) { return client.NumberVariation(key, target, defaultValue); }
-        public JObject jsonVariation(string key, dto.Target target, JObject defaultValue) {  return client.JsonVariation(key, target, defaultValue); }
+        public JObject jsonVariation(string key, dto.Target target, JObject defaultValue) { return client.JsonVariation(key, target, defaultValue); }
 
         // force message
-        public void Update(Message msg) { client.Update(msg, true);  }
+        public void Update(Message msg) { client.Update(msg, true); }
 
-        public void Close() { client.Close();  }
+        public void Close() { client.Close(); }
 
     }
 }

@@ -1,25 +1,15 @@
-﻿using io.harness.cfsdk.client.api.analytics;
-using io.harness.cfsdk.client.cache;
-using io.harness.cfsdk.client.connector;
-using io.harness.cfsdk.client.polling;
-using io.harness.cfsdk.HarnessOpenAPIService;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
-using Serilog;
-using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.IO;
+﻿using System;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Concurrent;
+using io.harness.cfsdk.client.api.analytics;
+using io.harness.cfsdk.client.connector;
+using io.harness.cfsdk.HarnessOpenAPIService;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 
 namespace io.harness.cfsdk.client.api
 {
-    internal class InnerClient :
+    internal sealed class InnerClient :
         IAuthCallback,
         IRepositoryCallback,
         IPollCallback,
@@ -40,22 +30,22 @@ namespace io.harness.cfsdk.client.api
         public event EventHandler InitializationCompleted;
         public event EventHandler<string> EvaluationChanged;
 
-        private CfClient parent;
-        private readonly ILogger logger;
+        private readonly CfClient parent;
+        private ILogger logger;
 
-        public InnerClient(CfClient parent, ILogger logger = null)
+        public InnerClient(CfClient parent)
         {
             this.parent = parent;
-            this.logger = logger ?? Log.Logger;
+            this.logger = Config.DefaultLogger;
         }
-        public InnerClient(string apiKey, Config config, CfClient parent, ILogger logger = null)
-            : this(parent, logger)
+        public InnerClient(string apiKey, Config config, CfClient parent)
+            : this(parent)
         {
             Initialize(apiKey, config);
         }
 
-        public InnerClient(IConnector connector, Config config, CfClient parent, ILogger logger = null)
-            : this(parent, logger)
+        public InnerClient(IConnector connector, Config config, CfClient parent)
+            : this(parent)
         {
             Initialize(connector, config);
         }
@@ -67,17 +57,19 @@ namespace io.harness.cfsdk.client.api
 
         public void Initialize(IConnector connector, Config config)
         {
-            this.connector = connector;
+            this.connector = connector ?? throw new ArgumentNullException(nameof(connector));
+            _ = config ?? throw new ArgumentNullException(nameof(config));
+            this.logger = config.CreateLogger<InnerClient>();
             this.authService = new AuthService(connector, config, this);
-            this.repository = new StorageRepository(config.Cache, config.Store, this);
+            this.repository = new StorageRepository(config.Cache, config.Store, this, config.CreateLogger<StorageRepository>());
             this.polling = new PollingProcessor(connector, this.repository, config, this);
             this.update = new UpdateProcessor(connector, this.repository, config, this);
-            this.evaluator = new Evaluator(this.repository, this);
+            this.evaluator = new Evaluator(this.repository, this, config.CreateLogger<Evaluator>());
             this.metric = new MetricsProcessor(connector, config, this);
         }
         public void Start()
         {
-            logger.Information("Initialize authentication");
+            logger.LogInformation("Initialize authentication");
             // Start Authentication flow
             this.authService.Start();
         }

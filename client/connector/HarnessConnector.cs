@@ -8,8 +8,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using io.harness.cfsdk.client.api;
 using io.harness.cfsdk.HarnessOpenAPIService;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using Serilog;
 
 namespace io.harness.cfsdk.client.connector
 {
@@ -18,7 +18,7 @@ namespace io.harness.cfsdk.client.connector
         void OnReauthenticateRequested();
     }
 
-    internal class HarnessConnector : IConnector
+    internal sealed class HarnessConnector : IConnector
     {
         private String token;
         private String environment;
@@ -28,19 +28,20 @@ namespace io.harness.cfsdk.client.connector
         public HttpClient metricHttpClient { get; set; }
         public HttpClient sseHttpClient { get; set; }
 
-        private string apiKey;
-        private Config config;
-        private IConnectionCallback callback;
+        private readonly string apiKey;
+        private readonly Config config;
+        private readonly IConnectionCallback callback;
         private readonly ILogger logger;
 
         private IService currentStream;
-        private CancellationTokenSource cancelToken = new CancellationTokenSource();
-        public HarnessConnector(String apiKey, Config config, IConnectionCallback callback, ILogger logger = null)
+        private readonly CancellationTokenSource cancelToken = new CancellationTokenSource();
+
+        public HarnessConnector(String apiKey, Config config, IConnectionCallback callback = null)
         {
-            this.config = config;
+            this.config = config ?? throw new ArgumentNullException(nameof(config));
             this.apiKey = apiKey;
             this.callback = callback;
-            this.logger = logger ?? Log.Logger;
+            this.logger = config.CreateLogger<HarnessConnector>();
 
             this.apiHttpClient = new HttpClient();
             this.apiHttpClient.BaseAddress = new Uri(config.ConfigUrl);
@@ -167,7 +168,7 @@ namespace io.harness.cfsdk.client.connector
                 DateTime endTime = DateTime.Now;
                 if ((endTime - startTime).TotalMilliseconds > config.MetricsServiceAcceptableDuration)
                 {
-                    logger.Warning("Metrics service API duration=[{Duration}]", endTime - startTime);
+                    logger.LogWarning("Metrics service API duration=[{Duration}]", endTime - startTime);
                 }
             }
             catch (AggregateException ex)
@@ -214,14 +215,14 @@ namespace io.harness.cfsdk.client.connector
             {
                 foreach (var e in ex.InnerExceptions)
                 {
-                    logger.Error(e, "Failed to get auth token {Error}", e.Message);
+                    logger.LogError(e, "Failed to get auth token {Error}", e.Message);
                     if (e is ApiException apiEx)
                     {
 
                         if (apiEx.StatusCode == (int)HttpStatusCode.Unauthorized || apiEx.StatusCode == (int)HttpStatusCode.Forbidden)
                         {
                             string errorMsg = $"Invalid apiKey {apiKey}. Serving default value.";
-                            logger.Error(errorMsg);
+                            logger.LogError(errorMsg);
                             throw new CfClientException(errorMsg);
                         }
                         throw new CfClientException(apiEx.Message);
@@ -237,8 +238,8 @@ namespace io.harness.cfsdk.client.connector
             {
                 if (e is ApiException apiEx && apiEx.StatusCode == (int)HttpStatusCode.Forbidden)
                 {
-                    logger.Error("Initiate reauthentication");
-                    callback.OnReauthenticateRequested();
+                    logger.LogError("Initiate reauthentication");
+                    callback?.OnReauthenticateRequested();
                     return;
                 }
             }

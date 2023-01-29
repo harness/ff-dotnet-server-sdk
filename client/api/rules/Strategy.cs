@@ -1,18 +1,17 @@
 ﻿
-using Murmur;
 using System;
-using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
+using Murmur;
 
 namespace io.harness.cfsdk.client.api.rules
 {
-    public class Strategy
+    internal sealed class Strategy
     {
-        public static int ONE_HUNDRED = 100;
+        public static readonly int ONE_HUNDRED = 100;
 
-        private string identifier;
-        private string bucketBy;
+        private readonly string identifier;
+        private readonly string bucketBy;
 
         public Strategy(String identifier, String bucketBy)
         {

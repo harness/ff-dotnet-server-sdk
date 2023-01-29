@@ -1,33 +1,31 @@
-﻿using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System;
 using System.Timers;
+using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.polling
 {
     public class ShortTermPolling : IEvaluationPolling
     {
-        private static int MINIMUM_POLLING_INTERVAL = 10000;
-        private long pollingInterval;
-        private Timer timer;
+        private static readonly int MINIMUM_POLLING_INTERVAL = 10000;
+        private readonly long pollingInterval;
         private readonly ILogger logger;
+        private Timer timer;
 
-        public ShortTermPolling(int time, ILogger logger = null)
+        public ShortTermPolling(int time, ILogger<ShortTermPolling> logger = null)
         {
             pollingInterval = Math.Max(time, MINIMUM_POLLING_INTERVAL);
-            this.logger = logger ?? Log.Logger;
+            this.logger = logger ?? api.Config.DefaultLogger;
         }
 
         public void start(Action<object, ElapsedEventArgs> runnable)
         {
             if (timer != null)
             {
-                logger.Information("POLLING timer - stopping before start");
+                logger.LogInformation("POLLING timer - stopping before start");
                 timer.Stop();
                 timer.Dispose();
             }
-            logger.Information("POLLING timer - scheduling new one");
+            logger.LogInformation("POLLING timer - scheduling new one");
             timer = new Timer(pollingInterval);
             timer.Elapsed += new ElapsedEventHandler(runnable);
             timer.AutoReset = true;
@@ -39,11 +37,11 @@ namespace io.harness.cfsdk.client.polling
         {
             if (timer != null)
             {
-                logger.Information("POLLING timer - stopping on exit");
+                logger.LogInformation("POLLING timer - stopping on exit");
                 timer.Stop();
                 timer.Dispose();
             }
-            logger.Information("POLLING timer - stoped");
+            logger.LogInformation("POLLING timer - stoped");
         }
     }
 }

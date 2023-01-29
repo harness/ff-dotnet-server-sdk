@@ -1,85 +1,78 @@
-﻿using System;
+using System;
 using io.harness.cfsdk.client.cache;
+using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.api
 {
     public class Config
     {
-        public static int MIN_FREQUENCY = 60;
+        public static readonly int MIN_FREQUENCY = 60;
 
-        public string ConfigUrl { get => configUrl; }
-        internal string configUrl = "https://config.ff.harness.io/api/1.0";
-        public string EventUrl { get => eventUrl; }
-        internal string eventUrl = "https://events.ff.harness.io/api/1.0";
-        public bool StreamEnabled { get => streamEnabled; }
-        internal bool streamEnabled = true;
+        public string ConfigUrl { get; internal set; } = "https://config.ff.harness.io/api/1.0";
+        public string EventUrl { get; internal set; } = "https://events.ff.harness.io/api/1.0";
+        public bool StreamEnabled { get; internal set; } = true;
 
-        public int PollIntervalInMiliSeconds { get => pollIntervalInSeconds * 1000; }
-        internal int pollIntervalInSeconds = 60;
+        public int PollIntervalInSeconds { get; internal set; } = 60;
+        public int PollIntervalInMiliSeconds => PollIntervalInSeconds * 1000;
 
         // configurations for Analytics
-        public bool AnalyticsEnabled { get => analyticsEnabled; }
-        internal bool analyticsEnabled = true;
+        public bool AnalyticsEnabled { get; internal set; } = true;
 
         public int Frequency { get => Math.Max(frequency, Config.MIN_FREQUENCY); }
         private int frequency = 60;
 
-        public ICache Cache { get => cache; }
-        internal ICache cache = new FeatureSegmentCache();
+        public ICache Cache { get; internal set; } = new FeatureSegmentCache();
 
-        public IStore Store { get => store;  }
-        internal IStore store = null;
+        public IStore Store { get; internal set; } = null;
 
-        //BufferSize must be a power of 2 for LMAX to work. This function vaidates
-        //that. Source: https://stackoverflow.com/a/600306/1493480
         public int BufferSize
         {
-            get
+            get { return bufferSize; }
+            internal set
             {
-                if (!(bufferSize != 0 && ((bufferSize & (bufferSize - 1)) == 0)))
-                {
+                // BufferSize must be a positive power of 2 for LMAX to work. 
+                // Source: https://stackoverflow.com/a/600306/1493480
+                if (value <= 0 || (value & (value - 1)) != 0)
                     throw new CfClientException("BufferSize must be a power of 2");
-                }
-                return bufferSize;
+                bufferSize = value;
             }
         }
-        private int bufferSize = 1024;
+        private int bufferSize = 1024; // Must be power of 2
 
 
         /** timeout in milliseconds to connect to CF Server */
-        public int ConnectionTimeout { get =>connectionTimeout;}
-        internal int connectionTimeout = 10000;
+        public int ConnectionTimeout { get; internal set; } = 10000;
 
         /** timeout in milliseconds for reading data from CF Server */
-        public int ReadTimeout { get => readTimeout;  }
-        internal int readTimeout { get; set; } = 30000;
+        public int ReadTimeout { get; internal set; } = 30000;
 
         /** timeout in milliseconds for writing data to CF Server */
-        public int WriteTimeout { get => WriteTimeout;  }
-        internal int writeTimeout { get; set; } = 10000;
+        public int WriteTimeout { get; internal set; } = 10000;
 
-        public bool Debug { get => debug;  }
-        internal bool debug { get; set; } = false;
+        public bool Debug { get; internal set; } = false;
 
         /** If metrics service POST call is taking > this time, we need to know about it */
 
-        public long MetricsServiceAcceptableDuration { get => metricsServiceAcceptableDuration;  }
-        internal long metricsServiceAcceptableDuration = 10000;
+        public long MetricsServiceAcceptableDuration { get; internal set; } = 10000;
 
-        public Config(string configUrl, string eventUrl, bool streamEnabled, int pollIntervalInSeconds, bool analyticsEnabled, int frequency, int bufferSize,  int connectionTimeout, int readTimeout, int writeTimeout, bool debug, long metricsServiceAcceptableDuration)
+        public ILoggerFactory LoggerFactory { get; internal set; }
+        internal static ILogger DefaultLogger => Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
+        internal ILogger CreateLogger<T>() => LoggerFactory?.CreateLogger<T>() ?? DefaultLogger;
+
+        public Config(string configUrl, string eventUrl, bool streamEnabled, int pollIntervalInSeconds, bool analyticsEnabled, int frequency, int bufferSize, int connectionTimeout, int readTimeout, int writeTimeout, bool debug, long metricsServiceAcceptableDuration)
         {
-            this.configUrl = configUrl;
-            this.eventUrl = eventUrl;
-            this.streamEnabled = streamEnabled;
-            this.pollIntervalInSeconds = pollIntervalInSeconds;
-            this.analyticsEnabled = analyticsEnabled;
+            this.ConfigUrl = configUrl;
+            this.EventUrl = eventUrl;
+            this.StreamEnabled = streamEnabled;
+            this.PollIntervalInSeconds = pollIntervalInSeconds;
+            this.AnalyticsEnabled = analyticsEnabled;
             this.frequency = frequency;
-            this.bufferSize = bufferSize;
-            this.connectionTimeout = connectionTimeout;
-            this.readTimeout = readTimeout;
-            this.writeTimeout = writeTimeout;
-            this.debug = debug;
-            this.metricsServiceAcceptableDuration = metricsServiceAcceptableDuration;
+            this.BufferSize = bufferSize;
+            this.ConnectionTimeout = connectionTimeout;
+            this.ReadTimeout = readTimeout;
+            this.WriteTimeout = writeTimeout;
+            this.Debug = debug;
+            this.MetricsServiceAcceptableDuration = metricsServiceAcceptableDuration;
         }
 
         public Config()
@@ -90,20 +83,6 @@ namespace io.harness.cfsdk.client.api
         {
             return new ConfigBuilder();
         }
-
-        /*
-  BufferSize must be a power of 2 for LMAX to work. This function vaidates
-  that. Source: https://stackoverflow.com/a/600306/1493480
- */
-        public int getBufferSize()
-        {
-            if (!(bufferSize != 0 && ((bufferSize & (bufferSize - 1)) == 0)))
-            {
-                throw new CfClientException("BufferSize must be a power of 2");
-            }
-            return bufferSize;
-        }
-
     }
 
     public class ConfigBuilder
@@ -122,64 +101,70 @@ namespace io.harness.cfsdk.client.api
 
         public ConfigBuilder SetPollingInterval(int pollIntervalInSeconds)
         {
-            this.configtobuild.pollIntervalInSeconds = pollIntervalInSeconds;
+            this.configtobuild.PollIntervalInSeconds = pollIntervalInSeconds;
             return this;
         }
         public ConfigBuilder SetCache(ICache cache)
         {
-            this.configtobuild.cache = cache;
+            this.configtobuild.Cache = cache;
             return this;
         }
         public ConfigBuilder SetStore(IStore store)
         {
-            this.configtobuild.store = store;
+            this.configtobuild.Store = store;
             return this;
         }
         public ConfigBuilder SetStreamEnabled(bool enabled = true)
         {
-            configtobuild.streamEnabled = enabled;
+            configtobuild.StreamEnabled = enabled;
             return this;
         }
         public ConfigBuilder MetricsServiceAcceptableDuration(long duration = 10000)
         {
-            configtobuild.metricsServiceAcceptableDuration = duration;
+            configtobuild.MetricsServiceAcceptableDuration = duration;
             return this;
         }
         public ConfigBuilder SetAnalyticsEnabled(bool analyticsenabled = true)
         {
-            this.configtobuild.analyticsEnabled = analyticsenabled;
+            this.configtobuild.AnalyticsEnabled = analyticsenabled;
             return this;
         }
         public ConfigBuilder ConfigUrl(string configUrl)
         {
-            this.configtobuild.configUrl = configUrl;
+            this.configtobuild.ConfigUrl = configUrl;
             return this;
         }
         public ConfigBuilder EventUrl(string eventUrl)
         {
-            this.configtobuild.eventUrl = eventUrl;
+            this.configtobuild.EventUrl = eventUrl;
             return this;
         }
         public ConfigBuilder connectionTimeout(int connectionTimeout)
         {
-            this.configtobuild.connectionTimeout = connectionTimeout;
+            this.configtobuild.ConnectionTimeout = connectionTimeout;
             return this;
         }
         public ConfigBuilder readTimeout(int readTimeout)
         {
-            this.configtobuild.readTimeout = readTimeout;
+            this.configtobuild.ReadTimeout = readTimeout;
             return this;
         }
 
         public ConfigBuilder writeTimeout(int writeTimeout)
         {
-            this.configtobuild.writeTimeout = writeTimeout;
+            this.configtobuild.WriteTimeout = writeTimeout;
             return this;
         }
 
         public ConfigBuilder debug(bool debug)
         {
-            this.configtobuild.debug = debug;
+            this.configtobuild.Debug = debug;
+            return this;
+        }
+
+        public ConfigBuilder SetLoggerFactory(ILoggerFactory loggerFactory)
+        {
+            this.configtobuild.LoggerFactory = loggerFactory;
             return this;
         }
     }

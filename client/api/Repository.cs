@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using io.harness.cfsdk.client.cache;
 using io.harness.cfsdk.HarnessOpenAPIService;
-using Serilog;
+using Microsoft.Extensions.Logging;
 
 [assembly: InternalsVisibleToAttribute("ff-server-sdk-test")]
 
@@ -32,19 +32,19 @@ namespace io.harness.cfsdk.client.api
         void Close();
     }
 
-    internal class StorageRepository : IRepository
+    internal sealed class StorageRepository : IRepository
     {
-        private ICache cache;
-        private IStore store;
-        private IRepositoryCallback callback;
+        private readonly ICache cache;
+        private readonly IStore store;
+        private readonly IRepositoryCallback callback;
         private readonly ILogger logger;
 
-        public StorageRepository(ICache cache, IStore store, IRepositoryCallback callback, ILogger logger = null)
+        public StorageRepository(ICache cache, IStore store = null, IRepositoryCallback callback = null, ILogger logger = null)
         {
-            this.cache = cache;
+            this.cache = cache ?? throw new ArgumentNullException(nameof(cache));
             this.store = store;
             this.callback = callback;
-            this.logger = logger ?? Log.Logger;
+            this.logger = logger ?? Config.DefaultLogger;
         }
 
         private string FlagKey(string identifier) { return "flags_" + identifier; }
@@ -87,15 +87,12 @@ namespace io.harness.cfsdk.client.api
             string key = FlagKey(identifier);
             if (store != null)
             {
-                logger.Debug("Flag {Identifier} successfully deleted from store", identifier);
+                logger.LogDebug("Flag {Identifier} successfully deleted from store", identifier);
                 store.Delete(key);
             }
             this.cache.Delete(key);
-            logger.Debug("Flag {Identifier} successfully deleted from cache", identifier);
-            if (this.callback != null)
-            {
-                this.callback.OnFlagDeleted(identifier);
-            }
+            logger.LogDebug("Flag {Identifier} successfully deleted from cache", identifier);
+            this.callback?.OnFlagDeleted(identifier);
         }
 
         public void DeleteSegment(string identifier)
@@ -103,15 +100,12 @@ namespace io.harness.cfsdk.client.api
             string key = SegmentKey(identifier);
             if (store != null)
             {
-                logger.Debug("Segment {Identifier} successfully deleted from store", identifier);
+                logger.LogDebug("Segment {Identifier} successfully deleted from store", identifier);
                 store.Delete(key);
             }
             this.cache.Delete(key);
-            logger.Debug("Segment {Identifier} successfully deleted from cache", identifier);
-            if (this.callback != null)
-            {
-                this.callback.OnSegmentDeleted(identifier);
-            }
+            logger.LogDebug("Segment {Identifier} successfully deleted from cache", identifier);
+            this.callback?.OnSegmentDeleted(identifier);
         }
         private T GetCache<T>(string key, bool updateCache)
         {
@@ -147,16 +141,13 @@ namespace io.harness.cfsdk.client.api
             // or if version is equal 0 (or doesn't exist)
             if (current != null && featureConfig.Version != 0 && current.Version >= featureConfig.Version)
             {
-                logger.Debug("Flag {Identifier} already exists", identifier);
+                logger.LogDebug("Flag {Identifier} already exists", identifier);
                 return;
             }
 
             Update(identifier, FlagKey(identifier), featureConfig);
 
-            if (this.callback != null)
-            {
-                this.callback.OnFlagStored(identifier);
-            }
+            this.callback?.OnFlagStored(identifier);
         }
         void IRepository.SetSegment(string identifier, Segment segment)
         {
@@ -165,28 +156,25 @@ namespace io.harness.cfsdk.client.api
             // or if version is equal 0 (or doesn't exist)
             if (current != null && segment.Version != 0 && current.Version >= segment.Version)
             {
-                logger.Debug("Segment {Identifier} already exists", identifier);
+                logger.LogDebug("Segment {Identifier} already exists", identifier);
                 return;
             }
 
             Update(identifier, SegmentKey(identifier), segment);
 
-            if (this.callback != null)
-            {
-                this.callback.OnSegmentStored(identifier);
-            }
+            this.callback?.OnSegmentStored(identifier);
         }
 
         private void Update(string identifier, string key, Object value)
         {
             if (this.store == null)
             {
-                logger.Debug("Item {Identifier} successfully cached", identifier);
+                logger.LogDebug("Item {Identifier} successfully cached", identifier);
                 cache.Set(key, value);
             }
             else
             {
-                logger.Debug("Item {Identifier} successfully stored and cache invalidated", identifier);
+                logger.LogDebug("Item {Identifier} successfully stored and cache invalidated", identifier);
                 store.Set(key, value);
                 cache.Delete(key);
             }

@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using io.harness.cfsdk.client.api;
-using io.harness.cfsdk.client.cache;
 using io.harness.cfsdk.client.connector;
-using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using Newtonsoft.Json;
 using NUnit.Framework;

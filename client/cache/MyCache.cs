@@ -1,50 +1,48 @@
-﻿using io.harness.cfsdk.HarnessOpenAPIService;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
-using System.Text;
 using io.harness.cfsdk.client.dto;
 
 namespace io.harness.cfsdk.client.cache
 {
-    internal interface IMyCache<K,V> : ICache<K, V>
+    internal interface IMyCache<K, V> : ICache<K, V>
     {
         IDictionary<K, V> GetAllElements();
     }
 
-    internal class MemoryCache<K,V> : IMyCache<K, V>
+    internal class MemoryCache<K, V> : IMyCache<K, V>
     {
-        private ConcurrentDictionary<K, V> CacheMap { get; set; }
+        private ConcurrentDictionary<K, V> cacheMap;
 
         public MemoryCache()
         {
-            CacheMap = new ConcurrentDictionary<K, V>();
+            cacheMap = new ConcurrentDictionary<K, V>();
         }
         public void Put(K key, V value)
         {
-            _ = CacheMap.AddOrUpdate(key, value, (k, v) => value);
+            _ = cacheMap.AddOrUpdate(key, value, (k, v) => value);
         }
         public V getIfPresent(K key)
         {
             V value;
-            _ = CacheMap.TryGetValue(key, out value);
+            _ = cacheMap.TryGetValue(key, out value);
             return value;
         }
         public IDictionary<K, V> GetAllElements()
         {
-            return new ReadOnlyDictionary<K, V>(CacheMap);
+            return new ReadOnlyDictionary<K, V>(cacheMap);
         }
 
         public void Delete(K key)
         {
             V value;
-            CacheMap.TryRemove(key, out value);
+            cacheMap.TryRemove(key, out value);
         }
 
         internal void resetCache()
         {
-            CacheMap = new ConcurrentDictionary<K, V>();
+            cacheMap = new ConcurrentDictionary<K, V>();
         }
 
         public void Put(KeyValuePair<K, V> keyValuePair)
@@ -59,7 +57,7 @@ namespace io.harness.cfsdk.client.cache
             }
         }
     }
-    internal class AnalyticsCache : MemoryCache<Analytics, int>
+    internal sealed class AnalyticsCache : MemoryCache<Analytics, int>
     {
     }
 
@@ -67,9 +65,9 @@ namespace io.harness.cfsdk.client.cache
     /// <summary>
     /// In memory cache wrapper.
     /// </summary>
-    internal class FeatureSegmentCache : ICache
+    internal sealed class FeatureSegmentCache : ICache
     {
-        private MemoryCache<string, object> memCache = new MemoryCache<string, object>();
+        private readonly MemoryCache<string, object> memCache = new MemoryCache<string, object>();
 
         public void Delete(string key)
         {

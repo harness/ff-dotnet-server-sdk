@@ -1,7 +1,8 @@
-﻿using Disruptor;
+﻿using System;
+using Disruptor;
 using io.harness.cfsdk.client.cache;
 using io.harness.cfsdk.client.dto;
-using Serilog;
+using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.api.analytics
 {
@@ -9,17 +10,17 @@ namespace io.harness.cfsdk.client.api.analytics
     //functionalities 1) Listens to the queue and take out the incoming object 2) Place them
     //appropriately in the cache for further processing
 
-    internal class AnalyticsEventHandler : IEventHandler<Analytics>
+    internal sealed class AnalyticsEventHandler : IEventHandler<Analytics>
     {
-        private AnalyticsCache analyticsCache;
-        private AnalyticsPublisherService analyticsPublisherService;
+        private readonly AnalyticsCache analyticsCache;
+        private readonly AnalyticsPublisherService analyticsPublisherService;
         private readonly ILogger logger;
 
         public AnalyticsEventHandler(AnalyticsCache analyticsCache, AnalyticsPublisherService analyticsPublisherService, ILogger logger = null)
         {
-            this.analyticsCache = analyticsCache;
-            this.analyticsPublisherService = analyticsPublisherService;
-            this.logger = logger ?? Log.Logger;
+            this.analyticsCache = analyticsCache ?? throw new ArgumentNullException(nameof(analyticsCache));
+            this.analyticsPublisherService = analyticsPublisherService ?? throw new ArgumentNullException(nameof(analyticsPublisherService));
+            this.logger = logger ?? Config.DefaultLogger;
         }
         public void OnEvent(Analytics analytics, long sequence, bool endOfBatch)
         {
@@ -32,7 +33,7 @@ namespace io.harness.cfsdk.client.api.analytics
                     }
                     catch (CfClientException e)
                     {
-                        logger.Warning(e, "Failed to send analytics data to server");
+                        logger.LogWarning(e, "Failed to send analytics data to server");
                     }
                     break;
                 case EventType.METRICS:

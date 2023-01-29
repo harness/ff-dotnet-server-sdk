@@ -4,10 +4,9 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using io.harness.cfsdk.client.api.rules;
-using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.HarnessOpenAPIService;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
-using Serilog;
 
 [assembly: InternalsVisibleToAttribute("ff-server-sdk-test")]
 
@@ -24,17 +23,17 @@ namespace io.harness.cfsdk.client.api
         double NumberVariation(string key, dto.Target target, double defaultValue);
         JObject JsonVariation(string key, dto.Target target, JObject defaultValue);
     }
-    internal class Evaluator : IEvaluator
+    internal sealed class Evaluator : IEvaluator
     {
-        private IRepository repository;
-        private IEvaluatorCallback callback;
+        private readonly IRepository repository;
+        private readonly IEvaluatorCallback callback;
         private readonly ILogger logger;
 
         public Evaluator(IRepository repository, IEvaluatorCallback callback, ILogger logger = null)
         {
-            this.repository = repository;
+            this.repository = repository ?? throw new ArgumentNullException(nameof(repository));
             this.callback = callback;
-            this.logger = logger ?? Log.Logger;
+            this.logger = logger ?? Config.DefaultLogger;
         }
         private Variation EvaluateVariation(string key, dto.Target target, FeatureConfigKind kind)
         {
@@ -53,9 +52,9 @@ namespace io.harness.cfsdk.client.api
             }
 
             Variation var = Evaluate(featureConfig, target);
-            if (var != null && callback != null)
+            if (var != null)
             {
-                this.callback.evaluationProcessed(featureConfig, target, var);
+                this.callback?.evaluationProcessed(featureConfig, target, var);
             }
             return var;
         }
@@ -220,14 +219,14 @@ namespace io.harness.cfsdk.client.api
                     // check exclude list
                     if (segment.Excluded != null && segment.Excluded.Any(t => t.Identifier.Equals(target.Identifier)))
                     {
-                        logger.Debug("Target {TargetName} excluded from segment {SegmentName} via exclude list", target.Name, segment.Name);
+                        logger.LogDebug("Target {TargetName} excluded from segment {SegmentName} via exclude list", target.Name, segment.Name);
                         return false;
                     }
 
                     // check include list
                     if (segment.Included != null && segment.Included.Any(t => t.Identifier.Equals(target.Identifier)))
                     {
-                        logger.Debug("Target {TargetName} included in segment {SegmentName} via include list", target.Name, segment.Name);
+                        logger.LogDebug("Target {TargetName} included in segment {SegmentName} via include list", target.Name, segment.Name);
                         return true;
                     }
 

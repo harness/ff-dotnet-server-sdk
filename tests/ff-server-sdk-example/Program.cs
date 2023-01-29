@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 
 namespace io.harness.example
 {
-
     class Program
     {
         static readonly string API_KEY = "70d4d39e-e50f-4cee-99bf-6fd569138c74";
@@ -26,25 +25,25 @@ namespace io.harness.example
                 Console.WriteLine($"Flag changed for {identifier}");
             };
         }
-        static async Task LocalExample()
+        static async Task LocalExample(ConfigBuilder configBuilder)
         {
             FileMapStore fileMapStore = new FileMapStore("Non-Freemium");
             var connector = new LocalConnector("local");
-            client = new CfClient(connector, Config.Builder().SetStore(fileMapStore).Build());
+            client = new CfClient(connector, configBuilder.SetStore(fileMapStore).Build());
             Subscribe();
             await client.InitializeAndWait();
 
         }
-        static async Task SingletonExample()
+        static async Task SingletonExample(ConfigBuilder configBuilder)
         {
             client = CfClient.Instance;
             FileMapStore fileMapStore = new FileMapStore("Non-Freemium");
-            await client.Initialize(API_KEY, Config.Builder().SetStore(fileMapStore).Build());
+            await client.Initialize(API_KEY, configBuilder.SetStore(fileMapStore).Build());
         }
-        static async Task SimpleExample()
+        static async Task SimpleExample(ConfigBuilder configBuilder)
         {
             FileMapStore fileMapStore = new FileMapStore("Non-Freemium");
-            client = new CfClient(API_KEY, Config.Builder().SetStore(fileMapStore).Build());
+            client = new CfClient(API_KEY, configBuilder.SetStore(fileMapStore).Build());
             client.InitializationCompleted += (sender, e) =>
             {
                 Console.WriteLine("Notification Initialization Completed");
@@ -52,7 +51,7 @@ namespace io.harness.example
 
             await client.InitializeAndWait();
         }
-        static async Task MultipleClientExample()
+        static async Task MultipleClientExample(ConfigBuilder configBuilder)
         {
             Random r = new Random();
 
@@ -67,9 +66,9 @@ namespace io.harness.example
             foreach (KeyValuePair<string, string> d in dict)
             {
                 FileMapStore fileMapStore = new FileMapStore(d.Key);
-                client = new CfClient(d.Value, Config.Builder().SetStore(fileMapStore).Build());
+                client = new CfClient(d.Value, configBuilder.SetStore(fileMapStore).Build());
 
-                var rand =  r.Next();
+                var rand = r.Next();
 
                 io.harness.cfsdk.client.dto.Target target =
                     io.harness.cfsdk.client.dto.Target.builder()
@@ -100,12 +99,12 @@ namespace io.harness.example
 
             }
         }
-        static async Task RemoteExample()
+        static async Task RemoteExample(ConfigBuilder configBuilder)
         {
             FileMapStore fileMapStore = new FileMapStore("file_cache");
 
             client = CfClient.Instance;
-            Config config = Config.Builder()
+            Config config = configBuilder
                 .SetAnalyticsEnabled()
                 .SetStreamEnabled(false)
                 .SetStore(fileMapStore)
@@ -126,14 +125,18 @@ namespace io.harness.example
                 .WriteTo.File("log-.txt", rollingInterval: RollingInterval.Day)
                 .CreateLogger();
 
+            // dotnet add package Serilog.Extensions.Logging
+            using var lf = new Serilog.Extensions.Logging.SerilogLoggerFactory(dispose: true);
+            ConfigBuilder newCfgBldr() => Config.Builder().SetLoggerFactory(lf);
+
             string line = Console.ReadLine();
             switch (line)
             {
-                case "singleton":   await SingletonExample();break;
-                case "remote":      await RemoteExample();break;
-                case "simple":      await SimpleExample();break;
-                case "local":       await LocalExample(); break;
-                case "multiple":    await MultipleClientExample(); return;
+                case "singleton": await SingletonExample(newCfgBldr()); break;
+                case "remote": await RemoteExample(newCfgBldr()); break;
+                case "simple": await SimpleExample(newCfgBldr()); break;
+                case "local": await LocalExample(newCfgBldr()); break;
+                case "multiple": await MultipleClientExample(newCfgBldr()); return;
             }
             if (client == null)
                 return;

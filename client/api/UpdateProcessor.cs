@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 using io.harness.cfsdk.client.connector;
 using io.harness.cfsdk.HarnessOpenAPIService;
-using Newtonsoft.Json;
-using Serilog;
+using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.api
 {
@@ -24,28 +22,28 @@ namespace io.harness.cfsdk.client.api
     /// Class responsible to initiate permanent connection with server
     /// and update state of 
     /// </summary>
-    internal class UpdateProcessor : IUpdateCallback, IUpdateProcessor
+    internal sealed class UpdateProcessor : IUpdateCallback, IUpdateProcessor
     {
-        private IConnector connector;
-        private IRepository repository;
-        private IUpdateCallback callback;
-
-        private IService service;
-        private Config config;
+        private readonly IConnector connector;
+        private readonly IRepository repository;
+        private readonly IUpdateCallback callback;
+        private readonly Config config;
         private readonly ILogger logger;
 
-        public UpdateProcessor(IConnector connector, IRepository repository, Config config, IUpdateCallback callback, ILogger logger = null)
+        private IService service;
+
+        public UpdateProcessor(IConnector connector, IRepository repository, Config config, IUpdateCallback callback = null)
         {
             this.callback = callback;
-            this.repository = repository;
-            this.connector = connector;
-            this.config = config;
-            this.logger = logger ?? Log.Logger;
+            this.repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            this.connector = connector ?? throw new ArgumentNullException(nameof(connector));
+            this.config = config ?? throw new ArgumentNullException(nameof(config));
+            this.logger = config.CreateLogger<UpdateProcessor>();
         }
 
         public void Start()
         {
-            if (config.streamEnabled)
+            if (config.StreamEnabled)
             {
                 this.service = connector.Stream(this);
                 this.service.Start();
@@ -64,22 +62,22 @@ namespace io.harness.cfsdk.client.api
         {
             if (manual && this.config.StreamEnabled)
             {
-                logger.Information("You run the update method manually with the stream enabled. Please turn off the stream in this case.");
+                logger.LogInformation("You run the update method manually with the stream enabled. Please turn off the stream in this case.");
             }
             //we got a message from server. Dispatch in separate thread.
             Task.Run(() => ProcessMessage(message));
         }
         public void OnStreamConnected()
         {
-            this.callback.OnStreamConnected();
+            this.callback?.OnStreamConnected();
         }
         public void OnStreamDisconnected()
         {
-            this.callback.OnStreamDisconnected();
+            this.callback?.OnStreamDisconnected();
             Stop();
             Task.Run(() =>
             {
-                Task.Delay(TimeSpan.FromSeconds(this.config.pollIntervalInSeconds)).Wait();
+                Task.Delay(TimeSpan.FromSeconds(this.config.PollIntervalInSeconds)).Wait();
                 Start();
             });
         }
@@ -101,7 +99,7 @@ namespace io.harness.cfsdk.client.api
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, "Error processing flag: {Identifier} event: {Event}.", message.Identifier, message.Event);
+                    logger.LogError(ex, "Error processing flag: {Identifier} event: {Event}.", message.Identifier, message.Event);
                 }
             }
             else if (message.Domain.Equals("target-segment"))
@@ -120,7 +118,7 @@ namespace io.harness.cfsdk.client.api
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, "Error processing segment: {Identifier} event: {Event}.", message.Identifier, message.Event);
+                    logger.LogError(ex, "Error processing segment: {Identifier} event: {Event}.", message.Identifier, message.Event);
                 }
             }
         }
