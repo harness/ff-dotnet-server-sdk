@@ -159,7 +159,7 @@ namespace io.harness.cfsdk.client.connector
                 DateTime startTime = DateTime.Now;
                 Task task = Task.Run(() =>
                 {
-                    HarnessOpenMetricsAPIService.Client client = new HarnessOpenMetricsAPIService.Client(this.metricHttpClient);
+                    HarnessOpenMetricsAPIService.Client client = new HarnessOpenMetricsAPIService.Client(this.metricHttpClient, logger);
                     client.BaseUrl = this.config.EventUrl;
                     return client.MetricsAsync(environment, cluster, metrics, this.cancelToken.Token);
                 });
