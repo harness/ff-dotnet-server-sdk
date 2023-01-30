@@ -1,0 +1,6 @@
+{
+    "files.trimFinalNewlines": true,
+    "files.trimTrailingWhitespace": true,
+    "editor.formatOnSave": true,
+    "dotnet-test-explorer.testProjectPath": "ff-netF48-server-sdk.sln"
+}

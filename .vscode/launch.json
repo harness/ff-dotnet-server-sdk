@@ -1,0 +1,70 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // Use IntelliSense to find out which attributes exist for C# debugging
+            // Use hover for the description of the existing attributes
+            // For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
+            "name": "ff-server-sdk-example local",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "${workspaceFolder}/tests/ff-server-sdk-example/bin/Debug/net7.0/ff-server-sdk-example.dll",
+            "args": ["local"],
+            "cwd": "${workspaceFolder}/tests/ff-server-sdk-example",
+            // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "ff-server-sdk-example singleton",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/tests/ff-server-sdk-example/bin/Debug/net7.0/ff-server-sdk-example.dll",
+            "args": ["singleton"],
+            "cwd": "${workspaceFolder}/tests/ff-server-sdk-example",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "ff-server-sdk-example remote",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/tests/ff-server-sdk-example/bin/Debug/net7.0/ff-server-sdk-example.dll",
+            "args": ["remote"],
+            "cwd": "${workspaceFolder}/tests/ff-server-sdk-example",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "ff-server-sdk-example simple",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/tests/ff-server-sdk-example/bin/Debug/net7.0/ff-server-sdk-example.dll",
+            "args": ["simple"],
+            "cwd": "${workspaceFolder}/tests/ff-server-sdk-example",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "ff-server-sdk-example multiple",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/tests/ff-server-sdk-example/bin/Debug/net7.0/ff-server-sdk-example.dll",
+            "args": ["multiple"],
+            "cwd": "${workspaceFolder}/tests/ff-server-sdk-example",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": ".NET Core Attach",
+            "type": "coreclr",
+            "request": "attach"
+        }
+    ]
+}
