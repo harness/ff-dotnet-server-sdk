@@ -29,12 +29,15 @@ CfClient.Instance.Initialize(apiKey, Config.Builder()
 
 ## Logging
 
-The Feature Flag Client can be configured to write logs using your app's `ILoggerFactory`,
-leveraging the standard `Microsoft.Extensions.Logging` abstractions which are supported
-my most logging providers such as Serilog or ASP.Net.
+The Feature Flag Client can be configured to write logs using the
+`Microsoft.Extensions.Logging.ILoggerFactory` which is supported by most logging
+providers, such as Serilog or ASP.Net.
 
-See the [getting_started](../examples/getting_started/Program.cs) project for an
-example of using Serilog in a console app.
+See the [getting_started](../examples/getting_started/Program.cs) project for a
+simple example using Serilog in a console app.
+
+See the [ff-server-sdk-example](../tests/ff-server-sdk-example/Program.cs) project
+for an example using Serilog via the app's `IServiceProvider`.
 
 ## Recommended reading
 

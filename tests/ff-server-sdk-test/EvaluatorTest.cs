@@ -33,7 +33,6 @@ namespace ff_server_sdk_test
             Variation variation)
         {
             var targetName = target != null ? target.Name : "_no_target";
-            Serilog.Log.Information($"processEvaluation {featureConfig.Feature}, {targetName}, {variation.Value} ");
         }
     }
 
@@ -72,8 +71,8 @@ namespace ff_server_sdk_test
                 flags.ForEach(flag => { repository.SetFlag(flag.Feature, flag); });
             }
         }
-        
-        
+
+
         private static FeatureConfig FindFeatureConfig(string flagName, List<FeatureConfig> flags)
         {
             foreach (FeatureConfig nextFlag in flags)
@@ -157,7 +156,7 @@ namespace ff_server_sdk_test
             }
 
             object got = null;
-            
+
             switch (kind)
             {
                 case FeatureConfigKind.Boolean:
