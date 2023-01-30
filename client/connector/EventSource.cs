@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using io.harness.cfsdk.client.api;
 using Microsoft.Extensions.Logging;
@@ -33,19 +34,19 @@ namespace io.harness.cfsdk.client.connector
 
         public void Start()
         {
+            Stop();
             Task.Run(() => StartStreaming());
         }
 
         public void Stop()
         {
-            if (this.streamReader != null)
+            var streamReader = Interlocked.Exchange(ref this.streamReader, null);
+            if (streamReader != null)
             {
-                this.streamReader.Close();
-                this.streamReader.Dispose();
-                this.streamReader = null;
-            }
+                logger.LogInformation("Stopping EventSource service.");
 
-            logger.LogInformation("Stopping EventSource service.");
+                streamReader.Dispose();
+            }
         }
 
         private async Task StartStreaming()
@@ -53,38 +54,48 @@ namespace io.harness.cfsdk.client.connector
             try
             {
                 logger.LogInformation("Starting EventSource service.");
-                using (this.streamReader = new StreamReader(await this.httpClient.GetStreamAsync(url)))
+                using (var streamReader = new StreamReader(await this.httpClient.GetStreamAsync(url)))
                 {
+                    if (Interlocked.CompareExchange(ref this.streamReader, streamReader, null) != null)
+                        return;
+
                     this.callback?.OnStreamConnected();
 
-                    while (!streamReader.EndOfStream)
+                    try
                     {
-                        string message = await streamReader.ReadLineAsync();
-                        if (!message.Contains("domain")) continue;
+                        while (!streamReader.EndOfStream)
+                        {
+                            string message = await streamReader.ReadLineAsync();
+                            if (!message.Contains("domain")) continue;
 
-                        logger.LogInformation("EventSource message received {Message}", message);
+                            logger.LogInformation("EventSource message received {Message}", message);
 
-                        // parse message
-                        JObject jsommessage = JObject.Parse("{" + message + "}");
+                            // parse message
+                            JObject jsommessage = JObject.Parse("{" + message + "}");
 
-                        Message msg = new Message();
-                        msg.Domain = (string)jsommessage["data"]["domain"];
-                        msg.Event = (string)jsommessage["data"]["event"];
-                        msg.Identifier = (string)jsommessage["data"]["identifier"];
-                        msg.Version = long.Parse((string)jsommessage["data"]["version"]);
+                            Message msg = new Message();
+                            msg.Domain = (string)jsommessage["data"]["domain"];
+                            msg.Event = (string)jsommessage["data"]["event"];
+                            msg.Identifier = (string)jsommessage["data"]["identifier"];
+                            msg.Version = long.Parse((string)jsommessage["data"]["version"]);
 
 
-                        this.callback?.Update(msg, false);
+                            this.callback?.Update(msg, false);
+                        }
+                    }
+                    finally
+                    {
+                        Interlocked.CompareExchange(ref this.streamReader, null, streamReader);
+                        this.callback?.OnStreamDisconnected();
                     }
                 }
             }
-            catch (Exception)
+            catch (TaskCanceledException)
             {
-                logger.LogError("EventSource service throw error. Retrying in {PollIntervalInSeconds}", this.config.PollIntervalInSeconds);
             }
-            finally
+            catch (Exception e)
             {
-                this.callback?.OnStreamDisconnected();
+                logger.LogError("EventSource service throw error: {Error}. Retrying in {PollIntervalInSeconds}", e.Message, this.config.PollIntervalInSeconds);
             }
 
         }

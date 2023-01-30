@@ -32,7 +32,7 @@ try
     Directory.SetCurrentDirectory(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)!);
 
     // Create our feature flag client...
-    var client = await CreateFFClient(args, serviceProvider);
+    using var client = await CreateFFClient(args, serviceProvider);
 
     // Monitor some feature flags for "target1"...
     var target = Target.builder()
@@ -50,7 +50,7 @@ try
         JObject jResult = client.jsonVariation("flag4", target, new JObject());
         Log.Information("JSON Variation value ----> {Result}", jResult);
 
-        await Task.Delay(TimeSpan.FromSeconds(20));
+        await Task.Delay(TimeSpan.FromSeconds(3));
     }
 }
 catch (TaskCanceledException) { }
@@ -148,7 +148,7 @@ async Task<ICfClient> MultipleClientExample(ConfigBuilder configBuilder)
     foreach (var (storeName, apiKey) in stores)
     {
         var fileMapStore = new FileMapStore(storeName);
-        var client = new CfClient(apiKey, configBuilder.SetStore(fileMapStore).Build());
+        using var client = new CfClient(apiKey, configBuilder.SetStore(fileMapStore).Build());
 
         var targetName = $"Target_{r.Next()}";
         var target =

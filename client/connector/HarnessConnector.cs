@@ -144,13 +144,14 @@ namespace io.harness.cfsdk.client.connector
         }
         public IService Stream(IUpdateCallback updater)
         {
-            if (currentStream != null)
+            if (this.currentStream != null)
             {
-                currentStream.Close();
+                this.currentStream.Close();
+                this.currentStream = null;
             }
             string url = $"stream?cluster={this.cluster}";
             this.currentStream = new EventSource(this.sseHttpClient, url, this.config, updater);
-            return currentStream;
+            return this.currentStream;
         }
         public void PostMetrics(HarnessOpenMetricsAPIService.Metrics metrics)
         {
@@ -247,8 +248,19 @@ namespace io.harness.cfsdk.client.connector
 
         public void Close()
         {
-            this.cancelToken.Cancel();
-            this.currentStream.Close();
+            this.cancelToken?.Cancel();
+            this.currentStream?.Stop();
+        }
+
+        public void Dispose()
+        {
+            this.Close();
+
+            this.cancelToken?.Dispose();
+            this.apiHttpClient?.Dispose();
+            this.metricHttpClient?.Dispose();
+            this.sseHttpClient?.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

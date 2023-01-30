@@ -37,9 +37,15 @@ namespace io.harness.cfsdk.client.connector
             // there is no authentication so just return any string
             return "success";
         }
+
         public void Close()
         {
+        }
 
+        public void Dispose()
+        {
+            Close();
+            GC.SuppressFinalize(this);
         }
 
         public FeatureConfig GetFlag(string identifier)
@@ -108,11 +114,12 @@ namespace io.harness.cfsdk.client.connector
         }
 
 
-        private sealed class FileWatcherService : IService, IDisposable
+        private sealed class FileWatcherService : IService
         {
-            private FileWatcher flagWatcher;
-            private FileWatcher segmentWatcher;
-            private IUpdateCallback callback;
+            private readonly FileWatcher flagWatcher;
+            private readonly FileWatcher segmentWatcher;
+            private readonly IUpdateCallback callback;
+
             public FileWatcherService(string flagPath, string segmentPath, IUpdateCallback callback, ILogger logger = null)
             {
                 this.flagWatcher = new FileWatcher("flag", flagPath, callback, logger);
@@ -122,12 +129,8 @@ namespace io.harness.cfsdk.client.connector
             public void Close()
             {
                 Stop();
-            }
-
-            public void Dispose()
-            {
-                this.flagWatcher.Dispose();
-                this.segmentWatcher.Dispose();
+                this.flagWatcher.Stop();
+                this.segmentWatcher.Stop();
             }
 
             public void Start()
@@ -135,7 +138,7 @@ namespace io.harness.cfsdk.client.connector
                 this.flagWatcher.Start();
                 this.segmentWatcher.Start();
 
-                this.callback.OnStreamConnected();
+                this.callback?.OnStreamConnected();
             }
 
             public void Stop()
@@ -143,7 +146,7 @@ namespace io.harness.cfsdk.client.connector
                 this.flagWatcher.Stop();
                 this.segmentWatcher.Stop();
 
-                this.callback.OnStreamDisconnected();
+                this.callback?.OnStreamDisconnected();
             }
         }
     }

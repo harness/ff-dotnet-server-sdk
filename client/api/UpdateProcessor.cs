@@ -20,7 +20,7 @@ namespace io.harness.cfsdk.client.api
     }
     /// <summary>
     /// Class responsible to initiate permanent connection with server
-    /// and update state of 
+    /// and update state of
     /// </summary>
     internal sealed class UpdateProcessor : IUpdateCallback, IUpdateProcessor
     {
@@ -31,6 +31,7 @@ namespace io.harness.cfsdk.client.api
         private readonly ILogger logger;
 
         private IService service;
+        private bool stopping;
 
         public UpdateProcessor(IConnector connector, IRepository repository, Config config, IUpdateCallback callback = null)
         {
@@ -53,8 +54,10 @@ namespace io.harness.cfsdk.client.api
         {
             if (this.service != null)
             {
+                stopping = true;
                 this.service.Stop();
                 this.service = null;
+                stopping = false;
             }
         }
 
@@ -74,6 +77,9 @@ namespace io.harness.cfsdk.client.api
         public void OnStreamDisconnected()
         {
             this.callback?.OnStreamDisconnected();
+
+            if (stopping) return;
+
             Stop();
             Task.Run(() =>
             {

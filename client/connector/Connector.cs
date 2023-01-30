@@ -6,7 +6,7 @@ using io.harness.cfsdk.HarnessOpenMetricsAPIService;
 
 namespace io.harness.cfsdk.client.connector
 {
-    public interface IConnector
+    public interface IConnector : IDisposable
     {
         string Authenticate();
         IEnumerable<FeatureConfig> GetFlags();

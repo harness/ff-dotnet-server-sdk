@@ -12,9 +12,10 @@ namespace ff_server_sdk_test
 {
     public class VersionTest
     {
-        static ICfClient client;
-        static FileMapStore fileMapStore;
-        static Segment remoteSegment;
+        ICfClient client;
+        FileMapStore fileMapStore;
+        Segment remoteSegment;
+
         [SetUp]
         public async Task SetUp()
         {
@@ -35,6 +36,12 @@ namespace ff_server_sdk_test
             SaveSegment(remoteSegment);
 
             await client.InitializeAndWait();
+        }
+
+        [TearDown]
+        public void EndTest()
+        {
+            client.Dispose();
         }
 
         private void SaveSegment(Segment seg)

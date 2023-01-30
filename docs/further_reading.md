@@ -73,7 +73,7 @@ The user can call InitializeAndWait to block and wait for the SDK
 
 ```c#
 // Creates instance of a client
-var client = new CfClient(API_KEY, Config.Builder().Build());
+using var client = new CfClient(API_KEY, Config.Builder().Build());
 
 // Starts authentication and asynchronously wait for initialisation to complete
 await client.InitializeAndWait();
@@ -88,8 +88,8 @@ Connector is just a proxy to your data. Currently supported connectors:
 * Local (used only in development)
 
 ```c#
-LocalConnector connector = new LocalConnector("local");
-client = new CfClient(connector);
+var connector = new LocalConnector("local");
+using var client = new CfClient(connector);
 ```
 
 ## Storage
@@ -99,9 +99,9 @@ When SDK is used without waiting on async methods, and configuration is provided
 If there is no flag in a storage then they will be evaluated from defaultValue argument.
 
 ```c#
-FileMapStore fileStore = new FileMapStore("Non-Freemium");
-LocalConnector connector = new LocalConnector("local");
-client = new CfClient(connector, Config.builder().store(fileStore).build());
+var fileStore = new FileMapStore("Non-Freemium");
+var connector = new LocalConnector("local");
+using var client = new CfClient(connector, Config.builder().store(fileStore).build());
 ```
 
 ## Fetch evaluation's value

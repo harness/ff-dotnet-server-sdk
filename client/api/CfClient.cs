@@ -5,7 +5,7 @@ using Newtonsoft.Json.Linq;
 
 namespace io.harness.cfsdk.client.api
 {
-    public interface ICfClient
+    public interface ICfClient : IDisposable
     {
         Task Initialize(string apiKey);
         Task Initialize(string apiKey, Config config);
@@ -97,5 +97,10 @@ namespace io.harness.cfsdk.client.api
 
         public void Close() { client.Close(); }
 
+        public void Dispose()
+        {
+            client.Dispose();
+            GC.SuppressFinalize(this);
+        }
     }
 }

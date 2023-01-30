@@ -31,5 +31,5 @@ while (true)
 {
     bool resultBool = CfClient.Instance.boolVariation(flagName, target, false);
     Console.WriteLine($"Flag variation {resultBool}");
-    await Task.Delay(TimeSpan.FromSeconds(10));
+    await Task.Delay(TimeSpan.FromSeconds(3));
 }

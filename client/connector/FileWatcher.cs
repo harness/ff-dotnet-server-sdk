@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.connector
 {
-    internal sealed class FileWatcher : IDisposable, IService
+    internal sealed class FileWatcher : IService
     {
         private readonly string domain;
         private readonly string path;
@@ -41,13 +41,10 @@ namespace io.harness.cfsdk.client.connector
             Stop();
         }
 
-        public void Dispose()
-        {
-            watcher.Dispose();
-        }
-
         public void Start()
         {
+            Stop();
+
             try
             {
                 watcher = new FileSystemWatcher();
@@ -62,12 +59,17 @@ namespace io.harness.cfsdk.client.connector
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error creating fileWatcher at {Path}", this.path);
+                Stop();
             }
         }
 
         public void Stop()
         {
-            watcher.EnableRaisingEvents = false;
+            if (watcher != null)
+            {
+                watcher.Dispose();
+                watcher = null;
+            }
         }
     }
 }

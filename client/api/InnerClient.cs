@@ -10,6 +10,7 @@ using Newtonsoft.Json.Linq;
 namespace io.harness.cfsdk.client.api
 {
     internal sealed class InnerClient :
+        IDisposable,
         IAuthCallback,
         IRepositoryCallback,
         IPollCallback,
@@ -26,6 +27,7 @@ namespace io.harness.cfsdk.client.api
         private IEvaluator evaluator;
         private IMetricsProcessor metric;
         private IConnector connector;
+        private bool closed;
 
         public event EventHandler InitializationCompleted;
         public event EventHandler<string> EvaluationChanged;
@@ -69,6 +71,8 @@ namespace io.harness.cfsdk.client.api
         }
         public void Start()
         {
+            if (closed) throw new CfClientException("Client is closed.");
+
             logger.LogInformation("Initialize authentication");
             // Start Authentication flow
             this.authService.Start();
@@ -97,7 +101,10 @@ namespace io.harness.cfsdk.client.api
         }
         public void OnStreamDisconnected()
         {
-            this.polling.Start();
+            if (!closed)
+            {
+                this.polling.Start();
+            }
         }
         #endregion
 
@@ -193,12 +200,20 @@ namespace io.harness.cfsdk.client.api
 
         public void Close()
         {
+            closed = true;
             this.connector.Close();
             this.authService.Stop();
             this.repository.Close();
             this.polling.Stop();
             this.update.Stop();
             this.metric.Stop();
+        }
+
+        public void Dispose()
+        {
+            Close();
+            this.connector.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         public void Update(Message message, bool manual)
