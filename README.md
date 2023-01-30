@@ -20,14 +20,15 @@ For a sample FF .NET SDK project, see our [test .NET project](examples/getting_s
 ## Requirements
 [.NET Framework >= 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48)<br>
 or<br>
-[.Net 5.0.104](https://docs.microsoft.com/en-us/nuget/quickstart/install-and-use-a-package-using-the-dotnet-cli) or newer (dotnet --version)<br>
+[.Net 7.0.102](https://docs.microsoft.com/en-us/nuget/quickstart/install-and-use-a-package-using-the-dotnet-cli) or newer (dotnet --version)
+
 The library is packaged as multi-target supporting `netstandard2.0` set of API's and additionaly targets `net461` for older frameworks.
 
 
 ## Quickstart
 To follow along with our test code sample, make sure you’ve:
 
-- [Created a Feature Flag on the Harness Platform](https://ngdocs.harness.io/article/1j7pdkqh7j-create-a-feature-flag) called harnessappdemodarkmode
+- [Created a Feature Flag on the Harness Platform](https://ngdocs.harness.io/article/1j7pdkqh7j-create-a-feature-flag) called `harnessappdemodarkmode`.
 - [Created a server SDK key and made a copy of it](https://ngdocs.harness.io/article/1j7pdkqh7j-create-a-feature-flag#step_3_create_an_sdk_key)
 
 
@@ -41,47 +42,37 @@ dotnet add package ff-dotnet-server-sdk
 ### Code Sample
 The following is a complete code example that you can use to test the `harnessappdemodarkmode` Flag you created on the Harness Platform. When you run the code it will:
 - Connect to the FF service.
-- Report the value of the Flag every 10 seconds until the connection is closed. Every time the `harnessappdemodarkmode` Flag is toggled on or off on the Harness Platform, the updated value is reported. 
+- Report the value of the Flag every 10 seconds until the connection is closed. Every time the `harnessappdemodarkmode` Flag is toggled on or off on the Harness Platform, the updated value is reported.
 - Close the SDK.
 
 
 ```c#
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.client.api;
-using System.Threading;
 
-namespace getting_started
+var apiKey = Environment.GetEnvironmentVariable("FF_API_KEY");
+var flagName = Environment.GetEnvironmentVariable("FF_FLAG_NAME") ?? "harnessappdemodarkmode";
+
+// Create a feature flag client
+await CfClient.Instance.Initialize(apiKey, Config.Builder().Build());
+
+// Create a target (different targets can get different results based on rules)
+Target target = Target.builder()
+                .Name("Harness_Target_1")
+                .Identifier("HT_1")
+                .Attributes(new Dictionary<string, string>() { { "email", "demo@harness.io" } })
+                .build();
+
+// Loop forever reporting the state of the flag
+while (true)
 {
-    class Program
-    {
-        public static String apiKey = Environment.GetEnvironmentVariable("FF_API_KEY");
-        public static String flagName = Environment.GetEnvironmentVariable("FF_FLAG_NAME") is string v && v.Length > 0 ? v : "harnessappdemodarkmode";
-
-        static void Main(string[] args)
-        {
-            // Create a feature flag client
-            CfClient.Instance.Initialize(apiKey, Config.Builder().Build());
-
-            // Create a target (different targets can get different results based on rules)
-            Target target = Target.builder()
-                            .Name("Harness_Target_1")
-                            .Identifier("HT_1")
-                            .Attributes(new Dictionary<string, string>(){{"email", "demo@harness.io"}})
-                            .build();
-
-           // Loop forever reporting the state of the flag
-            while (true)
-            {
-                bool resultBool = CfClient.Instance.boolVariation(flagName, target, false);
-                Console.WriteLine("Flag variation " + resultBool);
-                Thread.Sleep(10 * 1000);
-            }
-        }
-    }
+    bool resultBool = CfClient.Instance.boolVariation(flagName, target, false);
+    Console.WriteLine($"Flag variation {resultBool}");
+    await Task.Delay(TimeSpan.FromSeconds(10));
 }
-
 ```
 
 ### Running the example
@@ -96,7 +87,7 @@ If you dont have the right version of dotnet installed locally, or dont want to 
 use docker to quicky get started
 
 ```bash
-docker run -v $(pwd):/app -w /app -e FF_API_KEY=$FF_API_KEY mcr.microsoft.com/dotnet/sdk:5.0 dotnet run --project examples/getting_started/
+docker run -it --rm -v $(pwd):/app -w /app -e FF_API_KEY=$FF_API_KEY mcr.microsoft.com/dotnet/sdk:7.0 dotnet run --project examples/getting_started/
 ```
 
 ### Additional Reading
