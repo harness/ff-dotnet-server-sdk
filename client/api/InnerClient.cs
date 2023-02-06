@@ -1,21 +1,11 @@
 ﻿using io.harness.cfsdk.client.api.analytics;
-using io.harness.cfsdk.client.cache;
 using io.harness.cfsdk.client.connector;
-using io.harness.cfsdk.client.polling;
 using io.harness.cfsdk.HarnessOpenAPIService;
-using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
 using Serilog;
 using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Concurrent;
 
 namespace io.harness.cfsdk.client.api
 {

@@ -20,9 +20,9 @@ namespace io.harness.cfsdk.client.connector
 
     internal class HarnessConnector : IConnector
     {
-        private String token;
-        private String environment;
-        private String cluster;
+        private string token;
+        private string environment;
+        private string cluster;
 
         public HttpClient apiHttpClient { get; set; }
         public HttpClient metricHttpClient { get; set; }
@@ -31,223 +31,183 @@ namespace io.harness.cfsdk.client.connector
         private string apiKey;
         private Config config;
         private IConnectionCallback callback;
+        private Client harnessClient;
 
         private IService currentStream;
         private CancellationTokenSource cancelToken = new CancellationTokenSource();
-        public HarnessConnector(String apiKey, Config config, IConnectionCallback callback)
+
+        private static HttpClient ApiHttpClient(Config config)
+        {
+            HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri(config.ConfigUrl);
+            client.Timeout = TimeSpan.FromSeconds(config.ConnectionTimeout);
+            return client;
+        }
+        private static HttpClient MetricHttpClient(Config config)
+        {
+            HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri(config.EventUrl);
+            client.Timeout = TimeSpan.FromSeconds(config.ConnectionTimeout);
+            return client;
+        }
+        private static HttpClient SseHttpClient(Config config, string apiKey)
+        {
+            HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri(config.ConfigUrl.EndsWith("/") ? config.ConfigUrl : config.ConfigUrl + "/" );
+            client.DefaultRequestHeaders.Add("API-Key", apiKey);
+            client.DefaultRequestHeaders.Add("Accept", "text /event-stream");
+            client.Timeout = Timeout.InfiniteTimeSpan;
+            return client;
+        }
+        
+        public HarnessConnector(string apiKey, Config config, IConnectionCallback callback)
+        : this(apiKey, config, callback, ApiHttpClient(config), MetricHttpClient(config), SseHttpClient(config, apiKey))
+        {
+           
+        }
+
+        private static Client HarnessClient(Config config, HttpClient httpClient)
+        {
+            Client client = new Client(httpClient);
+            client.BaseUrl = config.ConfigUrl;
+            return client;
+        }
+
+        public HarnessConnector(
+            string apiKey,
+            Config config,
+            IConnectionCallback callback,
+            HttpClient apiHttpClient,
+            HttpClient metricHttpClient,
+            HttpClient sseHttpClient
+        ) : this(apiKey, config, callback, apiHttpClient, metricHttpClient, sseHttpClient, HarnessClient(config, apiHttpClient))
+        {
+        }
+
+        public HarnessConnector(
+            string apiKey,
+            Config config,
+            IConnectionCallback callback,
+            HttpClient apiHttpClient,
+            HttpClient metricHttpClient,
+            HttpClient sseHttpClient,
+            Client harnessClient)
         {
             this.config = config;
             this.apiKey = apiKey;
             this.callback = callback;
-
-            this.apiHttpClient = new HttpClient();
-            this.apiHttpClient.BaseAddress = new Uri(config.ConfigUrl);
-            this.apiHttpClient.Timeout = TimeSpan.FromSeconds(config.ConnectionTimeout);
-
-            this.metricHttpClient = new HttpClient();
-            this.metricHttpClient.BaseAddress = new Uri(config.EventUrl);
-            this.metricHttpClient.Timeout = TimeSpan.FromSeconds(config.ConnectionTimeout);
-
-            this.sseHttpClient = new HttpClient();
-            this.sseHttpClient.BaseAddress = new Uri(this.config.ConfigUrl.EndsWith("/") ? this.config.ConfigUrl : this.config.ConfigUrl + "/" );
-            this.sseHttpClient.DefaultRequestHeaders.Add("API-Key", this.apiKey);
-            this.sseHttpClient.DefaultRequestHeaders.Add("Accept", "text /event-stream");
-            this.sseHttpClient.Timeout = Timeout.InfiniteTimeSpan;
+            this.apiHttpClient = apiHttpClient;
+            this.metricHttpClient = metricHttpClient;
+            this.sseHttpClient = sseHttpClient;
+            this.harnessClient = harnessClient;
         }
-        public IEnumerable<FeatureConfig> GetFlags()
+
+        private async Task<T> ReauthenticateIfNeeded<T>(Func<Task<T>> task)
         {
             try
             {
-                Task<ICollection<FeatureConfig>> task = Task.Run(() =>
-                {
-                    Client client = new Client(this.apiHttpClient);
-                    client.BaseUrl = this.config.ConfigUrl;
-                    return client.ClientEnvFeatureConfigsGetAsync(this.environment, this.cluster, this.cancelToken.Token);
-                });
-
-                task.Wait();
-
-                return task.Result;
+                return await task();
             }
-            catch (AggregateException ex)
+            catch (ApiException ex)
             {
-                ReauthenticateIfNeeded(ex);
+                if (ex.StatusCode == (int)HttpStatusCode.Forbidden)
+                {
+                    Log.Error("Initiate reauthentication");
+                    callback.OnReauthenticateRequested();
+                }
+                throw new CfClientException(ex.Message);
+            }
+            catch (Exception ex)
+            {
                 throw new CfClientException(ex.Message);
             }
         }
-        public IEnumerable<Segment> GetSegments()
+        public async Task<IEnumerable<FeatureConfig>> GetFlags()
         {
-            try
-            {
-                Task<ICollection<Segment>> task = Task.Run(() =>
-                {
-                    Client client = new Client(this.apiHttpClient);
-                    client.BaseUrl = this.config.ConfigUrl;
-                    return client.ClientEnvTargetSegmentsGetAsync(this.environment, this.cluster, this.cancelToken.Token);
-                });
-
-                task.Wait();
-
-                return task.Result;
-            }
-            catch (AggregateException ex)
-            {
-                ReauthenticateIfNeeded(ex);
-                throw new CfClientException(ex.Message);
-            }
+            return await ReauthenticateIfNeeded(() => harnessClient.ClientEnvFeatureConfigsGetAsync(environment, cluster, cancelToken.Token));
         }
-        public FeatureConfig GetFlag(string identifier)
+        
+        public async Task<IEnumerable<Segment>> GetSegments()
         {
-            try
-            {
-                Task<FeatureConfig> task = Task.Run(() =>
-                {
-
-                    Client client = new Client(this.apiHttpClient);
-                    client.BaseUrl = this.config.ConfigUrl;
-                    return client.ClientEnvFeatureConfigsGetAsync(identifier, this.environment, this.cluster, this.cancelToken.Token);
-                });
-
-                task.Wait();
-
-                return task.Result;
-            }
-            catch (AggregateException ex)
-            {
-                ReauthenticateIfNeeded(ex);
-                throw new CfClientException(ex.Message);
-            }
+            return await ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(environment, cluster, cancelToken.Token));
         }
-        public Segment GetSegment(string identifer)
+        public Task<FeatureConfig> GetFlag(string identifier)
         {
-            try
-            {
-                Task<Segment> task = Task.Run(() =>
-                {
-                    Client client = new Client(this.apiHttpClient);
-                    client.BaseUrl = this.config.ConfigUrl;
-                    return client.ClientEnvTargetSegmentsGetAsync(identifer, this.environment, this.cluster, this.cancelToken.Token);
-                });
-
-                task.Wait();
-
-                return task.Result;
-            }
-            catch (AggregateException ex)
-            {
-                ReauthenticateIfNeeded(ex);
-                throw new CfClientException(ex.Message);
-            }
+            return ReauthenticateIfNeeded(() => harnessClient.ClientEnvFeatureConfigsGetAsync(identifier, environment, cluster, cancelToken.Token));
+        }
+        public Task<Segment> GetSegment(string identifier)
+        {
+            return ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(identifier, environment, cluster, cancelToken.Token));
         }
         public IService Stream(IUpdateCallback updater)
         {
-            if(currentStream != null)
-            {
-                currentStream.Close();
-            }
-            string url = $"stream?cluster={this.cluster}";
-            this.currentStream =  new EventSource(this.sseHttpClient, url, this.config, updater);
+            currentStream?.Close();
+            var url = $"stream?cluster={cluster}";
+            currentStream = new EventSource(sseHttpClient, url, config, updater);
             return currentStream;
         }
-        public void PostMetrics(HarnessOpenMetricsAPIService.Metrics metrics)
+        public async Task PostMetrics(HarnessOpenMetricsAPIService.Metrics metrics)
         {
-            try
+            await ReauthenticateIfNeeded<Task>(async () =>
             {
-                DateTime startTime = DateTime.Now;
-                Task task = Task.Run(() =>
+                var startTime = DateTime.Now;
+                var client = new HarnessOpenMetricsAPIService.Client(metricHttpClient)
                 {
-                    HarnessOpenMetricsAPIService.Client client = new HarnessOpenMetricsAPIService.Client(this.metricHttpClient);
-                    client.BaseUrl = this.config.EventUrl;
-                    return client.MetricsAsync(environment, cluster, metrics, this.cancelToken.Token);
-                });
-                task.Wait();
-
-                DateTime endTime = DateTime.Now;
+                    BaseUrl = config.EventUrl
+                };
+                await client.MetricsAsync(environment, cluster, metrics, cancelToken.Token);
+                var endTime = DateTime.Now;
                 if ((endTime - startTime).TotalMilliseconds > config.MetricsServiceAcceptableDuration)
                 {
                     Log.Warning($"Metrics service API duration=[{endTime - startTime}]");
                 }
-            }
-            catch (AggregateException ex)
-            {
-                ReauthenticateIfNeeded(ex);
-                throw new CfClientException(ex.Message);
-            }
+
+                return null;
+            });
         }
-        public string Authenticate()
+        public async Task<string> Authenticate()
         {
             try
             {
-                Task<AuthenticationResponse> task = Task.Run(() =>
+                var authenticationRequest = new AuthenticationRequest
                 {
-                    AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-                    authenticationRequest.ApiKey = apiKey;
-                    authenticationRequest.Target = new Target2 { Identifier = "" };
-
-                    Client client = new Client(this.apiHttpClient);
-                    client.BaseUrl = this.config.ConfigUrl;
-                    return client.ClientAuthAsync(authenticationRequest, cancelToken.Token);
-                });
-                // Wait for task to finish
-                task.Wait();
-                // Get the result
-                AuthenticationResponse response = task.Result;
-                this.token = response.AuthToken;
+                    ApiKey = apiKey,
+                    Target = new Target2 { Identifier = "" }
+                };
+                var response = await harnessClient.ClientAuthAsync(authenticationRequest, cancelToken.Token);
+                token = response.AuthToken;
 
                 var handler = new JwtSecurityTokenHandler();
-                SecurityToken jsonToken = handler.ReadToken(this.token);
-                JwtSecurityToken JWTToken = (JwtSecurityToken)jsonToken;
+                var jsonToken = handler.ReadToken(token);
+                var jwtToken = (JwtSecurityToken)jsonToken;
 
-                this.environment = JWTToken.Payload["environment"].ToString();
-                this.cluster = JWTToken.Payload["clusterIdentifier"].ToString();
+                environment = jwtToken.Payload["environment"].ToString();
+                cluster = jwtToken.Payload["clusterIdentifier"].ToString();
 
-                this.apiHttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", this.token);
-                this.metricHttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", this.token);
-                this.sseHttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", this.token);
+                apiHttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                metricHttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                sseHttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-                return this.token;
+                return token;
 
             }
-            catch (AggregateException ex)
+            catch (ApiException ex)
             {
-                foreach (var e in ex.InnerExceptions)
+                Log.Error($"Failed to get auth token {ex.Message}");
+                if (ex.StatusCode == (int)HttpStatusCode.Unauthorized || ex.StatusCode == (int)HttpStatusCode.Forbidden)
                 {
-                    Log.Error($"Failed to get auth token {e.Message}");
-                    ApiException apiEx = e as ApiException;
-                    if (apiEx != null)
-                    {
-
-                        if (apiEx.StatusCode == (int)HttpStatusCode.Unauthorized || apiEx.StatusCode == (int)HttpStatusCode.Forbidden)
-                        {
-                            string errorMsg = $"Invalid apiKey {apiKey}. Serving default value.";
-                            Log.Error(errorMsg);
-                            throw new CfClientException(errorMsg);
-                        }
-                        throw new CfClientException(apiEx.Message);
-                    }
-                    throw e;
+                    var errorMsg = $"Invalid apiKey {apiKey}. Serving default value.";
+                    Log.Error(errorMsg);
+                    throw new CfClientException(errorMsg);
                 }
-                throw ex;
-            }
-        }
-        private void ReauthenticateIfNeeded(AggregateException ex)
-        {
-            foreach (var e in ex.InnerExceptions)
-            {
-                ApiException apiEx = e as ApiException;
-                if (apiEx != null && apiEx.StatusCode == (int)HttpStatusCode.Forbidden)
-                {
-                    Log.Error("Initiate reauthentication");
-                    callback.OnReauthenticateRequested();
-                    return;
-                }
+                throw new CfClientException(ex.Message);
             }
         }
 
         public void Close()
         {
-            this.cancelToken.Cancel();
-            this.currentStream.Close();
+            cancelToken.Cancel();
+            currentStream.Close();
         }
     }
 }

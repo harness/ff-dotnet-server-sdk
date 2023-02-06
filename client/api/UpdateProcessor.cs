@@ -65,23 +65,25 @@ namespace io.harness.cfsdk.client.api
                 Log.Information("You run the update method manually with the stream enabled. Please turn off the stream in this case.");
             }
             //we got a message from server. Dispatch in separate thread.
-            Task.Run(() => ProcessMessage(message));
+            _ = ProcessMessage(message);
         }
         public void OnStreamConnected()
         {
             this.callback.OnStreamConnected();
         }
+
+        private async Task StartAfterInterval()
+        {
+            await Task.Delay(TimeSpan.FromSeconds(this.config.pollIntervalInSeconds));
+            Start();
+        }
         public void OnStreamDisconnected()
         {
             this.callback.OnStreamDisconnected();
             Stop();
-            Task.Run( () =>
-            {
-                Task.Delay(TimeSpan.FromSeconds(this.config.pollIntervalInSeconds)).Wait();
-                Start();
-            });
+            _ = StartAfterInterval();
         }
-        private void ProcessMessage(Message message)
+        private async Task ProcessMessage(Message message)
         {
             if (message.Domain.Equals("flag"))
             {
@@ -93,7 +95,7 @@ namespace io.harness.cfsdk.client.api
                     }
                     else if (message.Event.Equals("create") || message.Event.Equals("patch"))
                     {
-                        FeatureConfig feature = this.connector.GetFlag(message.Identifier);
+                        FeatureConfig feature = await this.connector.GetFlag(message.Identifier);
                         this.repository.SetFlag(message.Identifier, feature);
                     }
                 }
@@ -112,7 +114,7 @@ namespace io.harness.cfsdk.client.api
                     }
                     else if (message.Event.Equals("create") || message.Event.Equals("patch"))
                     {
-                        Segment segment = this.connector.GetSegment(message.Identifier);
+                        Segment segment = await this.connector.GetSegment(message.Identifier);
                         this.repository.SetSegment(message.Identifier, segment);
                     }
                 }

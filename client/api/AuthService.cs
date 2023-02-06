@@ -21,10 +21,11 @@ namespace io.harness.cfsdk.client.api
     /// </summary>
     internal class AuthService : IAuthService
     {
-        private IConnector connector;
-        private Config config;
+        private readonly IConnector connector;
+        private readonly Config config;
+        private readonly IAuthCallback callback;
         private Timer authTimer;
-        private IAuthCallback callback;
+        private int retries = 0;
 
         public AuthService(IConnector connector, Config config, IAuthCallback callback)
         {
@@ -34,22 +35,21 @@ namespace io.harness.cfsdk.client.api
         }
         public void Start()
         {
+            this.retries = 0;
             // initiate authentication
-            authTimer = new Timer(new TimerCallback(OnTimedEvent), null, 0, this.config.PollIntervalInMiliSeconds);
+            authTimer = new Timer(OnTimedEvent, null, 0, config.PollIntervalInMiliSeconds);
         }
         public void Stop()
         {
-            if (authTimer != null)
-            {
-                authTimer.Dispose();
-                authTimer = null;
-            }
+            if (authTimer == null) return;
+            authTimer.Dispose();
+            authTimer = null;
         }
-        private void OnTimedEvent(object source)
+        private async void OnTimedEvent(object source)
         {
             try
             {
-                connector.Authenticate();
+                await connector.Authenticate();
                 callback.OnAuthenticationSuccess();
                 Stop();
                 Log.Information("Stopping authentication service");
@@ -57,7 +57,15 @@ namespace io.harness.cfsdk.client.api
             catch
             {
                 // Exception thrown on Authentication. Timer will retry authentication.
-                Log.Error($"Exception while authenticating, retry in {this.config.pollIntervalInSeconds}");
+                if (retries++ >= config.MaxAuthRetries)
+                {
+                    Log.Error($"Max authentication retries reached {retries}");
+                    Stop();
+                }
+                else
+                {
+                    Log.Error($"Exception while authenticating, retry ({retries}) in {config.pollIntervalInSeconds}");
+                }
             }
         }
     }
