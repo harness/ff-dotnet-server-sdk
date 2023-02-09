@@ -15,6 +15,8 @@ namespace io.harness.cfsdk.client.api
         public int PollIntervalInSeconds { get; internal set; } = 60;
         public int PollIntervalInMiliSeconds => PollIntervalInSeconds * 1000;
 
+        public int MaxAuthRetries { get; internal set; } = 10;
+
         // configurations for Analytics
         public bool AnalyticsEnabled { get; internal set; } = true;
 
@@ -30,7 +32,7 @@ namespace io.harness.cfsdk.client.api
             get { return bufferSize; }
             internal set
             {
-                // BufferSize must be a positive power of 2 for LMAX to work. 
+                // BufferSize must be a positive power of 2 for LMAX to work.
                 // Source: https://stackoverflow.com/a/600306/1493480
                 if (value <= 0 || (value & (value - 1)) != 0)
                     throw new CfClientException("BufferSize must be a power of 2");

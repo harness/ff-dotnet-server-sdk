@@ -35,7 +35,7 @@ namespace io.harness.cfsdk.client.connector
         public void Start()
         {
             Stop();
-            Task.Run(() => StartStreaming());
+            _ = StartStreaming();
         }
 
         public void Stop()
@@ -43,8 +43,6 @@ namespace io.harness.cfsdk.client.connector
             var streamReader = Interlocked.Exchange(ref this.streamReader, null);
             if (streamReader != null)
             {
-                logger.LogInformation("Stopping EventSource service.");
-
                 streamReader.Dispose();
             }
         }
@@ -59,43 +57,44 @@ namespace io.harness.cfsdk.client.connector
                     if (Interlocked.CompareExchange(ref this.streamReader, streamReader, null) != null)
                         return;
 
-                    this.callback?.OnStreamConnected();
+                    callback?.OnStreamConnected();
 
                     try
                     {
                         while (!streamReader.EndOfStream)
                         {
-                            string message = await streamReader.ReadLineAsync();
+                            var message = await streamReader.ReadLineAsync();
                             if (!message.Contains("domain")) continue;
 
                             logger.LogInformation("EventSource message received {Message}", message);
 
                             // parse message
-                            JObject jsommessage = JObject.Parse("{" + message + "}");
+                            var jsonMessage = JObject.Parse("{" + message + "}");
+                            var data = jsonMessage["data"];
+                            var msg = new Message
+                            {
+                                Domain = (string)data["domain"],
+                                Event = (string)data["event"],
+                                Identifier = (string)data["identifier"],
+                                Version = long.Parse((string)data["version"])
+                            };
 
-                            Message msg = new Message();
-                            msg.Domain = (string)jsommessage["data"]["domain"];
-                            msg.Event = (string)jsommessage["data"]["event"];
-                            msg.Identifier = (string)jsommessage["data"]["identifier"];
-                            msg.Version = long.Parse((string)jsommessage["data"]["version"]);
-
-
-                            this.callback?.Update(msg, false);
+                            callback?.Update(msg, false);
                         }
                     }
                     finally
                     {
                         Interlocked.CompareExchange(ref this.streamReader, null, streamReader);
-                        this.callback?.OnStreamDisconnected();
+                        callback?.OnStreamDisconnected();
                     }
                 }
             }
             catch (TaskCanceledException)
             {
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                logger.LogError("EventSource service throw error: {Error}. Retrying in {PollIntervalInSeconds}", e.Message, this.config.PollIntervalInSeconds);
+                logger.LogError("EventSource service throw error. Retrying in {PollIntervalInSeconds}", config.PollIntervalInSeconds);
             }
 
         }
