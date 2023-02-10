@@ -27,7 +27,7 @@ namespace io.harness.cfsdk.client.api
         private IEvaluator evaluator;
         private IMetricsProcessor metric;
         private IConnector connector;
-        private bool closed;
+        private bool _disposed;
 
         public event EventHandler InitializationCompleted;
         public event EventHandler<string> EvaluationChanged;
@@ -59,9 +59,12 @@ namespace io.harness.cfsdk.client.api
 
         public void Initialize(IConnector connector, Config config)
         {
+            ThrowIfDisposed();
+
+            if (this.connector != null) throw new CfClientException("Client already initialized.");
+
             this.connector = connector ?? throw new ArgumentNullException(nameof(connector));
-            _ = config ?? throw new ArgumentNullException(nameof(config));
-            this.logger = config.CreateLogger<InnerClient>();
+            this.logger = (config ?? throw new ArgumentNullException(nameof(config))).CreateLogger<InnerClient>();
             this.authService = new AuthService(connector, config, this);
             this.repository = new StorageRepository(config.Cache, config.Store, this, config.CreateLogger<StorageRepository>());
             this.polling = new PollingProcessor(connector, this.repository, config, this);
@@ -71,7 +74,7 @@ namespace io.harness.cfsdk.client.api
         }
         public void Start()
         {
-            if (closed) throw new CfClientException("Client is closed.");
+            ThrowIfDisposed();
 
             logger.LogInformation("Initialize authentication");
             // Start Authentication flow
@@ -79,6 +82,8 @@ namespace io.harness.cfsdk.client.api
         }
         public async Task WaitToInitialize()
         {
+            ThrowIfDisposed();
+
             var initWork = new[] {
                 this.polling.ReadyAsync()
             };
@@ -97,33 +102,33 @@ namespace io.harness.cfsdk.client.api
 
         public void OnStreamConnected()
         {
+            if (_disposed) return;
             this.polling.Stop();
         }
         public void OnStreamDisconnected()
         {
-            if (!closed)
-            {
-                this.polling.Start();
-            }
+            if (_disposed) return;
+            this.polling.Start();
         }
         #endregion
-
-
 
         #region Authentication callback
         public void OnAuthenticationSuccess()
         {
+            if (_disposed) return;
+
             // after successfull authentication, start
             polling.Start();
             update.Start();
             metric.Start();
         }
-
         #endregion
 
         #region Reauthentication callback
         public void OnReauthenticateRequested()
         {
+            if (_disposed) return;
+
             polling.Stop();
             update.Stop();
             metric.Stop();
@@ -135,16 +140,13 @@ namespace io.harness.cfsdk.client.api
         #region Poller Callback
         public void OnPollerReady()
         {
-
         }
         public void OnPollError(string message)
         {
-
         }
         #endregion
 
         #region Repository callback
-
         public void OnFlagStored(string identifier)
         {
             OnNotifyEvaluationChanged(identifier);
@@ -157,18 +159,14 @@ namespace io.harness.cfsdk.client.api
 
         public void OnSegmentStored(string identifier)
         {
-            repository.FindFlagsBySegment(identifier).ToList().ForEach(i =>
-            {
-                OnNotifyEvaluationChanged(i);
-            });
+            if (_disposed) return;
+            repository.FindFlagsBySegment(identifier).ToList().ForEach(OnNotifyEvaluationChanged);
         }
 
         public void OnSegmentDeleted(string identifier)
         {
-            repository.FindFlagsBySegment(identifier).ToList().ForEach(i =>
-            {
-                OnNotifyEvaluationChanged(i);
-            });
+            if (_disposed) return;
+            repository.FindFlagsBySegment(identifier).ToList().ForEach(OnNotifyEvaluationChanged);
         }
         #endregion
 
@@ -183,45 +181,57 @@ namespace io.harness.cfsdk.client.api
 
         public bool BoolVariation(string key, dto.Target target, bool defaultValue)
         {
+            ThrowIfDisposed();
             return evaluator.BoolVariation(key, target, defaultValue);
         }
         public string StringVariation(string key, dto.Target target, string defaultValue)
         {
+            ThrowIfDisposed();
             return evaluator.StringVariation(key, target, defaultValue);
         }
         public double NumberVariation(string key, dto.Target target, double defaultValue)
         {
+            ThrowIfDisposed();
             return evaluator.NumberVariation(key, target, defaultValue);
         }
         public JObject JsonVariation(string key, dto.Target target, JObject defaultValue)
         {
+            ThrowIfDisposed();
             return evaluator.JsonVariation(key, target, defaultValue);
-        }
-
-        public void Close()
-        {
-            closed = true;
-            this.connector.Close();
-            this.authService.Stop();
-            this.repository.Close();
-            this.polling.Stop();
-            this.update.Stop();
-            this.metric.Stop();
         }
 
         public void Dispose()
         {
-            Close();
-            this.connector.Dispose();
-            GC.SuppressFinalize(this);
+            if (!_disposed)
+            {
+                _disposed = true;
+
+                this.connector.Dispose();
+                this.authService.Stop();
+                this.repository.Close();
+                this.polling.Stop();
+                this.update.Stop();
+                this.metric.Stop();
+
+                GC.SuppressFinalize(this);
+            }
+        }
+
+        private void ThrowIfDisposed()
+        {
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(CfClient));
         }
 
         public void Update(Message message, bool manual)
         {
+            ThrowIfDisposed();
             this.update.Update(message, manual);
         }
+
         public void evaluationProcessed(FeatureConfig featureConfig, dto.Target target, Variation variation)
         {
+            if (_disposed) return;
             this.metric.PushToQueue(target, featureConfig, variation);
         }
     }

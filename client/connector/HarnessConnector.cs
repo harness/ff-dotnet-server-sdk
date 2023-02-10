@@ -32,6 +32,7 @@ namespace io.harness.cfsdk.client.connector
         private readonly IConnectionCallback callback;
         private readonly Client harnessClient;
         private readonly ILogger logger;
+        private bool _disposed;
 
         private IService currentStream;
         private readonly CancellationTokenSource cancelToken = new CancellationTokenSource();
@@ -209,19 +210,23 @@ namespace io.harness.cfsdk.client.connector
 
         public void Close()
         {
-            this.cancelToken?.Cancel();
-            this.currentStream?.Close();
+            Dispose();
         }
 
         public void Dispose()
         {
-            this.Close();
+            if (!_disposed)
+            {
+                _disposed = true;
 
-            this.cancelToken?.Dispose();
-            this.apiHttpClient?.Dispose();
-            this.metricHttpClient?.Dispose();
-            this.sseHttpClient?.Dispose();
-            GC.SuppressFinalize(this);
+                this.cancelToken.Dispose();
+                this.currentStream?.Close();
+                this.apiHttpClient.Dispose();
+                this.metricHttpClient.Dispose();
+                this.sseHttpClient.Dispose();
+
+                GC.SuppressFinalize(this);
+            }
         }
     }
 }

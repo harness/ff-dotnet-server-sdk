@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -40,11 +40,11 @@ namespace io.harness.cfsdk.client.connector
 
         public void Close()
         {
+            Dispose();
         }
 
         public void Dispose()
         {
-            Close();
             GC.SuppressFinalize(this);
         }
 
