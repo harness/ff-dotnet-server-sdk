@@ -40,10 +40,21 @@ namespace io.harness.cfsdk.client.connector
 
         public void Stop()
         {
-            var streamReader = Interlocked.Exchange(ref this.streamReader, null);
-            if (streamReader != null)
+            // `this.streamReader` is owned by the `StartStreaming` function
+            // which is running in a separate thread. Beware race conditions!
+            var strmReader = Interlocked.Exchange(ref this.streamReader, null);
+            if (strmReader != null)
             {
-                streamReader.Dispose();
+                // Just close the reader. This will cause `StartStreaming`
+                // to terminate and dispose the stream.
+                try
+                {
+                    strmReader.Close();
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Fine
+                }
             }
         }
 
@@ -52,18 +63,23 @@ namespace io.harness.cfsdk.client.connector
             try
             {
                 logger.LogInformation("Starting EventSource service.");
-                using (var streamReader = new StreamReader(await this.httpClient.GetStreamAsync(url)))
+                using (var strmReader = new StreamReader(await this.httpClient.GetStreamAsync(url)))
                 {
-                    if (Interlocked.CompareExchange(ref this.streamReader, streamReader, null) != null)
+                    // Set `this.streamReader` IIF it is currently null...
+                    if (Interlocked.CompareExchange(ref this.streamReader, strmReader, null) != null)
+                    {
+                        // `this.streamReader` is not null, meaning there is another stream reader.
+                        // This can happen if Start() is called twice very quickly.
                         return;
-
-                    callback?.OnStreamConnected();
+                    }
 
                     try
                     {
-                        while (!streamReader.EndOfStream)
+                        callback?.OnStreamConnected();
+
+                        while (!strmReader.EndOfStream)
                         {
-                            var message = await streamReader.ReadLineAsync();
+                            var message = await strmReader.ReadLineAsync();
                             if (!message.Contains("domain")) continue;
 
                             logger.LogInformation("EventSource message received {Message}", message);
@@ -82,21 +98,23 @@ namespace io.harness.cfsdk.client.connector
                             callback?.Update(msg, false);
                         }
                     }
+                    catch (ObjectDisposedException)
+                    {
+                        // Stream was closed/disposed, probably via `Stop`.
+                    }
                     finally
                     {
-                        Interlocked.CompareExchange(ref this.streamReader, null, streamReader);
+                        // Clear `this.streamReader` IIF it contains _our_ `strmReader`.
+                        Interlocked.CompareExchange(ref this.streamReader, null, strmReader);
+
                         callback?.OnStreamDisconnected();
                     }
                 }
-            }
-            catch (TaskCanceledException)
-            {
             }
             catch (Exception)
             {
                 logger.LogError("EventSource service throw error. Retrying in {PollIntervalInSeconds}", config.PollIntervalInSeconds);
             }
-
         }
     }
 }
