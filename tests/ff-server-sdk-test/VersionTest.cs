@@ -10,6 +10,7 @@ using NUnit.Framework;
 
 namespace ff_server_sdk_test
 {
+    [Timeout(100)]
     public class VersionTest
     {
         ICfClient client;
@@ -54,13 +55,13 @@ namespace ff_server_sdk_test
             return fileMapStore.Get("segments_test_segment_identifier", typeof(Segment)) as Segment;
         }
 
-        [Test, Category("Version Testing")]
+        [Test, Category("Version Testing"), Timeout(5000)]
         public void TestVersionProperty()
         {
 
             // 1. Version from cache/storage should be the same as on "server"
 
-            Thread.Sleep(500);
+            Thread.Sleep(100);
 
             Segment storedSegment = GetSegment();
 
@@ -74,7 +75,7 @@ namespace ff_server_sdk_test
 
             SaveSegment(remoteSegment);
 
-            Thread.Sleep(500);
+            Thread.Sleep(100);
 
             storedSegment = GetSegment();
 
@@ -89,7 +90,7 @@ namespace ff_server_sdk_test
 
             SaveSegment(remoteSegment);
 
-            Thread.Sleep(500);
+            Thread.Sleep(100);
 
             storedSegment = GetSegment();
 
@@ -104,7 +105,7 @@ namespace ff_server_sdk_test
 
             SaveSegment(remoteSegment);
 
-            Thread.Sleep(500);
+            Thread.Sleep(100);
 
             storedSegment = GetSegment();
 

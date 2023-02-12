@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using io.harness.cfsdk.client.connector;
-using io.harness.cfsdk.HarnessOpenAPIService;
 using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.api

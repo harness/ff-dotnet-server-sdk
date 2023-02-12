@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using io.harness.cfsdk.client.api;
 using io.harness.cfsdk.client.connector;
@@ -9,35 +10,46 @@ namespace ff_server_sdk_test
 {
     internal class FakeAuth : IAuthCallback
     {
+        private SemaphoreSlim doneEvent = new SemaphoreSlim(0);
+
+        public async Task<bool> WaitForSuccess(int timeout)
+        {
+            return await doneEvent.WaitAsync(timeout);
+        }
+
         public void OnAuthenticationSuccess()
         {
-
+            doneEvent.Release();
         }
     }
-    [TestFixture]
+
+    [TestFixture, Timeout(100), Parallelizable()]
     public class InnerClient
     {
-        [Test]
+        [Test, Timeout(1000)]
         public async Task shouldOnlyAuthenticateOnceIfSuccessful()
         {
-            // Assert
+            // Arrange
+            var callback = new FakeAuth();
             var mockConnector = new Mock<IConnector>();
             mockConnector
                 .Setup(a => a.Authenticate())
                 .ReturnsAsync("Done");
+
             // Act
-            var a = new AuthService(mockConnector.Object, new Config { PollIntervalInMiliSeconds = 1000 }, new FakeAuth());
+            var a = new AuthService(mockConnector.Object, new Config { PollIntervalInMiliSeconds = 50 }, callback);
             a.Start();
 
-            // Verify
-            await Task.Delay(3000);
+            // Assert
+            Assert.IsTrue(await callback.WaitForSuccess(1000));
             mockConnector.Verify(it => it.Authenticate(), Times.Exactly(1));
         }
 
-        [Test]
+        [Test, Timeout(1000)]
         public async Task shouldOnlyAuthenticateThreeTimesUntilSuccessful()
         {
             // Assert
+            var callback = new FakeAuth();
             var mockConnector = new Mock<IConnector>();
             mockConnector
                 .SetupSequence(a => a.Authenticate())
@@ -46,18 +58,19 @@ namespace ff_server_sdk_test
                 .ReturnsAsync("DONE");
 
             // Act
-            var a = new AuthService(mockConnector.Object, new Config { PollIntervalInMiliSeconds = 1000 }, new FakeAuth());
+            var a = new AuthService(mockConnector.Object, new Config { PollIntervalInMiliSeconds = 50 }, callback);
             a.Start();
 
             // Verify
-            await Task.Delay(5000);
+            Assert.IsTrue(await callback.WaitForSuccess(1000));
             mockConnector.Verify(it => it.Authenticate(), Times.Exactly(3));
         }
 
-        [Test]
+        [Test, Timeout(1000)]
         public async Task shouldFailToAuthenticateWhenMaxRetriesReached()
         {
             // Assert
+            var callback = new FakeAuth();
             var mockConnector = new Mock<IConnector>();
             mockConnector
                 .SetupSequence(a => a.Authenticate())
@@ -66,11 +79,11 @@ namespace ff_server_sdk_test
                 .ReturnsAsync("DONE");
 
             // Act
-            var a = new AuthService(mockConnector.Object, new Config { PollIntervalInMiliSeconds = 1000, MaxAuthRetries = 1 }, new FakeAuth());
+            var a = new AuthService(mockConnector.Object, new Config { PollIntervalInMiliSeconds = 50, MaxAuthRetries = 1 }, callback);
             a.Start();
 
             // Verify
-            await Task.Delay(5000);
+            Assert.IsFalse(await callback.WaitForSuccess(200));
             mockConnector.Verify(it => it.Authenticate(), Times.Exactly(2));
         }
     }

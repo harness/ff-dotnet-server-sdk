@@ -13,7 +13,7 @@ using Client = io.harness.cfsdk.HarnessOpenAPIService.Client;
 
 namespace ff_server_sdk_test
 {
-    [TestFixture]
+    [TestFixture, Timeout(100), Parallelizable()]
     public class HarnessConnectorTest
     {
 
@@ -61,7 +61,7 @@ namespace ff_server_sdk_test
             mockCallback.Verify(it => it.OnReauthenticateRequested());
         }
 
-        [Test]
+        [Test, Timeout(1000)]
         public async Task ShouldNotReAuthWhenGetFlagReturns400()
         {
             //Arrange

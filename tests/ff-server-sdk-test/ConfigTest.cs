@@ -7,6 +7,7 @@ using NUnit.Framework;
 
 namespace ff_server_sdk_test
 {
+    [Timeout(100), Parallelizable()]
     public class ConfigTests
     {
         [Test]

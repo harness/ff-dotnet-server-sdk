@@ -38,7 +38,7 @@ namespace ff_server_sdk_test
 
 
 
-    [TestFixture]
+    [TestFixture, Timeout(100)]
     public class EvaluatorTest
     {
         private static IRepository repository;
@@ -173,11 +173,11 @@ namespace ff_server_sdk_test
                     break;
             }
 
-            Debug.Print("    TEST : {0}", testName);
-            Debug.Print("    FLAG : {0}", featureFlag);
-            Debug.Print("  TARGET : {0} ", targetIdentifier ?? "(none)");
-            Debug.Print("EXPECTED : {0} ({1})", expected, expected.GetType().Name);
-            Debug.Print("     GOT : {0} ({1})", got.ToString().Replace("\n", ""), got.GetType().Name);
+            // Debug.Print("    TEST : {0}", testName);
+            // Debug.Print("    FLAG : {0}", featureFlag);
+            // Debug.Print("  TARGET : {0} ", targetIdentifier ?? "(none)");
+            // Debug.Print("EXPECTED : {0} ({1})", expected, expected.GetType().Name);
+            // Debug.Print("     GOT : {0} ({1})", got.ToString().Replace("\n", ""), got.GetType().Name);
 
             if (kind == FeatureConfigKind.Json)
             {
