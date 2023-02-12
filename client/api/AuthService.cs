@@ -65,7 +65,7 @@ namespace io.harness.cfsdk.client.api
                 }
                 else
                 {
-                    logger.LogError("Exception while authenticating, retry ({Retries}) in {PollIntervalInSeconds}", retries, config.PollIntervalInSeconds);
+                    logger.LogError("Exception while authenticating, retry ({Retries}) in {PollInterval}msec", retries, config.PollIntervalInMiliSeconds);
                 }
             }
         }

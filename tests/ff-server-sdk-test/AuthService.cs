@@ -26,7 +26,7 @@ namespace ff_server_sdk_test
                 .Setup(a => a.Authenticate())
                 .ReturnsAsync("Done");
             // Act
-            var a = new AuthService(mockConnector.Object, new Config { PollIntervalInSeconds = 1 }, new FakeAuth());
+            var a = new AuthService(mockConnector.Object, new Config { PollIntervalInMiliSeconds = 1000 }, new FakeAuth());
             a.Start();
 
             // Verify
@@ -46,7 +46,7 @@ namespace ff_server_sdk_test
                 .ReturnsAsync("DONE");
 
             // Act
-            var a = new AuthService(mockConnector.Object, new Config { PollIntervalInSeconds = 1 }, new FakeAuth());
+            var a = new AuthService(mockConnector.Object, new Config { PollIntervalInMiliSeconds = 1000 }, new FakeAuth());
             a.Start();
 
             // Verify
@@ -66,7 +66,7 @@ namespace ff_server_sdk_test
                 .ReturnsAsync("DONE");
 
             // Act
-            var a = new AuthService(mockConnector.Object, new Config { PollIntervalInSeconds = 1, MaxAuthRetries = 1 }, new FakeAuth());
+            var a = new AuthService(mockConnector.Object, new Config { PollIntervalInMiliSeconds = 1000, MaxAuthRetries = 1 }, new FakeAuth());
             a.Start();
 
             // Verify

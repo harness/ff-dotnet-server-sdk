@@ -95,7 +95,7 @@ namespace io.harness.cfsdk.client.api
         // force message
         public void Update(Message msg) { client.Update(msg, true); }
 
-        public void Close() { client.Close(); }
+        public void Close() { Dispose(); }
 
         public void Dispose()
         {

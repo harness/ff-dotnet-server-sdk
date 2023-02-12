@@ -69,7 +69,7 @@ namespace io.harness.cfsdk.client.api
 
         public void Start()
         {
-            logger.LogInformation("Starting PollingProcessor with request interval: {PollIntervalInSeconds}", config.PollIntervalInSeconds);
+            logger.LogInformation("Starting PollingProcessor with request interval: {PollInterval}msec", config.PollIntervalInMiliSeconds);
             // start timer which will initiate periodic reading of flags and segments
             pollTimer = new Timer(OnTimedEventAsync, null, 0, config.PollIntervalInMiliSeconds);
         }
@@ -134,7 +134,7 @@ namespace io.harness.cfsdk.client.api
             }
             catch (Exception ex)
             {
-                logger.LogInformation("Polling will retry in {PollIntervalInSeconds}", config.PollIntervalInSeconds);
+                logger.LogInformation("Polling will retry in {PollInterval}msec", config.PollIntervalInMiliSeconds);
                 callback?.OnPollError(ex.Message);
             }
         }

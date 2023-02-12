@@ -113,7 +113,7 @@ namespace io.harness.cfsdk.client.connector
             }
             catch (Exception)
             {
-                logger.LogError("EventSource service throw error. Retrying in {PollIntervalInSeconds}", config.PollIntervalInSeconds);
+                logger.LogError("EventSource service throw error. Retrying in {PollInterval}msec", config.PollIntervalInMiliSeconds);
             }
         }
     }

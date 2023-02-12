@@ -12,8 +12,8 @@ namespace io.harness.cfsdk.client.api
         public string EventUrl { get; internal set; } = "https://events.ff.harness.io/api/1.0";
         public bool StreamEnabled { get; internal set; } = true;
 
-        public int PollIntervalInSeconds { get; internal set; } = 60;
-        public int PollIntervalInMiliSeconds => PollIntervalInSeconds * 1000;
+        public int PollIntervalInMiliSeconds { get; internal set; } = 60000;
+        public int PollIntervalInSeconds => PollIntervalInMiliSeconds / 1000;
 
         public int MaxAuthRetries { get; internal set; } = 10;
 
@@ -66,7 +66,7 @@ namespace io.harness.cfsdk.client.api
             this.ConfigUrl = configUrl;
             this.EventUrl = eventUrl;
             this.StreamEnabled = streamEnabled;
-            this.PollIntervalInSeconds = pollIntervalInSeconds;
+            this.PollIntervalInMiliSeconds = pollIntervalInSeconds * 1000;
             this.AnalyticsEnabled = analyticsEnabled;
             this.frequency = frequency;
             this.BufferSize = bufferSize;
@@ -103,7 +103,7 @@ namespace io.harness.cfsdk.client.api
 
         public ConfigBuilder SetPollingInterval(int pollIntervalInSeconds)
         {
-            this.configtobuild.PollIntervalInSeconds = pollIntervalInSeconds;
+            this.configtobuild.PollIntervalInMiliSeconds = pollIntervalInSeconds * 1000;
             return this;
         }
         public ConfigBuilder SetCache(ICache cache)

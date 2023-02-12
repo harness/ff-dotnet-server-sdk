@@ -77,7 +77,7 @@ namespace io.harness.cfsdk.client.api
 
         private async Task StartAfterInterval()
         {
-            await Task.Delay(TimeSpan.FromSeconds(this.config.PollIntervalInSeconds));
+            await Task.Delay(TimeSpan.FromMilliseconds(this.config.PollIntervalInMiliSeconds));
             Start();
         }
         public void OnStreamDisconnected()
