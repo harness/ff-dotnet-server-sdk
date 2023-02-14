@@ -85,10 +85,12 @@ namespace io.harness.cfsdk.client.api
 
         public void OnStreamConnected()
         {
+            Log.Debug("Stream connected");
             this.polling.Stop();
         }
         public void OnStreamDisconnected()
         {
+            Log.Debug("Stream disconnected");
             this.polling.Start();
         }
         #endregion

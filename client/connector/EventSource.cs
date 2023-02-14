@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
-using System.Net.Http.Headers;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using io.harness.cfsdk.client.api;
@@ -17,7 +17,7 @@ namespace io.harness.cfsdk.client.connector
         private readonly Config config;
         private readonly HttpClient httpClient;
         private readonly IUpdateCallback callback;
-        private StreamReader streamReader;
+        private const int ReadTimeoutMs = 60_000;
 
         public EventSource(HttpClient httpClient, string url, Config config, IUpdateCallback callback)
         {
@@ -39,29 +39,49 @@ namespace io.harness.cfsdk.client.connector
 
         public void Stop()
         {
-            if (streamReader != null)
-            { 
-                streamReader.Close();
-                streamReader.Dispose();
-                streamReader = null;
-            }
-
             Log.Information("Stopping EventSource service.");
+        }
+
+        private string ReadLine(Stream stream, int timeoutMs)
+        {
+            using (var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMilliseconds(timeoutMs)))
+            using (cancellationTokenSource.Token.Register(stream.Dispose))
+            {
+                StringBuilder builder = new StringBuilder();
+                int next;
+                do
+                {
+                    next = stream.ReadByte();
+                    if (next == -1)
+                    {
+                        return null;
+                    }
+
+                    builder.Append((char)next);
+                } while (next != 10);
+
+                return builder.ToString();
+            }
         }
 
         private async Task StartStreaming()
         {
             try
             {
+
                 Log.Information("Starting EventSource service.");
-                using (streamReader = new StreamReader(await this.httpClient.GetStreamAsync(url)))
+                using (Stream stream = await this.httpClient.GetStreamAsync(url))
                 {
                     callback.OnStreamConnected();
 
-                    while (!streamReader.EndOfStream)
+                    string message;
+                    while ((message = ReadLine(stream, ReadTimeoutMs)) != null)
                     {
-                        var message = await streamReader.ReadLineAsync();
-                        if (!message.Contains("domain")) continue;
+                        if (!message.Contains("domain"))
+                        {
+                            Log.Verbose("Received event source heartbeat");
+                            continue;
+                        }
 
                         Log.Information($"EventSource message received {message}");
 
@@ -80,9 +100,10 @@ namespace io.harness.cfsdk.client.connector
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                Log.Error($"EventSource service throw error. Retrying in {config.pollIntervalInSeconds}");
+                Log.Error($"EventSource service threw an error: {e.Message} Retrying in {config.pollIntervalInSeconds}", e);
+                Debug.WriteLine(e.ToString());
             }
             finally
             {

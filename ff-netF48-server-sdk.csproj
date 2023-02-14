@@ -5,11 +5,11 @@
     <PackageId>ff-dotnet-server-sdk</PackageId>
     <RootNamespace>io.harness.cfsdk</RootNamespace>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <Version>1.1.6</Version>
+    <Version>1.1.7</Version>
     <PackOnBuild>true</PackOnBuild>
-    <PackageVersion>1.1.6</PackageVersion>
+    <PackageVersion>1.1.7</PackageVersion>
     <Authors>support@harness.io</Authors>
-    <Copyright>Copyright © 2022 </Copyright>
+    <Copyright>Copyright © 2023 </Copyright>
     <PackageIconUrl>https://harness.io/icon-ff.svg</PackageIconUrl>
     <PackageLicenseUrl>https://github.com/drone/ff-dotnet-server-sdk/blob/main/LICENSE</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
