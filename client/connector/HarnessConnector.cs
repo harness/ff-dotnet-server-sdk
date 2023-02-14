@@ -56,7 +56,7 @@ namespace io.harness.cfsdk.client.connector
             client.BaseAddress = new Uri(config.ConfigUrl.EndsWith("/") ? config.ConfigUrl : config.ConfigUrl + "/" );
             client.DefaultRequestHeaders.Add("API-Key", apiKey);
             client.DefaultRequestHeaders.Add("Accept", "text /event-stream");
-            client.Timeout = Timeout.InfiniteTimeSpan;
+            client.Timeout = TimeSpan.FromMinutes(1);
             return client;
         }
         
