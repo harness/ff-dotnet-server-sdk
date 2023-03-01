@@ -10,6 +10,7 @@ namespace io.harness.cfsdk.client.connector
         private readonly string domain;
         private readonly string path;
         private readonly IUpdateCallback callback;
+        private ILogger loggerWithContext;
 
         private FileSystemWatcher watcher;
 
@@ -18,6 +19,7 @@ namespace io.harness.cfsdk.client.connector
             this.domain = domain;
             this.callback = callback;
             this.path = path;
+            loggerWithContext = Log.ForContext<FileWatcher>();
         }
 
         private void Watcher_Deleted(object sender, FileSystemEventArgs e)
@@ -62,7 +64,7 @@ namespace io.harness.cfsdk.client.connector
             }
             catch(Exception ex)
             {
-                Log.Error($"Error creating fileWatcher at {path}", ex);
+                loggerWithContext.Error($"Error creating fileWatcher at {path}", ex);
             }
         }
 

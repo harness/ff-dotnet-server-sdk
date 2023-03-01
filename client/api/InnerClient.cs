@@ -26,6 +26,7 @@ namespace io.harness.cfsdk.client.api
         private IEvaluator evaluator;
         private IMetricsProcessor metric;
         private IConnector connector;
+        private ILogger loggerWithContext;
 
         public event EventHandler InitializationCompleted;
         public event EventHandler<string> EvaluationChanged;
@@ -33,15 +34,22 @@ namespace io.harness.cfsdk.client.api
         private CfClient parent;
         public InnerClient(CfClient parent) { this.parent = parent; }
         public InnerClient(string apiKey, Config config, CfClient parent)
+            : this()
         {
             this.parent = parent;
             Initialize(apiKey, config);
         }
 
         public InnerClient(IConnector connector, Config config, CfClient parent)
+            : this()
         {
             this.parent = parent;
             Initialize(connector, config);
+        }
+
+        private InnerClient()
+        {
+            loggerWithContext = Log.ForContext<InnerClient>();
         }
 
         public void Initialize(string apiKey, Config config)
@@ -61,7 +69,7 @@ namespace io.harness.cfsdk.client.api
         }
         public void Start()
         {
-            Log.Information("Initialize authentication");
+            loggerWithContext.Information("Initialize authentication");
             // Start Authentication flow
             this.authService.Start();
         }
@@ -85,12 +93,12 @@ namespace io.harness.cfsdk.client.api
 
         public void OnStreamConnected()
         {
-            Log.Debug("Stream connected");
+            loggerWithContext.Debug("Stream connected");
             this.polling.Stop();
         }
         public void OnStreamDisconnected()
         {
-            Log.Debug("Stream disconnected");
+            loggerWithContext.Debug("Stream disconnected");
             this.polling.Start();
         }
         #endregion

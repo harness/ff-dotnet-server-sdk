@@ -22,11 +22,13 @@ namespace io.harness.cfsdk.HarnessOpenMetricsAPIService
         private string _baseUrl = "/api/1.0";
         private System.Net.Http.HttpClient _httpClient;
         private System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings;
-    
+        private ILogger _loggerWithContext;
+
         public Client(System.Net.Http.HttpClient httpClient)
         {
             _httpClient = httpClient;
             _settings = new System.Lazy<Newtonsoft.Json.JsonSerializerSettings>(CreateSerializerSettings);
+            _loggerWithContext = Log.ForContext<Client>();
         }
     
         private Newtonsoft.Json.JsonSerializerSettings CreateSerializerSettings()
@@ -108,8 +110,8 @@ namespace io.harness.cfsdk.HarnessOpenMetricsAPIService
     
                         var status_ = (int)response_.StatusCode;
 
-                        Log.Information("API call, url: " + url_);
-                        Log.Information("API call, status: " + status_);
+                        _loggerWithContext.Information("API call, url: " + url_);
+                        _loggerWithContext.Information("API call, status: " + status_);
 
                         if (status_ == 200)
                         {

@@ -35,6 +35,7 @@ namespace io.harness.cfsdk.client.connector
 
         private IService currentStream;
         private CancellationTokenSource cancelToken = new CancellationTokenSource();
+        private ILogger loggerWithContext;
 
         private static HttpClient ApiHttpClient(Config config)
         {
@@ -100,6 +101,7 @@ namespace io.harness.cfsdk.client.connector
             this.metricHttpClient = metricHttpClient;
             this.sseHttpClient = sseHttpClient;
             this.harnessClient = harnessClient;
+            loggerWithContext = Log.ForContext<HarnessConnector>();
         }
 
         private async Task<T> ReauthenticateIfNeeded<T>(Func<Task<T>> task)
@@ -112,7 +114,7 @@ namespace io.harness.cfsdk.client.connector
             {
                 if (ex.StatusCode == (int)HttpStatusCode.Forbidden)
                 {
-                    Log.Error("Initiate reauthentication");
+                    loggerWithContext.Error("Initiate reauthentication");
                     callback.OnReauthenticateRequested();
                 }
                 throw new CfClientException(ex.Message);
@@ -159,7 +161,7 @@ namespace io.harness.cfsdk.client.connector
                 var endTime = DateTime.Now;
                 if ((endTime - startTime).TotalMilliseconds > config.MetricsServiceAcceptableDuration)
                 {
-                    Log.Warning($"Metrics service API duration=[{endTime - startTime}]");
+                    loggerWithContext.Warning($"Metrics service API duration=[{endTime - startTime}]");
                 }
 
                 return null;
@@ -193,11 +195,11 @@ namespace io.harness.cfsdk.client.connector
             }
             catch (ApiException ex)
             {
-                Log.Error($"Failed to get auth token {ex.Message}");
+                loggerWithContext.Error($"Failed to get auth token {ex.Message}");
                 if (ex.StatusCode == (int)HttpStatusCode.Unauthorized || ex.StatusCode == (int)HttpStatusCode.Forbidden)
                 {
                     var errorMsg = $"Invalid apiKey {apiKey}. Serving default value.";
-                    Log.Error(errorMsg);
+                    loggerWithContext.Error(errorMsg);
                     throw new CfClientException(errorMsg);
                 }
                 throw new CfClientException(ex.Message);

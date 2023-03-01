@@ -48,6 +48,7 @@ namespace io.harness.cfsdk.client.api
         private IPollCallback callback;
         private Timer pollTimer;
         private Config config;
+        private ILogger loggerWithContext;
         private bool isInitialized = false;
         private SemaphoreSlim readyEvent;
 
@@ -57,6 +58,7 @@ namespace io.harness.cfsdk.client.api
             this.repository = repository;
             this.connector = connector;
             this.config = config;
+            loggerWithContext = Log.ForContext<PollingProcessor>();
             this.readyEvent = new SemaphoreSlim(0, 3);
         }
         public async Task<bool> ReadyAsync()
@@ -67,13 +69,13 @@ namespace io.harness.cfsdk.client.api
 
         public void Start()
         {
-            Log.Information($"Starting PollingProcessor with request interval: {config.pollIntervalInSeconds}");
+            loggerWithContext.Information($"Starting PollingProcessor with request interval: {config.pollIntervalInSeconds}");
             // start timer which will initiate periodic reading of flags and segments
             pollTimer = new Timer(OnTimedEventAsync, null, 0, config.PollIntervalInMiliSeconds);
         }
         public void Stop()
         {
-            Log.Information("Stopping PollingProcessor");
+            loggerWithContext.Information("Stopping PollingProcessor");
             // stop timer
             if (pollTimer == null) return;
             pollTimer.Dispose();
@@ -84,9 +86,9 @@ namespace io.harness.cfsdk.client.api
         {
             try
             {
-                Log.Debug("Fetching flags started");
+                loggerWithContext.Debug("Fetching flags started");
                 var flags = await this.connector.GetFlags();
-                Log.Debug("Fetching flags finished");
+                loggerWithContext.Debug("Fetching flags finished");
                 foreach (var item in flags)
                 {
                     repository.SetFlag(item.Feature, item);
@@ -95,7 +97,7 @@ namespace io.harness.cfsdk.client.api
             }
             catch (CfClientException ex)
             {
-                Log.Error($"Exception was raised when fetching flags data with the message {ex.Message}");
+                loggerWithContext.Error($"Exception was raised when fetching flags data with the message {ex.Message}");
                 throw;
             }
         }
@@ -103,9 +105,9 @@ namespace io.harness.cfsdk.client.api
         {
             try
             {
-                Log.Debug("Fetching segments started");
+                loggerWithContext.Debug("Fetching segments started");
                 IEnumerable<Segment> segments = await connector.GetSegments();
-                Log.Debug("Fetching segments finished");
+                loggerWithContext.Debug("Fetching segments finished");
                 foreach (Segment item in segments)
                 {
                     repository.SetSegment(item.Identifier, item);
@@ -113,7 +115,7 @@ namespace io.harness.cfsdk.client.api
             }
             catch (CfClientException ex)
             {
-                Log.Error($"Exception was raised when fetching segments data with the message {ex.Message}");
+                loggerWithContext.Error($"Exception was raised when fetching segments data with the message {ex.Message}");
                 throw;
             }
         }
@@ -121,7 +123,7 @@ namespace io.harness.cfsdk.client.api
         {
             try
             {
-                Log.Debug("Running polling iteration");
+                loggerWithContext.Debug("Running polling iteration");
                 await Task.WhenAll(new List<Task> { ProcessFlags(), ProcessSegments() });
 
                 if (isInitialized) return;
@@ -129,9 +131,9 @@ namespace io.harness.cfsdk.client.api
                 callback.OnPollerReady();
                 readyEvent.Release();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                Log.Information($"Polling will retry in {config.pollIntervalInSeconds}");
+                loggerWithContext.Information($"Polling will retry in {config.pollIntervalInSeconds}");
                 callback.OnPollError(ex.Message);
             }
         }

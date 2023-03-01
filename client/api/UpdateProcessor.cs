@@ -32,6 +32,7 @@ namespace io.harness.cfsdk.client.api
 
         private IService service;
         private Config config;
+        private ILogger loggerWithContext;
 
         public UpdateProcessor(IConnector connector, IRepository repository, Config config, IUpdateCallback callback)
         {
@@ -39,6 +40,7 @@ namespace io.harness.cfsdk.client.api
             this.repository = repository;
             this.connector = connector;
             this.config = config;
+            loggerWithContext = Log.ForContext<UpdateProcessor>();
         }
 
         public void Start()
@@ -60,9 +62,9 @@ namespace io.harness.cfsdk.client.api
 
         public void Update(Message message, bool manual)
         {
-            if( manual && this.config.StreamEnabled)
+            if (manual && this.config.StreamEnabled)
             {
-                Log.Information("You run the update method manually with the stream enabled. Please turn off the stream in this case.");
+                loggerWithContext.Information("You run the update method manually with the stream enabled. Please turn off the stream in this case.");
             }
             //we got a message from server. Dispatch in separate thread.
             _ = ProcessMessage(message);
@@ -99,9 +101,9 @@ namespace io.harness.cfsdk.client.api
                         this.repository.SetFlag(message.Identifier, feature);
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
-                    Log.Error($"Error processing flag: {message.Identifier} event: {message.Event}.", ex);
+                    loggerWithContext.Error($"Error processing flag: {message.Identifier} event: {message.Event}.", ex);
                 }
             }
             else if (message.Domain.Equals("target-segment"))
@@ -118,9 +120,9 @@ namespace io.harness.cfsdk.client.api
                         this.repository.SetSegment(message.Identifier, segment);
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
-                    Log.Error($"Error processing segment: {message.Identifier} event: {message.Event}.", ex);
+                    loggerWithContext.Error($"Error processing segment: {message.Identifier} event: {message.Event}.", ex);
                 }
             }
         }

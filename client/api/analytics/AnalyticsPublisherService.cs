@@ -30,17 +30,19 @@ namespace io.harness.cfsdk.client.api.analytics
 
         private AnalyticsCache analyticsCache;
         private IConnector connector;
+        private ILogger loggerWithContext;
 
 
         public AnalyticsPublisherService(IConnector connector, AnalyticsCache analyticsCache)
         {
             this.analyticsCache = analyticsCache;
             this.connector = connector;
+            loggerWithContext = Log.ForContext<AnalyticsPublisherService>();
         }
 
         public void sendDataAndResetCache()
         {
-            Log.Information("Reading from queue and building cache, SDL version: " + sdkVersion);
+            loggerWithContext.Information("Reading from queue and building cache, SDL version: " + sdkVersion);
 
             IDictionary<Analytics, int> all = analyticsCache.GetAllElements();
 
@@ -52,20 +54,20 @@ namespace io.harness.cfsdk.client.api.analytics
                     if ((metrics.MetricsData != null && metrics.MetricsData.Count >0)
                         || (metrics.TargetData != null && metrics.TargetData.Count > 0))
                     {
-                        Log.Debug("Sending analytics data :{@a}", metrics);
+                        loggerWithContext.Debug("Sending analytics data :{@a}", metrics);
                         connector.PostMetrics(metrics);
                     }
 
                     stagingTargetSet.ToList().ForEach(element => globalTargetSet.Add(element));
                     stagingTargetSet.Clear();
-                    Log.Information("Successfully sent analytics data to the server");
+                    loggerWithContext.Information("Successfully sent analytics data to the server");
                     analyticsCache.resetCache();
                 }
                 catch (CfClientException ex)
                 {
                     // Clear the set because the cache is only invalidated when there is no
                     // exception, so the targets will reappear in the next iteration
-                    Log.Error("Failed to send metricsData {@e}", ex);
+                    loggerWithContext.Error("Failed to send metricsData {@e}", ex);
                 }
             }
         }

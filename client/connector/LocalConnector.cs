@@ -17,6 +17,8 @@ namespace io.harness.cfsdk.client.connector
         private string segmentPath;
         private string metricPath;
         private string source;
+        private ILogger loggerWithContext;
+
         public LocalConnector(string source)
         {
             this.source = source;
@@ -24,6 +26,7 @@ namespace io.harness.cfsdk.client.connector
             this.flagPath = Path.Combine(source, "flags");
             this.segmentPath = Path.Combine(source, "segments");
             this.metricPath = Path.Combine(source, "metrics");
+            loggerWithContext = Log.ForContext<LocalConnector>();
 
             Directory.CreateDirectory(this.flagPath);
             Directory.CreateDirectory(this.segmentPath);
@@ -61,7 +64,7 @@ namespace io.harness.cfsdk.client.connector
             }
             catch (Exception ex)
             {
-                Log.Error("Error accessing feature files.", ex);
+                loggerWithContext.Error("Error accessing feature files.", ex);
             }
             return Task.FromResult((IEnumerable<FeatureConfig>)features);
         }
@@ -84,7 +87,7 @@ namespace io.harness.cfsdk.client.connector
             }
             catch(Exception ex)
             {
-                Log.Error("Error accessing segment files.", ex);
+                loggerWithContext.Error("Error accessing segment files.", ex);
             }
             return Task.FromResult((IEnumerable<Segment>)segments);
         }

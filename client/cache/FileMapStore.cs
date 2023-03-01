@@ -12,9 +12,12 @@ namespace io.harness.cfsdk.client.api
     public class FileMapStore : IStore
     {
         private string storeName;
+        private ILogger loggerWithContext;
+
         public FileMapStore(string name)
         {
             storeName = name;
+            loggerWithContext = Log.ForContext<FileMapStore>();
             Directory.CreateDirectory(name);
             Array.ForEach(Directory.EnumerateFiles(name).ToArray(), f => File.Delete(f));
         }
@@ -43,7 +46,7 @@ namespace io.harness.cfsdk.client.api
             }
             catch( Exception ex)
             {
-                Log.Error("Failure to deserialize data from file storage", ex);
+                loggerWithContext.Error("Failure to deserialize data from file storage", ex);
                 return null;
             }
         }

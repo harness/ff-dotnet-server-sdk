@@ -28,10 +28,13 @@ namespace io.harness.cfsdk.client.api
     {
         private IRepository repository;
         private IEvaluatorCallback callback;
+        private ILogger loggerWithContext;
+
         public Evaluator(IRepository repository, IEvaluatorCallback callback)
         {
             this.repository = repository;
             this.callback = callback;
+            loggerWithContext = Log.ForContext<Evaluator>();
         }
         private Variation EvaluateVariation(string key, dto.Target target, FeatureConfigKind kind)
         {
@@ -217,14 +220,14 @@ namespace io.harness.cfsdk.client.api
                     // check exclude list
                     if (segment.Excluded != null && segment.Excluded.Any(t => t.Identifier.Equals(target.Identifier)))
                     {
-                        Log.Debug($"Target {target.Name} excluded from segment {segment.Name} via exclude list");
+                        loggerWithContext.Debug($"Target {target.Name} excluded from segment {segment.Name} via exclude list");
                         return false;
                     }
 
                     // check include list
                     if (segment.Included != null && segment.Included.Any(t => t.Identifier.Equals(target.Identifier)))
                     {
-                        Log.Debug($"Target {target.Name} included in segment {segment.Name} via include list");
+                        loggerWithContext.Debug($"Target {target.Name} included in segment {segment.Name} via include list");
                         return true;
                     }
 

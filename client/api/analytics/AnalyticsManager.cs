@@ -29,11 +29,14 @@ namespace io.harness.cfsdk.client.api.analytics
         private AnalyticsPublisherService analyticsPublisherService;
         private IMetricCallback callback;
         private Config config;
+        private ILogger loggerWithContext;
+
         public MetricsProcessor(IConnector connector, Config config, IMetricCallback callback)
         {
             this.analyticsCache = new AnalyticsCache();
             this.callback = callback;
             this.config = config;
+            loggerWithContext = Log.ForContext<MetricsProcessor>();
             this.analyticsPublisherService = new AnalyticsPublisherService(connector, analyticsCache);
             this.ringBuffer = createRingBuffer(config.getBufferSize(), analyticsPublisherService);
         }
@@ -66,7 +69,7 @@ namespace io.harness.cfsdk.client.api.analytics
             long sequence = -1;
             if (!ringBuffer.TryNext(out sequence)) // Grab the next sequence if we can
             {
-                Log.Warning("Insufficient capacity in the analytics ringBuffer");
+                loggerWithContext.Warning("Insufficient capacity in the analytics ringBuffer");
             }
             else
             {
@@ -104,11 +107,11 @@ namespace io.harness.cfsdk.client.api.analytics
             long sequence = -1;
             if (!ringBuffer.TryNext(out sequence)) // Grab the next sequence if we can
             {
-                Log.Warning("Insufficient capacity in the analytics ringBuffer");
+                loggerWithContext.Warning("Insufficient capacity in the analytics ringBuffer");
             }
             else
             {
-                Log.Information("Publishing timerInfo to ringBuffer");
+                loggerWithContext.Information("Publishing timerInfo to ringBuffer");
                 ringBuffer[sequence].EventType = EventType.TIMER; // Get the entry in the Disruptor for the sequence
             }
 
