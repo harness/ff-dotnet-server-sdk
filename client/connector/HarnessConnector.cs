@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using io.harness.cfsdk.client.api;
 using io.harness.cfsdk.HarnessOpenAPIService;
+using Microsoft.IdentityModel.Tokens;
 using Serilog;
 
 namespace io.harness.cfsdk.client.connector
