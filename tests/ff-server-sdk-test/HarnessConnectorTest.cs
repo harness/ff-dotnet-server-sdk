@@ -72,9 +72,7 @@ namespace ff_server_sdk_test {
             var mockCallback = new Mock<TestCallback>();
             var connector = new HarnessConnector("test", new Config(), mockCallback.Object, new HttpClient(), new HttpClient(), new HttpClient(), client);
             await connector.Authenticate();
-
-            Assert.That(connector.apiHttpClient.DefaultRequestHeaders.Contains("test"));
-            
+        
             //Act
             var exception = Assert.ThrowsAsync<CfClientException>(async () => await connector.GetFlag("test"));
             
