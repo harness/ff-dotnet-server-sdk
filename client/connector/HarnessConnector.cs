@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using io.harness.cfsdk.client.api;
 using io.harness.cfsdk.HarnessOpenAPIService;
-using Microsoft.IdentityModel.Tokens;
 using Serilog;
 
 namespace io.harness.cfsdk.client.connector
@@ -21,7 +22,8 @@ namespace io.harness.cfsdk.client.connector
     internal class HarnessConnector : IConnector
     {
         private string token;
-        private string environment;
+        private static string environment;
+        private static string accountID;
         private string cluster;
 
         public HttpClient apiHttpClient { get; set; }
@@ -36,11 +38,16 @@ namespace io.harness.cfsdk.client.connector
         private IService currentStream;
         private CancellationTokenSource cancelToken = new CancellationTokenSource();
 
+        private static string sdkVersion = Assembly.GetExecutingAssembly().GetName().ToString();
+
         private static HttpClient ApiHttpClient(Config config)
         {
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(config.ConfigUrl);
             client.Timeout = TimeSpan.FromSeconds(config.ConnectionTimeout);
+            client.DefaultRequestHeaders.Add("Harness-SDK-Info", $".Net {sdkVersion} Client");
+            client.DefaultRequestHeaders.Add("Harness-EnvironmentID", environment);
+            client.DefaultRequestHeaders.Add("Harness-AccountID", accountID);
             return client;
         }
         private static HttpClient MetricHttpClient(Config config)
@@ -48,6 +55,9 @@ namespace io.harness.cfsdk.client.connector
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(config.EventUrl);
             client.Timeout = TimeSpan.FromSeconds(config.ConnectionTimeout);
+            client.DefaultRequestHeaders.Add("Harness-SDK-Info", $".Net {sdkVersion} Client");
+            client.DefaultRequestHeaders.Add("Harness-EnvironmentID", environment);
+            client.DefaultRequestHeaders.Add("Harness-AccountID", accountID);
             return client;
         }
         private static HttpClient SseHttpClient(Config config, string apiKey)
@@ -56,6 +66,9 @@ namespace io.harness.cfsdk.client.connector
             client.BaseAddress = new Uri(config.ConfigUrl.EndsWith("/") ? config.ConfigUrl : config.ConfigUrl + "/" );
             client.DefaultRequestHeaders.Add("API-Key", apiKey);
             client.DefaultRequestHeaders.Add("Accept", "text /event-stream");
+            client.DefaultRequestHeaders.Add("Harness-SDK-Info", $".Net {sdkVersion} Client");
+            client.DefaultRequestHeaders.Add("Harness-EnvironmentID", environment);
+            client.DefaultRequestHeaders.Add("Harness-AccountID", accountID);
             client.Timeout = TimeSpan.FromMinutes(1);
             return client;
         }
@@ -181,6 +194,7 @@ namespace io.harness.cfsdk.client.connector
                 var jsonToken = handler.ReadToken(token);
                 var jwtToken = (JwtSecurityToken)jsonToken;
 
+                accountID = jwtToken.Payload["accountID"].ToString();
                 environment = jwtToken.Payload["environment"].ToString();
                 cluster = jwtToken.Payload["clusterIdentifier"].ToString();
 
