@@ -8,6 +8,7 @@
     <Version>1.1.7</Version>
     <PackOnBuild>true</PackOnBuild>
     <PackageVersion>1.1.7</PackageVersion>
+    <AssemblyVersion>1.1.7</AssemblyVersion>
     <Authors>support@harness.io</Authors>
     <Copyright>Copyright © 2023 </Copyright>
     <PackageIconUrl>https://harness.io/icon-ff.svg</PackageIconUrl>
@@ -20,7 +21,7 @@
     <Description>Harness Feature Flags (FF) is a feature management solution that enables users to change the software’s functionality, without deploying new code. FF uses feature flags to hide code or behaviours without having to ship new versions of the software. A feature flag is like a powerful if statement.</Description>
     <PackageReleaseNotes>.NET Server SDK for Harness Feature Flag platform</PackageReleaseNotes>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
   </PropertyGroup>
 
   <ItemGroup>

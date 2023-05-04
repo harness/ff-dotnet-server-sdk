@@ -18,8 +18,8 @@ namespace ff_server_sdk_test {
     {
         
         string fakeJwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" +
-                         ".eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJlbnZpcm9ubWVudCI6InRlc3QiLCJjbHVzdGVySWRlbnRpZmllciI6InRlc3QifQ" +
-                         ".gF0nYhfLrYhzk1oa0fwXZsegewN4xqipCRNaWMSgEXk";
+            ".eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJlbnZpcm9ubWVudCI6InRlc3QiLCJjbHVzdGVySWRlbnRpZmllciI6InRlc3QiLCJhY2NvdW50SUQiOiJ0ZXN0In0" +
+            ".MVFJ6Sd0AObZkg3LxKYU9EBMn-t40tPJ-tFd0Ch5EiU";
 
         public class TestCallback : IConnectionCallback
         {
@@ -54,7 +54,7 @@ namespace ff_server_sdk_test {
             var mockCallback = new Mock<TestCallback>();
             var connector = new HarnessConnector("test", new Config(), mockCallback.Object, new HttpClient(), new HttpClient(), new HttpClient(), client);
             await connector.Authenticate();
-            
+  
             //Act
             var exception = Assert.ThrowsAsync<CfClientException>(async () => await connector.GetFlag("test"));
             
@@ -72,7 +72,7 @@ namespace ff_server_sdk_test {
             var mockCallback = new Mock<TestCallback>();
             var connector = new HarnessConnector("test", new Config(), mockCallback.Object, new HttpClient(), new HttpClient(), new HttpClient(), client);
             await connector.Authenticate();
-            
+        
             //Act
             var exception = Assert.ThrowsAsync<CfClientException>(async () => await connector.GetFlag("test"));
             
