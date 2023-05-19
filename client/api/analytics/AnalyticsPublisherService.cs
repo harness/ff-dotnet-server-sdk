@@ -31,7 +31,6 @@ namespace io.harness.cfsdk.client.api.analytics
         private AnalyticsCache analyticsCache;
         private IConnector connector;
 
-
         public AnalyticsPublisherService(IConnector connector, AnalyticsCache analyticsCache)
         {
             this.analyticsCache = analyticsCache;
@@ -40,8 +39,6 @@ namespace io.harness.cfsdk.client.api.analytics
 
         public void sendDataAndResetCache()
         {
-            Log.Information("Reading from queue and building cache, SDL version: " + sdkVersion);
-
             IDictionary<Analytics, int> all = analyticsCache.GetAllElements();
 
             if (all.Count != 0)

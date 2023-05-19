@@ -19,23 +19,21 @@ namespace io.harness.cfsdk.client.api.analytics
     {
         void Start();
         void Stop();
-        void PushToQueue(dto.Target target, FeatureConfig featureConfig, Variation variation);
+        void PushToCache(dto.Target target, FeatureConfig featureConfig, Variation variation);
     }
     internal class MetricsProcessor : IMetricsProcessor
     {
         private AnalyticsCache analyticsCache;
-        private RingBuffer<Analytics> ringBuffer;
         private Timer timer;
         private AnalyticsPublisherService analyticsPublisherService;
         private IMetricCallback callback;
         private Config config;
-        public MetricsProcessor(IConnector connector, Config config, IMetricCallback callback)
+        public MetricsProcessor(IConnector connector, Config config, IMetricCallback callback, AnalyticsCache analyticsCache, AnalyticsPublisherService analyticsPublisherService)
         {
-            this.analyticsCache = new AnalyticsCache();
+            this.analyticsCache = analyticsCache;
             this.callback = callback;
             this.config = config;
-            this.analyticsPublisherService = new AnalyticsPublisherService(connector, analyticsCache);
-            this.ringBuffer = createRingBuffer(config.getBufferSize(), analyticsPublisherService);
+            this.analyticsPublisherService = analyticsPublisherService;
         }
 
         public void Start()
@@ -53,68 +51,49 @@ namespace io.harness.cfsdk.client.api.analytics
 
         public void Stop()
         {
-            if(config.analyticsEnabled && this.timer != null)
+            if (config.analyticsEnabled && this.timer != null)
             {
                 this.timer.Stop();
                 this.timer = null;
             }
         }
 
-        public void PushToQueue(dto.Target target, FeatureConfig featureConfig, Variation variation)
+        public void PushToCache(dto.Target target, FeatureConfig featureConfig, Variation variation)
         {
-            Analytics analytics = new Analytics(featureConfig, target, variation, EventType.METRICS);
-            long sequence = -1;
-            if (!ringBuffer.TryNext(out sequence)) // Grab the next sequence if we can
+            var cacheSize = analyticsCache.GetAllElements().Count;
+            var bufferSize = config.getBufferSize();
+
+            if (cacheSize > bufferSize)
             {
-                Log.Warning("Insufficient capacity in the analytics ringBuffer");
+                Log.Warning("Metric frequency map exceeded buffer size ({0} > {1}), force flushing", cacheSize, bufferSize);
+
+                // If the map is starting to grow too much then push the metrics now and reset the counters
+                SendMetrics();
+
             }
             else
             {
-                ringBuffer[sequence].FeatureConfig = analytics.FeatureConfig;
-                ringBuffer[sequence].Target = analytics.Target;
-                ringBuffer[sequence].Variation = analytics.Variation;
-            }
-
-            if (sequence != -1)
-            {
-                ringBuffer.Publish(sequence);
+                Analytics analytics = new Analytics(featureConfig, target, variation, EventType.METRICS);
+                int count = analyticsCache.getIfPresent(analytics);
+                analyticsCache.Put(analytics, count + 1);
             }
         }
-        private RingBuffer<Analytics> createRingBuffer(int bufferSize, AnalyticsPublisherService analyticsPublisherService)
-        {
-            // The factory for the event
-            //AnalyticsEventFactory factory = new AnalyticsEventFactory();
 
-            // Construct the Disruptor
-            Disruptor<Analytics> disruptor =
-                new Disruptor<Analytics>(() => new Analytics(), bufferSize, TaskScheduler.Default);
-
-            // Connect the handler
-            disruptor.HandleEventsWith(
-                new AnalyticsEventHandler(analyticsCache, analyticsPublisherService));
-
-            // Start the Disruptor, starts all threads running
-            disruptor.Start();
-
-            // Get the ring buffer from the Disruptor to be used for publishing.
-            return disruptor.RingBuffer;
-        }
         internal void Timer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            long sequence = -1;
-            if (!ringBuffer.TryNext(out sequence)) // Grab the next sequence if we can
-            {
-                Log.Warning("Insufficient capacity in the analytics ringBuffer");
-            }
-            else
-            {
-                Log.Information("Publishing timerInfo to ringBuffer");
-                ringBuffer[sequence].EventType = EventType.TIMER; // Get the entry in the Disruptor for the sequence
-            }
+            Log.Debug("Timer Elapsed - Processing/Sending analytics data");
+            SendMetrics();
+        }
 
-            if (sequence != -1)
+        internal void SendMetrics()
+        {
+            try
             {
-                ringBuffer.Publish(sequence);
+                analyticsPublisherService.sendDataAndResetCache();
+            }
+            catch (CfClientException ex)
+            {
+                Log.Warning("Failed to send analytics data to server", ex);
             }
         }
     }

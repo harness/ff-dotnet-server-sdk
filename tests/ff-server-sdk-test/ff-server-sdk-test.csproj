@@ -27,6 +27,8 @@
 
   <ItemGroup>
     <None Remove="Microsoft.NET.Test.Sdk" />
+    <None Remove="api\" />
+    <None Remove="api\analytics\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="ff-test-cases\tests\**\*">
@@ -35,5 +37,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\ff-netF48-server-sdk.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="api\" />
+    <Folder Include="api\analytics\" />
   </ItemGroup>
 </Project>
