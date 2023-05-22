@@ -1,4 +1,5 @@
 ﻿using io.harness.cfsdk.client.api.analytics;
+using io.harness.cfsdk.client.cache;
 using io.harness.cfsdk.client.connector;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using Newtonsoft.Json.Linq;
@@ -51,13 +52,14 @@ namespace io.harness.cfsdk.client.api
 
         public void Initialize(IConnector connector, Config config)
         {
+            var analyticsCache = new AnalyticsCache();
             this.connector = connector;
             this.authService = new AuthService(connector, config, this);
             this.repository = new StorageRepository(config.Cache, config.Store, this);
             this.polling = new PollingProcessor(connector, this.repository, config, this);
             this.update = new UpdateProcessor(connector, this.repository, config, this);
             this.evaluator = new Evaluator(this.repository, this);
-            this.metric = new MetricsProcessor(connector, config, this);
+            this.metric = new MetricsProcessor(connector, config, this, analyticsCache, new AnalyticsPublisherService(connector, analyticsCache));
         }
         public void Start()
         {
@@ -199,7 +201,7 @@ namespace io.harness.cfsdk.client.api
         }
         public void evaluationProcessed(FeatureConfig featureConfig, dto.Target target, Variation variation)
         {
-            this.metric.PushToQueue(target, featureConfig, variation);
+            this.metric.PushToCache(target, featureConfig, variation);
         }
     }
 }

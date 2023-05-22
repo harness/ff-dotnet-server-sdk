@@ -58,7 +58,7 @@ namespace io.harness.cfsdk.client.api
         internal int readTimeout { get; set; } = 30000;
 
         /** timeout in milliseconds for writing data to CF Server */
-        public int WriteTimeout { get => WriteTimeout;  }
+        public int WriteTimeout { get => writeTimeout;  }
         internal int writeTimeout { get; set; } = 10000;
 
         public bool Debug { get => debug;  }
