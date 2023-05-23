@@ -7,6 +7,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace io.harness.cfsdk.client.api.analytics
@@ -26,7 +27,7 @@ namespace io.harness.cfsdk.client.api.analytics
         private static string SDK_VERSION = "SDK_VERSION";
 
 
-        private Version sdkVersion = typeof(AnalyticsPublisherService).Assembly.GetName().Version;
+        private string sdkVersion = Assembly.GetExecutingAssembly().GetName().ToString();
 
         private AnalyticsCache analyticsCache;
         private IConnector connector;
@@ -130,7 +131,7 @@ namespace io.harness.cfsdk.client.api.analytics
                 setMetricsAttriutes(metricsData, SDK_TYPE, SERVER);
 
                 setMetricsAttriutes(metricsData, SDK_LANGUAGE, ".NET");
-                setMetricsAttriutes(metricsData, SDK_VERSION, sdkVersion.ToString() );
+                setMetricsAttriutes(metricsData, SDK_VERSION, sdkVersion);
                 metrics.MetricsData.Add(metricsData);
             }
 
