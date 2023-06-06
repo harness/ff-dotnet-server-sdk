@@ -63,7 +63,7 @@ namespace io.harness.cfsdk.client.api
         }
         public void Start()
         {
-            Log.Information("Initialize authentication");
+            Log.Debug("Authenticating");
             // Start Authentication flow
             this.authService.Start();
         }
@@ -87,12 +87,12 @@ namespace io.harness.cfsdk.client.api
 
         public void OnStreamConnected()
         {
-            Log.Debug("Stream connected");
+            Log.Information("SDKCODE(stream:5000): SSE stream connected ok");
             this.polling.Stop();
         }
         public void OnStreamDisconnected()
         {
-            Log.Debug("Stream disconnected");
+            Log.Information("SDKCODE(stream:5001): SSE stream disconnected");
             this.polling.Start();
         }
         #endregion
@@ -103,6 +103,8 @@ namespace io.harness.cfsdk.client.api
         public void OnAuthenticationSuccess()
         {
             // after successfull authentication, start
+            Log.Information("SDKCODE(auth:2000): Authenticated ok");
+
             polling.Start();
             update.Start();
             metric.Start();
@@ -161,6 +163,7 @@ namespace io.harness.cfsdk.client.api
 
         private void OnNotifyInitializationCompleted()
         {
+            Log.Information("SDKCODE(init:1000): The SDK has successfully initialized");
             InitializationCompleted?.Invoke(parent, EventArgs.Empty);
         }
         private void OnNotifyEvaluationChanged(string identifier)

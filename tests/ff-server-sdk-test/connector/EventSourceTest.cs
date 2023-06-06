@@ -64,13 +64,13 @@ namespace ff_server_sdk_test.connector
 
             public void OnStreamConnected()
             {
-                Log.Information("Stream connected");
+                Log.Information("SDKCODE(stream:5000): SSE stream connected ok");
                 ConnectCount++;
             }
 
             public void OnStreamDisconnected()
             {
-                Log.Information("Stream disconnected");
+                Log.Information("SDKCODE(stream:5001): SSE stream disconnected");
                 DisconnectCount++;
                 disconnectLatch.Signal();
             }

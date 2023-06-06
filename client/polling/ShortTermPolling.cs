@@ -22,11 +22,11 @@ namespace io.harness.cfsdk.client.polling
         {
             if (timer != null)
             {
-                Log.Information("POLLING timer - stopping before start");
+                Log.Debug("POLLING timer - stopping before start");
                 timer.Stop();
                 timer.Dispose();
             }
-            Log.Information("POLLING timer - scheduling new one");
+            Log.Debug("POLLING timer - scheduling new one");
             timer = new Timer(pollingInterval);
             timer.Elapsed += new ElapsedEventHandler(runnable);
             timer.AutoReset = true;
@@ -38,11 +38,11 @@ namespace io.harness.cfsdk.client.polling
         {
             if (timer != null)
             {
-                Log.Information("POLLING timer - stopping on exit");
+                Log.Debug("POLLING timer - stopping on exit");
                 timer.Stop();
                 timer.Dispose();
             }
-            Log.Information("POLLING timer - stoped");
+            Log.Debug("POLLING timer - stoped");
         }
     }
 }

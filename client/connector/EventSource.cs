@@ -39,7 +39,7 @@ namespace io.harness.cfsdk.client.connector
 
         public void Stop()
         {
-            Log.Information("Stopping EventSource service.");
+            Log.Debug("Stopping EventSource service.");
         }
 
         private string ReadLine(Stream stream, int timeoutMs)
@@ -69,7 +69,7 @@ namespace io.harness.cfsdk.client.connector
             try
             {
 
-                Log.Information("Starting EventSource service.");
+                Log.Debug("Starting EventSource service.");
                 using (Stream stream = await this.httpClient.GetStreamAsync(url))
                 {
                     callback.OnStreamConnected();
@@ -83,7 +83,7 @@ namespace io.harness.cfsdk.client.connector
                             continue;
                         }
 
-                        Log.Information($"EventSource message received {message}");
+                        Log.Information($"SDKCODE(stream:5002): SSE event received {message}");
 
                         // parse message
                         var jsonMessage = JObject.Parse("{" + message + "}");

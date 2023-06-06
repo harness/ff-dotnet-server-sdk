@@ -118,7 +118,7 @@ namespace io.harness.cfsdk.client.api
 
         private void logEvaluatiionFailureError(FeatureConfigKind kind, string featureKey, dto.Target target, string defaultValue)
         {
-            Log.Error($"SDK_EVAL_6001: Failed to evaluate {kind} variation for {{ \"target\": \"{target.Identifier}\", \"flag\": \"{featureKey}\"}} and the default variation {defaultValue} is being returned");
+            Log.Warning($"SDKCODE(eval:6001): Failed to evaluate {kind} variation for {{ \"target\": \"{target.Identifier}\", \"flag\": \"{featureKey}\"}} and the default variation {defaultValue} is being returned");
         }
 
         private bool checkPreRequisite(FeatureConfig parentFeatureConfig, dto.Target target)
