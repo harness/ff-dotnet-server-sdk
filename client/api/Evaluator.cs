@@ -24,6 +24,7 @@ namespace io.harness.cfsdk.client.api
         double NumberVariation(string key, dto.Target target, double defaultValue);
         JObject JsonVariation(string key, dto.Target target, JObject defaultValue);
     }
+
     internal class Evaluator : IEvaluator
     {
         private IRepository repository;
@@ -67,7 +68,7 @@ namespace io.harness.cfsdk.client.api
             }
             else
             {
-                Log.Error($"SDK_EVAL_6001: Failed to evaluate bool variation for {{ \"target\": \"{target.Identifier}\", \"flag\": \"{key}\"}} and the default variation {defaultValue} is being returned");
+                logEvaluatiionFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
                 return defaultValue;
             }
         }
@@ -81,7 +82,7 @@ namespace io.harness.cfsdk.client.api
             }
             else
             {
-                Log.Error($"SDK_EVAL_6001: Failed to evaluate json variation for {{ \"target\": \"{target.Identifier}\", \"flag\": \"{key}\"}} and the default variation {defaultValue} is being returned");
+                logEvaluatiionFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
                 return defaultValue;
             }
         }
@@ -96,7 +97,7 @@ namespace io.harness.cfsdk.client.api
             }
             else
             {
-                Log.Error($"SDK_EVAL_6001: Failed to evaluate number variation for {{ \"target\": \"{target.Identifier}\", \"flag\": \"{key}\"}} and the default variation {defaultValue} is being returned");
+                logEvaluatiionFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
                 return defaultValue;
             }
         }
@@ -110,9 +111,14 @@ namespace io.harness.cfsdk.client.api
             }
             else
             {
-                Log.Error($"SDK_EVAL_6001: Failed to evaluate string variation for {{ \"target\": \"{target.Identifier}\", \"flag\": \"{key}\"}} and the default variation {defaultValue} is being returned");
+                logEvaluatiionFailureError(FeatureConfigKind.String, key, target, defaultValue);
                 return defaultValue;
             }
+        }
+
+        private void logEvaluatiionFailureError(FeatureConfigKind kind, string featureKey, dto.Target target, string defaultValue)
+        {
+            Log.Error($"SDK_EVAL_6001: Failed to evaluate {kind} variation for {{ \"target\": \"{target.Identifier}\", \"flag\": \"{featureKey}\"}} and the default variation {defaultValue} is being returned");
         }
 
         private bool checkPreRequisite(FeatureConfig parentFeatureConfig, dto.Target target)
