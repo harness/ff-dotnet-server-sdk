@@ -1,5 +1,6 @@
 ﻿using io.harness.cfsdk.client.connector;
 using Newtonsoft.Json.Linq;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -53,14 +54,17 @@ namespace io.harness.cfsdk.client.api
         public CfClient(IConnector connector) : this(connector, Config.Builder().Build()) { }
         public CfClient()
         {
+            Log.Logger = new LoggerConfiguration().WriteTo.Debug().CreateLogger();
             client = new InnerClient(this);
         }
         public CfClient(string apiKey, Config config)
         {
+            Log.Logger = new LoggerConfiguration().WriteTo.Debug().CreateLogger();
             client = new InnerClient(apiKey, config, this);
         }
         public CfClient(IConnector connector, Config config)
         {
+            Log.Logger = new LoggerConfiguration().WriteTo.Debug().CreateLogger();
             client = new InnerClient(connector, config, this);
         }
         // start authentication with server

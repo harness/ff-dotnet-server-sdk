@@ -24,6 +24,7 @@ namespace io.harness.cfsdk.client.api
         double NumberVariation(string key, dto.Target target, double defaultValue);
         JObject JsonVariation(string key, dto.Target target, JObject defaultValue);
     }
+
     internal class Evaluator : IEvaluator
     {
         private IRepository repository;
@@ -61,26 +62,63 @@ namespace io.harness.cfsdk.client.api
         {
             Variation variation = EvaluateVariation(key, target, FeatureConfigKind.Boolean);
             bool res;
-            return (variation != null && Boolean.TryParse(variation.Value, out res)) ? res : defaultValue;
+            if (variation != null && Boolean.TryParse(variation.Value, out res))
+            {
+                return res;
+            }
+            else
+            {
+                logEvaluatiionFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
+                return defaultValue;
+            }
         }
 
         public JObject JsonVariation(string key, dto.Target target, JObject defaultValue)
         {
             Variation variation = EvaluateVariation(key, target, FeatureConfigKind.Json);
-            return variation != null ? JObject.Parse(variation.Value) : defaultValue;
+            if (variation != null)
+            {
+                return JObject.Parse(variation.Value);
+            }
+            else
+            {
+                logEvaluatiionFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
+                return defaultValue;
+            }
         }
 
         public double NumberVariation(string key, dto.Target target, double defaultValue)
         {
             Variation variation = EvaluateVariation(key, target, FeatureConfigKind.Int);
             double res;
-            return (variation != null && Double.TryParse(variation.Value, out res)) ? res : defaultValue;
+            if (variation != null && Double.TryParse(variation.Value, out res))
+            {
+                return res;
+            }
+            else
+            {
+                logEvaluatiionFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
+                return defaultValue;
+            }
         }
 
         public string StringVariation(string key, dto.Target target, string defaultValue)
         {
             Variation variation = EvaluateVariation(key, target, FeatureConfigKind.String);
-            return variation != null ? variation.Value : defaultValue;
+            if (variation != null)
+            {
+                return variation.Value;
+            }
+            else
+            {
+                logEvaluatiionFailureError(FeatureConfigKind.String, key, target, defaultValue);
+                return defaultValue;
+            }
+        }
+
+        private void logEvaluatiionFailureError(FeatureConfigKind kind, string featureKey, dto.Target target, string defaultValue)
+        {
+            Log.Error($"SDK_EVAL_6001: Failed to evaluate {kind} variation for {{ \"target\": \"{target.Identifier}\", \"flag\": \"{featureKey}\"}} and the default variation {defaultValue} is being returned");
         }
 
         private bool checkPreRequisite(FeatureConfig parentFeatureConfig, dto.Target target)
