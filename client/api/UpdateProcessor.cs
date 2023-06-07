@@ -62,7 +62,7 @@ namespace io.harness.cfsdk.client.api
         {
             if( manual && this.config.StreamEnabled)
             {
-                Log.Information("You run the update method manually with the stream enabled. Please turn off the stream in this case.");
+                Log.Information("You ran the update method manually with the stream enabled. Please turn off the stream in this case.");
             }
             //we got a message from server. Dispatch in separate thread.
             _ = ProcessMessage(message);

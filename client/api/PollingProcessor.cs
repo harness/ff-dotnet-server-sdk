@@ -67,13 +67,13 @@ namespace io.harness.cfsdk.client.api
 
         public void Start()
         {
-            Log.Information($"Starting PollingProcessor with request interval: {config.pollIntervalInSeconds}");
+            Log.Debug($"SDKCODE(poll:4000): Polling started, intervalMs: {config.PollIntervalInMiliSeconds}");
             // start timer which will initiate periodic reading of flags and segments
             pollTimer = new Timer(OnTimedEventAsync, null, 0, config.PollIntervalInMiliSeconds);
         }
         public void Stop()
         {
-            Log.Information("Stopping PollingProcessor");
+            Log.Debug("SDKCODE(poll:4001): Polling stopped");
             // stop timer
             if (pollTimer == null) return;
             pollTimer.Dispose();
@@ -131,7 +131,7 @@ namespace io.harness.cfsdk.client.api
             }
             catch(Exception ex)
             {
-                Log.Information($"Polling will retry in {config.pollIntervalInSeconds}");
+                Log.Warning($"Polling failed with error: {ex.Message}. Will retry in {config.pollIntervalInSeconds}");
                 callback.OnPollError(ex.Message);
             }
         }

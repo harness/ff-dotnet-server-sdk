@@ -56,14 +56,14 @@ namespace io.harness.cfsdk.client.api.analytics
 
                     stagingTargetSet.ToList().ForEach(element => globalTargetSet.Add(element));
                     stagingTargetSet.Clear();
-                    Log.Information("Successfully sent analytics data to the server");
+                    Log.Debug("Successfully sent analytics data to the server");
                     analyticsCache.resetCache();
                 }
                 catch (CfClientException ex)
                 {
                     // Clear the set because the cache is only invalidated when there is no
                     // exception, so the targets will reappear in the next iteration
-                    Log.Error("Failed to send metricsData {@e}", ex);
+                    Log.Error($"SDKCODE(stream:7002): Posting metrics failed, reason: {ex.Message}");
                 }
             }
         }
