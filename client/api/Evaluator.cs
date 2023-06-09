@@ -118,7 +118,7 @@ namespace io.harness.cfsdk.client.api
 
         private void logEvaluatiionFailureError(FeatureConfigKind kind, string featureKey, dto.Target target, string defaultValue)
         {
-            Log.Warning($"SDKCODE(eval:6001): Failed to evaluate {kind} variation for {{ \"target\": \"{target.Identifier}\", \"flag\": \"{featureKey}\"}} and the default variation {defaultValue} is being returned");
+            Log.Warning($"SDKCODE(eval:6001): Failed to evaluate {kind} variation for {{ \"target\": \"{target}\", \"flag\": \"{featureKey}\"}} and the default variation {defaultValue} is being returned");
         }
 
         private bool checkPreRequisite(FeatureConfig parentFeatureConfig, dto.Target target)
@@ -242,6 +242,11 @@ namespace io.harness.cfsdk.client.api
 
         private string EvaluateDistribution(FeatureConfig featureConfig, dto.Target target)
         {
+            if (featureConfig.Rules == null || target == null)
+            {
+                return null;
+            }
+
             DistributionProcessor distributionProcessor = new DistributionProcessor(featureConfig.DefaultServe);
             return distributionProcessor.loadKeyName(target);
         }
