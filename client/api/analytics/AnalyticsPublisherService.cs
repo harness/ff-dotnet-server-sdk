@@ -40,8 +40,6 @@ namespace io.harness.cfsdk.client.api.analytics
 
         public void sendDataAndResetCache()
         {
-            Console.WriteLine("sendDataAndResetCache:" + analyticsCache.ToString());
-
             IDictionary<Analytics, int> all = analyticsCache.GetAllElements();
 
             if (all.Count != 0)
@@ -83,7 +81,7 @@ namespace io.harness.cfsdk.client.api.analytics
                 TargetData targetData = new TargetData();
                 // Set Metrics data
                 MetricsData metricsData = new MetricsData();
-          
+
                 Analytics analytics = entry.Key;
                 dto.Target target = analytics.Target;
 
