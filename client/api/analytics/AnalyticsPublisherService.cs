@@ -81,14 +81,15 @@ namespace io.harness.cfsdk.client.api.analytics
                 TargetData targetData = new TargetData();
                 // Set Metrics data
                 MetricsData metricsData = new MetricsData();
-             
+
                 Analytics analytics = entry.Key;
-                HashSet<string> privateAttributes = analytics.Target.PrivateAttributes;
                 dto.Target target = analytics.Target;
+
                 FeatureConfig featureConfig = analytics.FeatureConfig;
                 Variation variation = analytics.Variation;
-                if (!globalTargetSet.Contains(target) && !target.IsPrivate)
+                if (target != null && !globalTargetSet.Contains(target) && !target.IsPrivate)
                 {
+                    HashSet<string> privateAttributes = analytics.Target.PrivateAttributes;
                     stagingTargetSet.Add(target);
                     Dictionary<string, string> attributes = target.Attributes;
                     attributes.ToList().ForEach(el =>
@@ -109,6 +110,16 @@ namespace io.harness.cfsdk.client.api.analytics
                            }
                            targetData.Attributes.Add(keyValue);
                        });
+
+                    if (target.IsPrivate)
+                    {
+                        setMetricsAttributes(metricsData, TARGET_ATTRIBUTE, ANONYMOUS_TARGET);
+                    }
+                    else
+                    {
+                        setMetricsAttributes(metricsData, TARGET_ATTRIBUTE, target.Identifier);
+                    }
+                       
                     targetData.Identifier = target.Identifier;
                     targetData.Name = target.Name;
                     metrics.TargetData.Add(targetData);
@@ -117,28 +128,21 @@ namespace io.harness.cfsdk.client.api.analytics
                 metricsData.Timestamp = (long)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds;
                 metricsData.Count = entry.Value;
                 metricsData.MetricsType = MetricsDataMetricsType.FFMETRICS;
-                setMetricsAttriutes(metricsData, FEATURE_NAME_ATTRIBUTE, featureConfig.Feature);
-                setMetricsAttriutes(metricsData, VARIATION_IDENTIFIER_ATTRIBUTE, variation.Identifier);
-                setMetricsAttriutes(metricsData, VARIATION_VALUE_ATTRIBUTE, variation.Value);
-                if (target.IsPrivate)
-                {
-                    setMetricsAttriutes(metricsData, TARGET_ATTRIBUTE, ANONYMOUS_TARGET);
-                }
-                else
-                {
-                    setMetricsAttriutes(metricsData, TARGET_ATTRIBUTE, target.Identifier);
-                }
-                setMetricsAttriutes(metricsData, SDK_TYPE, SERVER);
+                setMetricsAttributes(metricsData, FEATURE_NAME_ATTRIBUTE, featureConfig.Feature);
+                setMetricsAttributes(metricsData, VARIATION_IDENTIFIER_ATTRIBUTE, variation.Identifier);
+                setMetricsAttributes(metricsData, VARIATION_VALUE_ATTRIBUTE, variation.Value);
 
-                setMetricsAttriutes(metricsData, SDK_LANGUAGE, ".NET");
-                setMetricsAttriutes(metricsData, SDK_VERSION, sdkVersion);
+                setMetricsAttributes(metricsData, SDK_TYPE, SERVER);
+
+                setMetricsAttributes(metricsData, SDK_LANGUAGE, ".NET");
+                setMetricsAttributes(metricsData, SDK_VERSION, sdkVersion);
                 metrics.MetricsData.Add(metricsData);
             }
 
             return metrics;
         }
 
-        private void setMetricsAttriutes(MetricsData metricsData, String key, String value)
+        private void setMetricsAttributes(MetricsData metricsData, String key, String value)
         {
             KeyValue metricsAttributes = new KeyValue();
             metricsAttributes.Key = key;
