@@ -1,4 +1,5 @@
-﻿using io.harness.cfsdk.client.connector;
+﻿using System;
+using io.harness.cfsdk.client.connector;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using Serilog;
 using System.Threading;
@@ -54,17 +55,17 @@ namespace io.harness.cfsdk.client.api
                 Stop();
                 Log.Debug("Stopping authentication service");
             }
-            catch
+            catch (Exception ex)
             {
                 // Exception thrown on Authentication. Timer will retry authentication.
                 if (retries++ >= config.MaxAuthRetries)
-                {
+                { ;
                     Log.Error($"SDKCODE(auth:2001): Authentication failed. Max authentication retries reached {retries} - defaults will be served");
                     Stop();
                 }
                 else
                 {
-                    Log.Warning($"SDKCODE(auth:2003): Retrying to authenticate. Retry ({retries}) in {config.pollIntervalInSeconds} Seconds");
+                    Log.Warning($"SDKCODE(auth:2003): Retrying to authenticate. Retry ({retries}) in {config.pollIntervalInSeconds} Seconds. Reason: {ex}");
                 }
             }
         }
