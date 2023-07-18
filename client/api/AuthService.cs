@@ -59,7 +59,7 @@ namespace io.harness.cfsdk.client.api
             {
                 // Exception thrown on Authentication. Timer will retry authentication.
                 if (retries++ >= config.MaxAuthRetries)
-                { 
+                {
                     Log.Error($"SDKCODE(auth:2001): Authentication failed. Max authentication retries reached {retries} - defaults will be served");
                     Stop();
                 }
