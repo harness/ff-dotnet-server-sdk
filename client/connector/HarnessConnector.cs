@@ -47,7 +47,10 @@ namespace io.harness.cfsdk.client.connector
             client.Timeout = TimeSpan.FromSeconds(config.ConnectionTimeout);
             client.DefaultRequestHeaders.Add("Harness-SDK-Info", $".Net {sdkVersion} Client");
             client.DefaultRequestHeaders.Add("Harness-EnvironmentID", environment);
-            client.DefaultRequestHeaders.Add("Harness-AccountID", accountID);
+            if (accountID != null)
+            {
+                client.DefaultRequestHeaders.Add("Harness-AccountID", accountID);
+            }
             return client;
         }
         private static HttpClient MetricHttpClient(Config config)
@@ -56,8 +59,12 @@ namespace io.harness.cfsdk.client.connector
             client.BaseAddress = new Uri(config.EventUrl);
             client.Timeout = TimeSpan.FromSeconds(config.ConnectionTimeout);
             client.DefaultRequestHeaders.Add("Harness-SDK-Info", $".Net {sdkVersion} Client");
+            if (accountID != null)
+            {
+                client.DefaultRequestHeaders.Add("Harness-AccountID", accountID);
+
+            }
             client.DefaultRequestHeaders.Add("Harness-EnvironmentID", environment);
-            client.DefaultRequestHeaders.Add("Harness-AccountID", accountID);
             return client;
         }
         private static HttpClient SseHttpClient(Config config, string apiKey)
@@ -68,7 +75,10 @@ namespace io.harness.cfsdk.client.connector
             client.DefaultRequestHeaders.Add("Accept", "text /event-stream");
             client.DefaultRequestHeaders.Add("Harness-SDK-Info", $".Net {sdkVersion} Client");
             client.DefaultRequestHeaders.Add("Harness-EnvironmentID", environment);
-            client.DefaultRequestHeaders.Add("Harness-AccountID", accountID);
+            if (accountID != null)
+            {
+                client.DefaultRequestHeaders.Add("Harness-AccountID", accountID);
+            }
             client.Timeout = TimeSpan.FromMinutes(1);
             return client;
         }
@@ -208,7 +218,11 @@ namespace io.harness.cfsdk.client.connector
                 var jsonToken = handler.ReadToken(token);
                 var jwtToken = (JwtSecurityToken)jsonToken;
 
-                accountID = jwtToken.Payload["accountID"].ToString();
+                // accountID is not sent when using the relay proxy
+                if (jwtToken.Payload.TryGetValue("accountID", out var accountIdValue) && accountIdValue != null)
+                {
+                    accountID = accountIdValue.ToString();
+                }                
                 environment = jwtToken.Payload["environment"].ToString();
                 cluster = jwtToken.Payload["clusterIdentifier"].ToString();
 
