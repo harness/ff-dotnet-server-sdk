@@ -38,19 +38,14 @@ namespace io.harness.cfsdk.client.connector
         private IService currentStream;
         private CancellationTokenSource cancelToken = new CancellationTokenSource();
 
-        private static string sdkVersion = Assembly.GetExecutingAssembly().GetName().ToString();
+        private static string sdkVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "";
 
         private static HttpClient ApiHttpClient(Config config)
         {
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(config.ConfigUrl);
             client.Timeout = TimeSpan.FromSeconds(config.ConnectionTimeout);
-            client.DefaultRequestHeaders.Add("Harness-SDK-Info", $".Net {sdkVersion} Client");
-            client.DefaultRequestHeaders.Add("Harness-EnvironmentID", environment);
-            if (accountID != null)
-            {
-                client.DefaultRequestHeaders.Add("Harness-AccountID", accountID);
-            }
+            client.DefaultRequestHeaders.Add("Harness-SDK-Info", $".Net {sdkVersion} Server");
             return client;
         }
         private static HttpClient MetricHttpClient(Config config)
@@ -73,7 +68,7 @@ namespace io.harness.cfsdk.client.connector
             client.BaseAddress = new Uri(config.ConfigUrl.EndsWith("/") ? config.ConfigUrl : config.ConfigUrl + "/" );
             client.DefaultRequestHeaders.Add("API-Key", apiKey);
             client.DefaultRequestHeaders.Add("Accept", "text /event-stream");
-            client.DefaultRequestHeaders.Add("Harness-SDK-Info", $".Net {sdkVersion} Client");
+            client.DefaultRequestHeaders.Add("Harness-SDK-Info", $".Net {sdkVersion} Server");
             client.DefaultRequestHeaders.Add("Harness-EnvironmentID", environment);
             if (accountID != null)
             {
@@ -225,11 +220,17 @@ namespace io.harness.cfsdk.client.connector
                 }                
                 environment = jwtToken.Payload["environment"].ToString();
                 cluster = jwtToken.Payload["clusterIdentifier"].ToString();
+                var environmentIdentifier = jwtToken.Payload["environmentIdentifier"].ToString();
 
-                apiHttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                metricHttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                sseHttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
+                foreach (var httpClient in new[] { apiHttpClient, metricHttpClient, sseHttpClient })
+                {
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    httpClient.DefaultRequestHeaders.Add("Harness-EnvironmentID", environmentIdentifier ?? environment);
+                    if (accountID != null && accountID.Length > 0)
+                    {
+                        httpClient.DefaultRequestHeaders.Add("Harness-AccountID", accountID);
+                    }
+                }
                 return token;
 
             }
