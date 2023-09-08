@@ -220,7 +220,7 @@ namespace io.harness.cfsdk.client.connector
                 }                
                 environment = jwtToken.Payload["environment"].ToString();
                 cluster = jwtToken.Payload["clusterIdentifier"].ToString();
-                var environmentIdentifier = jwtToken.Payload.GetValueOrDefault("environmentIdentifier", environment).ToString();
+                var environmentIdentifier = jwtToken.Payload.ContainsKey("environmentIdentifier") ? jwtToken.Payload["clusterIdentifier"].ToString() : environment;
 
                 foreach (var httpClient in new[] { apiHttpClient, metricHttpClient, sseHttpClient })
                 {
