@@ -220,13 +220,18 @@ namespace io.harness.cfsdk.client.connector
                 }                
                 environment = jwtToken.Payload["environment"].ToString();
                 cluster = jwtToken.Payload["clusterIdentifier"].ToString();
-                var environmentIdentifier = jwtToken.Payload["environmentIdentifier"].ToString();
+                var environmentIdentifier = jwtToken.Payload.GetValueOrDefault("environmentIdentifier", environment).ToString();
 
                 foreach (var httpClient in new[] { apiHttpClient, metricHttpClient, sseHttpClient })
                 {
                     httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                    httpClient.DefaultRequestHeaders.Add("Harness-EnvironmentID", environmentIdentifier ?? environment);
-                    if (accountID != null && accountID.Length > 0)
+
+                    if (!String.IsNullOrEmpty(environmentIdentifier))
+                    {
+                        httpClient.DefaultRequestHeaders.Add("Harness-EnvironmentID", environmentIdentifier);
+                    }
+
+                    if (!String.IsNullOrEmpty(accountID))
                     {
                         httpClient.DefaultRequestHeaders.Add("Harness-AccountID", accountID);
                     }
