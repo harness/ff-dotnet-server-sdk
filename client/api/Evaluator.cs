@@ -123,7 +123,6 @@ namespace io.harness.cfsdk.client.api
 
         private bool checkPreRequisite(FeatureConfig parentFeatureConfig, dto.Target target)
         {
-            bool result = true;
             if (parentFeatureConfig.Prerequisites != null && parentFeatureConfig.Prerequisites.Count > 0)
             {
                 List<Prerequisite> prerequisites = parentFeatureConfig.Prerequisites.ToList();
@@ -148,13 +147,14 @@ namespace io.harness.cfsdk.client.api
                     {
                         return false;
                     }
-                    else
+
+                    if (!checkPreRequisite(preReqFeatureConfig, target))
                     {
-                        result = checkPreRequisite(preReqFeatureConfig, target);
+                        return false;
                     }
                 }
             }
-            return result;
+            return true;
         }
         private Variation Evaluate(FeatureConfig featureConfig, dto.Target target)
         {
