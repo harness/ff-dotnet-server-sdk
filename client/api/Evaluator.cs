@@ -321,7 +321,7 @@ namespace io.harness.cfsdk.client.api
                     return attrStr.Contains(value);
                 case "equal":
                     return attrStr.ToLower().Equals(value.ToLower());
-                case "attrStr":
+                case "equal_sensitive":
                     return attrStr.Equals(value);
                 case "in":
                     return clause.Values.Contains(attrStr);
