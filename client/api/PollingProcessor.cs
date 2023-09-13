@@ -67,9 +67,17 @@ namespace io.harness.cfsdk.client.api
 
         public void Start()
         {
-            Log.Debug($"SDKCODE(poll:4000): Polling started, intervalMs: {config.PollIntervalInMiliSeconds}");
+            var intervalMs = config.PollIntervalInMiliSeconds;
+
+            if (intervalMs < 60000)
+            {
+                Log.Warning("Poll interval cannot be less than 60 seconds");
+                intervalMs = 60000;
+            }
+
+            Log.Debug($"SDKCODE(poll:4000): Polling started, intervalMs: {intervalMs}");
             // start timer which will initiate periodic reading of flags and segments
-            pollTimer = new Timer(OnTimedEventAsync, null, 0, config.PollIntervalInMiliSeconds);
+            pollTimer = new Timer(OnTimedEventAsync, null, 0, intervalMs);
         }
         public void Stop()
         {
