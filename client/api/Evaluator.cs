@@ -275,7 +275,10 @@ namespace io.harness.cfsdk.client.api
                     if (segment.Rules != null)
                     {
                         Clause firstSuccess = segment.Rules.FirstOrDefault(r => EvaluateClause(r, target));
-                        return firstSuccess != null;
+                        if (firstSuccess != null)
+                        {
+                            return true;
+                        }
                     }
                 }
             }
