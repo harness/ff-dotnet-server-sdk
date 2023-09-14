@@ -1162,43 +1162,6 @@
           "$ref": "#/components/schemas/Evaluation"
         }
       },
-      "KeyValue": {
-        "type": "object",
-        "required": [
-          "key",
-          "value"
-        ],
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "value": {
-            "type": "string"
-          }
-        }
-      },
-      "TargetData": {
-        "type": "object",
-        "required": [
-          "name",
-          "identifier",
-          "attributes"
-        ],
-        "properties": {
-          "identifier": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "attributes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/KeyValue"
-            }
-          }
-        }
-      },
       "TargetSegment": {
         "type": "object",
         "required": [

@@ -793,31 +793,6 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/Evaluation'
-    KeyValue:
-      type: object
-      properties:
-        key:
-          type: string
-        value:
-          type: string
-      required:
-        - key
-        - value
-    TargetData:
-      type: object
-      properties:
-        identifier:
-          type: string
-        name:
-          type: string
-        attributes:
-          type: array
-          items:
-            $ref: '#/components/schemas/KeyValue'
-      required:
-        - name
-        - identifier
-        - attributes
     TargetSegment:
       type: object
       properties:
