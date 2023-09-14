@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 using Serilog;
 using System;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace io.harness.cfsdk.client.api
@@ -164,6 +165,7 @@ namespace io.harness.cfsdk.client.api
         private void OnNotifyInitializationCompleted()
         {
             Log.Information("SDKCODE(init:1000): The SDK has successfully initialized");
+            Log.Information("SDK version: " + Assembly.GetExecutingAssembly().GetName().Version);
             InitializationCompleted?.Invoke(parent, EventArgs.Empty);
         }
         private void OnNotifyEvaluationChanged(string identifier)

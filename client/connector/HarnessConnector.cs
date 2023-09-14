@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using io.harness.cfsdk.client.api;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Serialization;
 using Serilog;
 
 namespace io.harness.cfsdk.client.connector
@@ -87,6 +88,7 @@ namespace io.harness.cfsdk.client.connector
         private static Client HarnessClient(Config config, HttpClient httpClient)
         {
             Client client = new Client(httpClient);
+            client.JsonSerializerSettings.ContractResolver = new JsonContractResolver();
             client.BaseUrl = config.ConfigUrl;
             return client;
         }
@@ -242,6 +244,7 @@ namespace io.harness.cfsdk.client.connector
             catch (ApiException ex)
             {
                 Log.Error($"SDKCODE(init:1001):The SDK has failed to initialize due to the following authentication error: {ex.Message}");
+                Log.Error(ex.StackTrace);
                 if (ex.StatusCode == (int)HttpStatusCode.Unauthorized || ex.StatusCode == (int)HttpStatusCode.Forbidden)
                 {
                     var errorMsg = $"SDKCODE(init:1001):The SDK has failed to initialize due to the following authentication error: Invalid apiKey {apiKey}. Defaults will be served.";

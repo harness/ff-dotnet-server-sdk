@@ -4,11 +4,11 @@
         <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
         <PackageId>ff-dotnet-server-sdk</PackageId>
         <RootNamespace>io.harness.cfsdk</RootNamespace>
-        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-        <Version>1.1.9</Version>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Version>1.1.10</Version>
         <PackOnBuild>true</PackOnBuild>
-        <PackageVersion>1.1.9</PackageVersion>
-        <AssemblyVersion>1.1.9</AssemblyVersion>
+        <PackageVersion>1.1.10</PackageVersion>
+        <AssemblyVersion>1.1.10</AssemblyVersion>
         <Authors>support@harness.io</Authors>
         <Copyright>Copyright © 2023 </Copyright>
         <PackageIconUrl>https://harness.io/icon-ff.svg</PackageIconUrl>
