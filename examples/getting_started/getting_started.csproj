@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ff-dotnet-server-sdk" Version="1.1.10" />
+    <PackageReference Include="ff-dotnet-server-sdk" Version="1.1.*" />
     <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
   </ItemGroup>
 
