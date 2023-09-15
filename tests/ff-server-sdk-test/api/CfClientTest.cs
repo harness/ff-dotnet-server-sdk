@@ -10,86 +10,89 @@ using Serilog;
 using WireMock.Logging;
 using WireMock.Settings;
 using NUnit.Framework;
-namespace ff_server_sdk_test.api;
-using static CannedResponses;
 
-[TestFixture]
-public class CfClientTest
+namespace ff_server_sdk_test.api
 {
-    private WireMockServer server;
-    
-    [SetUp]
-    public void StartMockServer()
+    using static CannedResponses;
+
+    [TestFixture]
+    public class CfClientTest
     {
-        server = WireMockServer.Start(new WireMockServerSettings
+        private WireMockServer server;
+
+        [SetUp]
+        public void StartMockServer()
         {
-            Logger = new WireMockConsoleLogger(),
-            ThrowExceptionWhenMatcherFails = true
-        });
+            server = WireMockServer.Start(new WireMockServerSettings
+            {
+                Logger = new WireMockConsoleLogger(),
+                ThrowExceptionWhenMatcherFails = true
+            });
 
-        Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Verbose()
-            .WriteTo.Console()
-            .CreateLogger();
-    }
-    
-    [TearDown]
-    public void StopMockServer()
-    {
-        server.Stop();
-    }
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Verbose()
+                .WriteTo.Console()
+                .CreateLogger();
+        }
 
-    [Test]
-    public void ShouldNotThrowErrorIfTargetToVariationMapNotPopulated()
-    {
-        server
-            .Given(Request.Create().WithPath("/api/1.0/client/auth").UsingPost())
-            .RespondWith(MakeAuthResponse());
- 
-        server
-            .Given(Request.Create().WithPath("/api/1.0/client/env/00000000-0000-0000-0000-000000000000/feature-configs").UsingGet())
-            .RespondWith(Response.Create()
-                .WithStatusCode(200)
-                .WithBody(MakeFeatureConfigBodyWithVariationToTargetMapSetToNull()));
-
-        server
-            .Given(Request.Create().WithPath("/api/1.0/client/env/00000000-0000-0000-0000-000000000000/target-segments").UsingGet())
-            .RespondWith(Response.Create()
-                .WithStatusCode(200)
-                .WithBody(MakeTargetSegmentsBody()));
-        
-        var target =
-            Target.builder()
-                .Name("CfClientTest")
-                .Attributes(new Dictionary<string, string> { { "attr", "val" } })
-                .Identifier("CfClientTest")
-                .build();
-        
-        Log.Information("Running at " + server.Url);
-        
-        var client = new CfClient("dummy api key", Config.Builder()
-            .debug(true)
-            .SetStreamEnabled(false)
-            .SetAnalyticsEnabled(false)
-            .ConfigUrl(server.Url + "/api/1.0")
-            .Build());
-
-        CountdownEvent initLatch = new CountdownEvent(1);
-
-        client.InitializationCompleted += (sender, e) =>
+        [TearDown]
+        public void StopMockServer()
         {
-            Console.WriteLine("Initialization Completed");
-            initLatch.Signal();
-        };
-        
-        client.InitializeAndWait();
-        
-        var ok = initLatch.Wait(TimeSpan.FromMinutes(2));
-        Assert.That(ok, Is.True, "failed to init in time");
+            server.Stop();
+        }
 
-        var result = client.stringVariation("FeatureWithVariationToTargetMapSetAsNull", target, "failed");
-        Assert.That(result, Is.EqualTo("on"), "did not get correct flag state");
+        [Test]
+        public void ShouldNotThrowErrorIfTargetToVariationMapNotPopulated()
+        {
+            server
+                .Given(Request.Create().WithPath("/api/1.0/client/auth").UsingPost())
+                .RespondWith(MakeAuthResponse());
+
+            server
+                .Given(Request.Create()
+                    .WithPath("/api/1.0/client/env/00000000-0000-0000-0000-000000000000/feature-configs").UsingGet())
+                .RespondWith(Response.Create()
+                    .WithStatusCode(200)
+                    .WithBody(MakeFeatureConfigBodyWithVariationToTargetMapSetToNull()));
+
+            server
+                .Given(Request.Create()
+                    .WithPath("/api/1.0/client/env/00000000-0000-0000-0000-000000000000/target-segments").UsingGet())
+                .RespondWith(Response.Create()
+                    .WithStatusCode(200)
+                    .WithBody(MakeTargetSegmentsBody()));
+
+            var target =
+                Target.builder()
+                    .Name("CfClientTest")
+                    .Attributes(new Dictionary<string, string> { { "attr", "val" } })
+                    .Identifier("CfClientTest")
+                    .build();
+
+            Log.Information("Running at " + server.Url);
+
+            var client = new CfClient("dummy api key", Config.Builder()
+                .debug(true)
+                .SetStreamEnabled(false)
+                .SetAnalyticsEnabled(false)
+                .ConfigUrl(server.Url + "/api/1.0")
+                .Build());
+
+            CountdownEvent initLatch = new CountdownEvent(1);
+
+            client.InitializationCompleted += (sender, e) =>
+            {
+                Console.WriteLine("Initialization Completed");
+                initLatch.Signal();
+            };
+
+            client.InitializeAndWait();
+
+            var ok = initLatch.Wait(TimeSpan.FromMinutes(2));
+            Assert.That(ok, Is.True, "failed to init in time");
+
+            var result = client.stringVariation("FeatureWithVariationToTargetMapSetAsNull", target, "failed");
+            Assert.That(result, Is.EqualTo("on"), "did not get correct flag state");
+        }
     }
-    
-    
 }
