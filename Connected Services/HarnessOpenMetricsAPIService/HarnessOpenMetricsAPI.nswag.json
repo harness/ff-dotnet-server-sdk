@@ -1,4 +1,4 @@
-﻿{
+{
   "openapi": "3.0.0",
   "info": {
     "title": "Harness feature flag analytics service",
@@ -20,7 +20,7 @@
     }
   ],
   "paths": {
-    "/metrics/{environment}": {
+    "/metrics/{environmentUUID}": {
       "post": {
         "summary": "Send metrics to the Analytics server.",
         "description": "Send metrics to Analytics server",
@@ -57,6 +57,9 @@
           }
         },
         "security": [
+          {
+            "ApiKeyAuth": []
+          },
           {
             "BearerAuth": []
           }
@@ -161,10 +164,18 @@
         ],
         "properties": {
           "code": {
-            "type": "string"
+            "type": "string",
+            "description": "The http error code",
+            "example": "404"
           },
           "message": {
-            "type": "string"
+            "type": "string",
+            "description": "The reason the request failed",
+            "example": "Error retrieving projects, organization 'default_org' does not exist"
+          },
+          "details": {
+            "type": "object",
+            "description": "Additional details about the error"
           }
         }
       }
@@ -203,7 +214,7 @@
     },
     "parameters": {
       "environmentPathParam": {
-        "name": "environment",
+        "name": "environmentUUID",
         "in": "path",
         "required": true,
         "description": "environment parameter in query.",
@@ -213,6 +224,11 @@
       }
     },
     "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "name": "api-key",
+        "in": "header"
+      },
       "BearerAuth": {
         "type": "http",
         "scheme": "bearer",

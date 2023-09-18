@@ -1,4 +1,4 @@
-﻿{
+{
   "openapi": "3.0.0",
   "info": {
     "title": "Harness feature flag service client apis",
@@ -22,6 +22,9 @@
   "paths": {
     "/client/env/{environmentUUID}/feature-configs": {
       "get": {
+        "tags": [
+          "client"
+        ],
         "summary": "Get all feature flags activations",
         "description": "All feature flags with activations in project environment",
         "operationId": "GetFeatureConfig",
@@ -36,7 +39,7 @@
             }
           },
           {
-            "$ref": "#/components/parameters/clusterQueryParam/schema"
+            "$ref": "#/components/parameters/clusterQueryOptionalParam/schema"
           }
         ],
         "responses": {
@@ -63,6 +66,9 @@
     },
     "/client/env/{environmentUUID}/feature-configs/{identifier}": {
       "get": {
+        "tags": [
+          "client"
+        ],
         "summary": "Get feature config",
         "operationId": "GetFeatureConfigByIdentifier",
         "parameters": [
@@ -85,7 +91,7 @@
             }
           },
           {
-            "$ref": "#/components/parameters/clusterQueryParam/schema"
+            "$ref": "#/components/parameters/clusterQueryOptionalParam/schema"
           }
         ],
         "responses": {
@@ -109,6 +115,9 @@
     },
     "/client/env/{environmentUUID}/target-segments": {
       "get": {
+        "tags": [
+          "client"
+        ],
         "summary": "Retrieve all segments.",
         "description": "Used to retrieve all segments for certain account id.",
         "operationId": "GetAllSegments",
@@ -123,7 +132,7 @@
             }
           },
           {
-            "$ref": "#/components/parameters/clusterQueryParam/schema"
+            "$ref": "#/components/parameters/clusterQueryOptionalParam/schema"
           }
         ],
         "responses": {
@@ -166,6 +175,9 @@
     },
     "/client/env/{environmentUUID}/target-segments/{identifier}": {
       "get": {
+        "tags": [
+          "client"
+        ],
         "summary": "Retrieve a segment by identifier",
         "description": "Used to retrieve a segment for a certain account id by identifier",
         "operationId": "GetSegmentByIdentifier",
@@ -189,7 +201,7 @@
             }
           },
           {
-            "$ref": "#/components/parameters/clusterQueryParam/schema"
+            "$ref": "#/components/parameters/clusterQueryOptionalParam/schema"
           }
         ],
         "responses": {
@@ -229,6 +241,9 @@
     },
     "/client/auth": {
       "post": {
+        "tags": [
+          "client"
+        ],
         "summary": "Authenticate with the admin server.",
         "description": "Used to retrieve all target segments for certain account id.",
         "operationId": "Authenticate",
@@ -273,6 +288,9 @@
     },
     "/client/env/{environmentUUID}/target/{target}/evaluations": {
       "get": {
+        "tags": [
+          "client"
+        ],
         "summary": "Get feature evaluations for target",
         "operationId": "GetEvaluations",
         "parameters": [
@@ -295,7 +313,7 @@
             }
           },
           {
-            "$ref": "#/components/parameters/clusterQueryParam/schema"
+            "$ref": "#/components/parameters/clusterQueryOptionalParam/schema"
           }
         ],
         "responses": {
@@ -304,16 +322,31 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Evaluations"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Pagination"
+                    },
+                    {
+                      "$ref": "#/components/schemas/Evaluations"
+                    }
+                  ]
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
     "/client/env/{environmentUUID}/target/{target}/evaluations/{feature}": {
       "get": {
+        "tags": [
+          "client"
+        ],
         "summary": "Get feature evaluations for target",
         "operationId": "GetEvaluationByIdentifier",
         "parameters": [
@@ -345,7 +378,7 @@
             }
           },
           {
-            "$ref": "#/components/parameters/clusterQueryParam/schema"
+            "$ref": "#/components/parameters/clusterQueryOptionalParam/schema"
           }
         ],
         "responses": {
@@ -359,11 +392,19 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
     "/stream": {
       "get": {
+        "tags": [
+          "client"
+        ],
         "summary": "Stream endpoint.",
         "operationId": "Stream",
         "parameters": [
@@ -376,7 +417,7 @@
             }
           },
           {
-            "$ref": "#/components/parameters/clusterQueryParam/schema"
+            "$ref": "#/components/parameters/clusterQueryOptionalParam/schema"
           }
         ],
         "responses": {
@@ -419,12 +460,131 @@
           }
         ]
       }
+    },
+    "/proxy/config": {
+      "get": {
+        "tags": [
+          "Proxy"
+        ],
+        "summary": "Gets Proxy config for multiple environments",
+        "description": "Gets Proxy config for multiple environments if the Key query param is provided or gets config for a single environment if an environment query param is provided",
+        "operationId": "GetProxyConfig",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageNumber/schema"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize/schema"
+          },
+          {
+            "name": "environment",
+            "in": "query",
+            "description": "Accepts an EnvironmentID. If this is provided then the endpoint will only return config for this environment. If this is left empty then the Proxy will return config for all environments associated with the Proxy Key.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "in": "query",
+            "required": true,
+            "description": "Accpets a Proxy Key.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ProxyConfigResponse",
+            "description": ""
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated",
+            "description": ""
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized",
+            "description": ""
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound",
+            "description": ""
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError",
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/proxy/auth": {
+      "post": {
+        "tags": [
+          "Proxy"
+        ],
+        "summary": "Endpoint that the Proxy can use to authenticate with the client server",
+        "description": "Endpoint that the Proxy can use to authenticate with the client server",
+        "operationId": "AuthenticateProxyKey",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "proxyKey"
+                ],
+                "properties": {
+                  "proxyKey": {
+                    "type": "string",
+                    "example": "896045f3-42ee-4e73-9154-086644768b96"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated",
+            "description": ""
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized",
+            "description": ""
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound",
+            "description": ""
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError",
+            "description": ""
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
       "FeatureState": {
         "type": "string",
+        "description": "The state of a flag either off or on",
         "enum": [
           "on",
           "off"
@@ -432,29 +592,37 @@
       },
       "Variation": {
         "type": "object",
+        "description": "A variation of a flag that can be returned to a target",
         "required": [
           "identifier",
           "value"
         ],
         "properties": {
           "identifier": {
-            "type": "string"
+            "type": "string",
+            "description": "The unique identifier for the variation",
+            "example": "off-variation"
           },
           "value": {
-            "type": "string"
+            "type": "string",
+            "description": "The variation value to serve such as true or false for a boolean flag",
+            "example": "true"
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "The user friendly name of the variation",
+            "example": "Off VAriation"
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "description": "A description of the variation"
           }
         }
       },
       "Clause": {
         "type": "object",
+        "description": "A clause describes what conditions are used to evaluate a flag",
         "required": [
-          "id",
           "attribute",
           "op",
           "negate",
@@ -462,52 +630,69 @@
         ],
         "properties": {
           "id": {
-            "type": "string"
+            "type": "string",
+            "description": "The unique ID for the clause",
+            "example": "32434243"
           },
           "attribute": {
-            "type": "string"
+            "type": "string",
+            "description": "The attribute to use in the clause.  This can be any target attribute",
+            "example": "identifier"
           },
           "op": {
-            "type": "string"
+            "type": "string",
+            "description": "The type of operation such as equals, starts_with, contains",
+            "example": "starts_with"
           },
           "values": {
             "type": "array",
+            "description": "The values that are compared against the operator",
             "items": {
               "type": "string"
             }
           },
           "negate": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Is the operation negated?",
+            "example": "false"
           }
         }
       },
       "WeightedVariation": {
         "type": "object",
+        "description": "A variation and the weighting it should receive as part of a percentage rollout",
         "required": [
           "variation",
           "weight"
         ],
         "properties": {
           "variation": {
-            "type": "string"
+            "type": "string",
+            "description": "The variation identifier",
+            "example": "off-variation"
           },
           "weight": {
-            "type": "integer"
+            "type": "integer",
+            "description": "The weight to be given to the variation in percent",
+            "example": "50"
           }
         }
       },
       "Distribution": {
         "type": "object",
+        "description": "Describes a distribution rule",
         "required": [
           "bucketBy",
           "variations"
         ],
         "properties": {
           "bucketBy": {
-            "type": "string"
+            "type": "string",
+            "description": "The attribute to use when distributing targets across buckets"
           },
           "variations": {
             "type": "array",
+            "description": "A list of variations and the weight that should be given to each",
             "items": {
               "$ref": "#/components/schemas/WeightedVariation"
             }
@@ -516,6 +701,7 @@
       },
       "Serve": {
         "type": "object",
+        "description": "Describe the distribution rule and the variation that should be served to the target",
         "properties": {
           "distribution": {
             "$ref": "#/components/schemas/Distribution"
@@ -527,21 +713,25 @@
       },
       "ServingRule": {
         "type": "object",
+        "description": "The rule used to determine what variation to serve to a target",
         "required": [
           "priority",
           "clauses",
-          "serve",
-          "ruleId"
+          "serve"
         ],
         "properties": {
           "ruleId": {
-            "type": "string"
+            "type": "string",
+            "description": "The unique identifier for this rule"
           },
           "priority": {
-            "type": "integer"
+            "type": "integer",
+            "description": "The rules priority relative to other rules.  The rules are evaluated in order with 1 being the highest",
+            "example": "1"
           },
           "clauses": {
             "type": "array",
+            "description": "A list of clauses to use in the rule",
             "items": {
               "$ref": "#/components/schemas/Clause"
             }
@@ -553,16 +743,19 @@
       },
       "Prerequisite": {
         "type": "object",
+        "description": "Feature Flag pre-requisites",
         "required": [
           "feature",
           "variations"
         ],
         "properties": {
           "feature": {
-            "type": "string"
+            "type": "string",
+            "description": "The feature identifier that is the prerequisite"
           },
           "variations": {
             "type": "array",
+            "description": "A list of variations that must be met",
             "items": {
               "type": "string"
             }
@@ -571,36 +764,44 @@
       },
       "TargetMap": {
         "type": "object",
+        "description": "Target map provides the details of a target that belongs to a flag",
         "required": [
-          "idenfifier",
+          "identifier",
           "name"
         ],
         "properties": {
           "identifier": {
-            "type": "string"
+            "type": "string",
+            "description": "The identifier for the target"
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "The name of the target"
           }
         }
       },
       "VariationMap": {
         "type": "object",
+        "description": "A mapping of variations to targets and target groups (segments).  The targets listed here should receive this variation.",
         "required": [
           "variation"
         ],
         "properties": {
           "variation": {
-            "type": "string"
+            "type": "string",
+            "description": "The variation identifier",
+            "example": "off-variation"
           },
           "targets": {
             "type": "array",
+            "description": "A list of target mappings",
             "items": {
               "$ref": "#/components/schemas/TargetMap"
             }
           },
           "targetSegments": {
             "type": "array",
+            "description": "A list of target groups (segments)",
             "items": {
               "type": "string"
             }
@@ -616,7 +817,6 @@
           "state",
           "kind",
           "variations",
-          "defaultTarget",
           "offVariation",
           "defaultServe"
         ],
@@ -681,21 +881,27 @@
       },
       "Tag": {
         "type": "object",
-        "description": "A name and value pair.",
+        "description": "A Tag object used to tag feature flags - consists of name and identifier",
         "required": [
-          "name"
+          "name",
+          "identifier"
         ],
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "The name of the tag",
+            "example": "feature-flag-tag-1"
           },
-          "value": {
-            "type": "string"
+          "identifier": {
+            "type": "string",
+            "description": "The identifier of the tag",
+            "example": "feature-flag-tag-1"
           }
         }
       },
       "Segment": {
         "type": "object",
+        "description": "A Target Group (Segment) response",
         "required": [
           "identifier",
           "name"
@@ -703,30 +909,35 @@
         "properties": {
           "identifier": {
             "type": "string",
-            "description": "Unique identifier for the segment."
+            "description": "Unique identifier for the target group."
           },
           "name": {
             "type": "string",
-            "description": "Name of the segment.",
+            "description": "Name of the target group.",
             "example": "Beta Testers"
           },
           "environment": {
-            "type": "string"
+            "type": "string",
+            "description": "The environment this target group belongs to",
+            "example": "Production"
           },
           "tags": {
             "type": "array",
+            "description": "Tags for this target group",
             "items": {
               "$ref": "#/components/schemas/Tag"
             }
           },
           "included": {
             "type": "array",
+            "description": "A list of Targets who belong to this target group",
             "items": {
               "$ref": "#/components/schemas/Target"
             }
           },
           "excluded": {
             "type": "array",
+            "description": "A list of Targets who are excluded from this target group",
             "items": {
               "$ref": "#/components/schemas/Target"
             }
@@ -740,20 +951,25 @@
           },
           "createdAt": {
             "type": "integer",
+            "description": "The data and time in milliseconds when the group was created",
             "format": "int64"
           },
           "modifiedAt": {
             "type": "integer",
+            "description": "The data and time in milliseconds when the group was last modified",
             "format": "int64"
           },
           "version": {
             "type": "integer",
-            "format": "int64"
+            "description": "The version of this group.  Each time it is modified the version is incremented",
+            "format": "int64",
+            "example": "1"
           }
         }
       },
       "Target": {
         "type": "object",
+        "description": "A Target object",
         "required": [
           "identifier",
           "name",
@@ -764,35 +980,52 @@
         ],
         "properties": {
           "identifier": {
-            "type": "string"
+            "type": "string",
+            "description": "The unique identifier for this target",
+            "example": "john-doe"
           },
           "account": {
-            "type": "string"
+            "type": "string",
+            "description": "The account ID that the target belongs to",
+            "example": "abcXDdffdaffd"
           },
           "org": {
-            "type": "string"
+            "type": "string",
+            "description": "The identifier for the organization that the target belongs to"
           },
           "environment": {
-            "type": "string"
+            "type": "string",
+            "description": "The identifier for the environment that the target belongs to"
           },
           "project": {
-            "type": "string"
+            "type": "string",
+            "description": "The identifier for the project that this target belongs to"
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "The name of this Target",
+            "example": "John Doe"
           },
           "anonymous": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Indicates if this target is anonymous"
           },
           "attributes": {
-            "type": "object"
+            "type": "object",
+            "description": "a JSON representation of the attributes for this target",
+            "example": {
+              "age": "20",
+              "location": "Belfast"
+            }
           },
           "createdAt": {
             "type": "integer",
+            "description": "The date and time in milliseconds when this Target was created",
             "format": "int64"
           },
           "segments": {
             "type": "array",
+            "description": "A list of Target Groups (Segments) that this Target belongs to",
             "items": {
               "$ref": "#/components/schemas/Segment"
             }
@@ -807,10 +1040,18 @@
         ],
         "properties": {
           "code": {
-            "type": "string"
+            "type": "string",
+            "description": "The http error code",
+            "example": "404"
           },
           "message": {
-            "type": "string"
+            "type": "string",
+            "description": "The reason the request failed",
+            "example": "Error retrieving projects, organization 'default_org' does not exist"
+          },
+          "details": {
+            "type": "object",
+            "description": "Additional details about the error"
           }
         }
       },
@@ -863,26 +1104,32 @@
           "pageCount",
           "itemCount",
           "pageSize",
-          "pageIndex",
           "pageIndex"
         ],
         "properties": {
           "version": {
-            "type": "integer"
+            "type": "integer",
+            "description": "The version of this object.  The version will be incremented each time the object is modified",
+            "example": "5"
           },
           "pageCount": {
-            "type": "integer"
+            "type": "integer",
+            "description": "The total number of pages",
+            "example": "100"
           },
           "itemCount": {
             "type": "integer",
+            "description": "The total number of items",
             "example": "1"
           },
           "pageSize": {
             "type": "integer",
+            "description": "The number of items per page",
             "example": "1"
           },
           "pageIndex": {
             "type": "integer",
+            "description": "The current page",
             "example": "0"
           }
         }
@@ -914,6 +1161,79 @@
         "items": {
           "$ref": "#/components/schemas/Evaluation"
         }
+      },
+      "TargetSegment": {
+        "type": "object",
+        "required": [
+          "identifier"
+        ],
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "description": "Unique identifier for the segment."
+          },
+          "included": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "excluded": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rules": {
+            "type": "array",
+            "description": "An array of rules that can cause a user to be included in this segment.",
+            "items": {
+              "$ref": "#/components/schemas/Clause"
+            }
+          }
+        }
+      },
+      "ProxyConfig": {
+        "type": "object",
+        "description": "TBD",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Pagination"
+          },
+          {
+            "properties": {
+              "environments": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "apiKeys": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "featureConfigs": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/FeatureConfig"
+                      }
+                    },
+                    "segments": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TargetSegment"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     "responses": {
@@ -956,24 +1276,73 @@
             }
           }
         }
+      },
+      "ProxyConfigResponse": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProxyConfig"
+            }
+          }
+        }
       }
     },
     "parameters": {
-      "clusterQueryParam": {
-        "name": "clusterIdentifier",
+      "clusterQueryOptionalParam": {
+        "name": "cluster",
         "in": "query",
         "description": "Unique identifier for the cluster for the account",
         "schema": {
           "type": "string"
         }
+      },
+      "environmentPathParam": {
+        "name": "environmentUUID",
+        "in": "path",
+        "required": true,
+        "description": "environment parameter in query.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "pageNumber": {
+        "name": "pageNumber",
+        "in": "query",
+        "description": "PageNumber",
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "pageSize": {
+        "name": "pageSize",
+        "in": "query",
+        "description": "PageSize",
+        "schema": {
+          "type": "integer"
+        }
       }
     },
     "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "name": "api-key",
+        "in": "header"
+      },
       "BearerAuth": {
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT"
       }
     }
-  }
+  },
+  "tags": [
+    {
+      "name": "client"
+    },
+    {
+      "name": "Proxy",
+      "description": "APIs used by the ff-proxy"
+    }
+  ]
 }
