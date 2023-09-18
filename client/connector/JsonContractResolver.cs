@@ -1,8 +1,8 @@
 using System;
 using System.Reflection;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using Serilog;
 
 namespace io.harness.cfsdk.client.connector
 {
@@ -16,8 +16,15 @@ namespace io.harness.cfsdk.client.connector
     /// https://github.com/RicoSuter/NSwag/issues/850
     /// https://www.newtonsoft.com/json/help/html/t_newtonsoft_json_required.htm
     /// </summary>
-    class JsonContractResolver : DefaultContractResolver
+    internal class JsonContractResolver : DefaultContractResolver
     {
+        private readonly ILogger<JsonContractResolver> logger;
+
+        internal JsonContractResolver(ILoggerFactory loggerFactory)
+        {
+            this.logger = loggerFactory.CreateLogger<JsonContractResolver>();
+        }
+
         protected override JsonProperty CreateProperty(System.Reflection.MemberInfo member, MemberSerialization memberSerialization)
         {
             var property = base.CreateProperty(member, memberSerialization);
@@ -43,7 +50,7 @@ namespace io.harness.cfsdk.client.connector
         {
             if (property.NullValueHandling != NullValueHandling.Ignore ||
                 property.Required != Required.DisallowNull) return;
-            Log.Debug($"Changing JSON property '{property.PropertyName}' from Required.DisallowNull to Required.Default");
+            logger.LogDebug($"Changing JSON property '{property.PropertyName}' from Required.DisallowNull to Required.Default");
             property.Required = Required.Default;
         }
         
@@ -51,7 +58,7 @@ namespace io.harness.cfsdk.client.connector
         {
             if (contract.ItemNullValueHandling != NullValueHandling.Ignore ||
                 contract.ItemRequired != Required.DisallowNull) return;
-            Log.Debug($"Changing JSON object contract '{contract}' from Required.DisallowNull to Required.Default");
+            logger.LogDebug($"Changing JSON object contract '{contract}' from Required.DisallowNull to Required.Default");
             contract.ItemRequired = Required.Default;
         }
     }

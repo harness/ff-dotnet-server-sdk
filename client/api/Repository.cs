@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using io.harness.cfsdk.client.cache;
 using io.harness.cfsdk.HarnessOpenAPIService;
-using Serilog;
+using Microsoft.Extensions.Logging;
 
 [assembly: InternalsVisibleToAttribute("ff-server-sdk-test")]
 
@@ -34,14 +34,16 @@ namespace io.harness.cfsdk.client.api
 
     internal class StorageRepository : IRepository
     {
+        private readonly ILogger logger;
         private ICache cache;
         private IStore store;
         private IRepositoryCallback callback;
-        public StorageRepository(ICache cache, IStore store, IRepositoryCallback callback)
+        public StorageRepository(ICache cache, IStore store, IRepositoryCallback callback, ILoggerFactory loggerFactory)
         {
             this.cache = cache;
             this.store = store;
             this.callback = callback;
+            this.logger = loggerFactory.CreateLogger<StorageRepository>();
         }
 
         private string FlagKey(string identifier) {  return "flags_" + identifier; }
@@ -84,11 +86,11 @@ namespace io.harness.cfsdk.client.api
             string key = FlagKey(identifier);
             if (store != null)
             {
-                Log.Debug($"Flag {identifier} successfully deleted from store");
+                logger.LogDebug($"Flag {identifier} successfully deleted from store");
                 store.Delete(key);
             }
             this.cache.Delete(key);
-            Log.Debug($"Flag {identifier} successfully deleted from cache");
+            logger.LogDebug($"Flag {identifier} successfully deleted from cache");
             if (this.callback != null)
             {
                 this.callback.OnFlagDeleted(identifier);
@@ -100,11 +102,11 @@ namespace io.harness.cfsdk.client.api
             string key = SegmentKey(identifier);
             if (store != null)
             {
-                Log.Debug($"Segment {identifier} successfully deleted from store");
+                logger.LogDebug($"Segment {identifier} successfully deleted from store");
                 store.Delete(key);
             }
             this.cache.Delete(key);
-            Log.Debug($"Segment {identifier} successfully deleted from cache");
+            logger.LogDebug($"Segment {identifier} successfully deleted from cache");
             if (this.callback != null)
             {
                 this.callback.OnSegmentDeleted(identifier);
@@ -144,7 +146,7 @@ namespace io.harness.cfsdk.client.api
             // or if version is equal 0 (or doesn't exist)
             if( current != null && featureConfig.Version != 0 && current.Version >= featureConfig.Version )
             {
-                Log.Debug($"Flag {identifier} already exists");
+                logger.LogDebug($"Flag {identifier} already exists");
                 return;
             }
 
@@ -162,7 +164,7 @@ namespace io.harness.cfsdk.client.api
             // or if version is equal 0 (or doesn't exist)
             if (current != null && segment.Version != 0 && current.Version >= segment.Version)
             {
-                Log.Debug($"Segment {identifier} already exists");
+                logger.LogDebug($"Segment {identifier} already exists");
                 return;
             }
 
@@ -178,12 +180,12 @@ namespace io.harness.cfsdk.client.api
         {
             if (this.store == null)
             {
-                Log.Debug($"Item {identifier} successfully cached");
+                logger.LogDebug($"Item {identifier} successfully cached");
                 cache.Set(key, value);
             }
             else
             {
-                Log.Debug($"Item {identifier} successfully stored and cache invalidated");
+                logger.LogDebug($"Item {identifier} successfully stored and cache invalidated");
                 store.Set(key, value);
                 cache.Delete(key);
             }

@@ -21,7 +21,7 @@ For a sample FF .NET SDK project, see our [test .NET project](examples/getting_s
 [.NET Framework >= 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48)<br>
 or<br>
 [.Net 5.0.104](https://docs.microsoft.com/en-us/nuget/quickstart/install-and-use-a-package-using-the-dotnet-cli) or newer (dotnet --version)<br>
-The library is packaged as multi-target supporting `netstandard2.0` set of API's and additionaly targets `net461` for older frameworks.
+The library is packaged as multi-target supporting `net5.0`, `net6.0` and `net7.0`.
 
 
 ## Quickstart

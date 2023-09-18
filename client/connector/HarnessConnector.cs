@@ -9,9 +9,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using io.harness.cfsdk.client.api;
 using io.harness.cfsdk.HarnessOpenAPIService;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Serialization;
-using Serilog;
 
 namespace io.harness.cfsdk.client.connector
 {
@@ -22,6 +22,8 @@ namespace io.harness.cfsdk.client.connector
 
     internal class HarnessConnector : IConnector
     {
+        private readonly ILogger<HarnessConnector> logger;
+        private readonly ILoggerFactory loggerFactory;
         private string token;
         private static string environment;
         private static string accountID;
@@ -39,7 +41,7 @@ namespace io.harness.cfsdk.client.connector
         private IService currentStream;
         private CancellationTokenSource cancelToken = new CancellationTokenSource();
 
-        private static string sdkVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "";
+        private static readonly string sdkVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "";
 
         private static HttpClient ApiHttpClient(Config config)
         {
@@ -79,16 +81,16 @@ namespace io.harness.cfsdk.client.connector
             return client;
         }
         
-        public HarnessConnector(string apiKey, Config config, IConnectionCallback callback)
-        : this(apiKey, config, callback, ApiHttpClient(config), MetricHttpClient(config), SseHttpClient(config, apiKey))
+        public HarnessConnector(string apiKey, Config config, IConnectionCallback callback, ILoggerFactory loggerFactory)
+        : this(apiKey, config, callback, ApiHttpClient(config), MetricHttpClient(config), SseHttpClient(config, apiKey), loggerFactory)
         {
            
         }
 
-        private static Client HarnessClient(Config config, HttpClient httpClient)
+        private static Client HarnessClient(Config config, HttpClient httpClient, ILoggerFactory loggerFactory)
         {
             Client client = new Client(httpClient);
-            client.JsonSerializerSettings.ContractResolver = new JsonContractResolver();
+            client.JsonSerializerSettings.ContractResolver = new JsonContractResolver(loggerFactory);
             client.BaseUrl = config.ConfigUrl;
             return client;
         }
@@ -99,8 +101,9 @@ namespace io.harness.cfsdk.client.connector
             IConnectionCallback callback,
             HttpClient apiHttpClient,
             HttpClient metricHttpClient,
-            HttpClient sseHttpClient
-        ) : this(apiKey, config, callback, apiHttpClient, metricHttpClient, sseHttpClient, HarnessClient(config, apiHttpClient))
+            HttpClient sseHttpClient,
+            ILoggerFactory loggerFactory
+        ) : this(apiKey, config, callback, apiHttpClient, metricHttpClient, sseHttpClient, HarnessClient(config, apiHttpClient, loggerFactory), loggerFactory)
         {
         }
 
@@ -111,7 +114,8 @@ namespace io.harness.cfsdk.client.connector
             HttpClient apiHttpClient,
             HttpClient metricHttpClient,
             HttpClient sseHttpClient,
-            Client harnessClient)
+            Client harnessClient,
+            ILoggerFactory loggerFactory)
         {
             this.config = config;
             this.apiKey = apiKey;
@@ -120,6 +124,8 @@ namespace io.harness.cfsdk.client.connector
             this.metricHttpClient = metricHttpClient;
             this.sseHttpClient = sseHttpClient;
             this.harnessClient = harnessClient;
+            this.loggerFactory = loggerFactory;
+            this.logger = loggerFactory.CreateLogger<HarnessConnector>();
         }
 
         private async Task<T> ReauthenticateIfNeeded<T>(Func<Task<T>> task)
@@ -132,7 +138,7 @@ namespace io.harness.cfsdk.client.connector
             {
                 if (ex.StatusCode == (int)HttpStatusCode.Forbidden)
                 {
-                    Log.Error("Initiate reauthentication");
+                    logger.LogError("Initiate reauthentication");
                     callback.OnReauthenticateRequested();
                 }
                 throw new CfClientException(ex.Message);
@@ -163,7 +169,7 @@ namespace io.harness.cfsdk.client.connector
         {
             currentStream?.Close();
             var url = $"stream?cluster={cluster}";
-            currentStream = new EventSource(sseHttpClient, url, config, updater);
+            currentStream = new EventSource(sseHttpClient, url, config, updater, loggerFactory);
             return currentStream;
         }
         public async Task PostMetrics(HarnessOpenMetricsAPIService.Metrics metrics)
@@ -176,18 +182,18 @@ namespace io.harness.cfsdk.client.connector
                     BaseUrl = config.EventUrl
                 };
                 try {
-                    Log.Information("SDKCODE(metric:7000): Metrics thread started");
+                    logger.LogInformation("SDKCODE(metric:7000): Metrics thread started");
                     await client.MetricsAsync(environment, metrics, cancelToken.Token);
-                    Log.Information("SDKCODE(metric:7001): Metrics thread exited");
+                    logger.LogInformation("SDKCODE(metric:7001): Metrics thread exited");
                 }
                 catch (ApiException ex) {
-                    Log.Warning($"SDKCODE(metric:7002): Posting metrics failed, reason: {ex.Message}");
+                    logger.LogWarning(ex, $"SDKCODE(metric:7002): Posting metrics failed, reason: {ex.Message}");
                 }
 
                 var endTime = DateTime.Now;
                 if ((endTime - startTime).TotalMilliseconds > config.MetricsServiceAcceptableDuration)
                 {
-                    Log.Warning($"Metrics post duration exceeded allowable=[{endTime - startTime}]");
+                    logger.LogWarning($"Metrics post duration exceeded allowable=[{endTime - startTime}]");
                 }
 
                 return null;
@@ -197,7 +203,7 @@ namespace io.harness.cfsdk.client.connector
         {
             if (string.IsNullOrWhiteSpace(apiKey)) {
                 var errorMsg = $"SDKCODE(init:1002):The SDK has failed to initialize due to a missing or empty API key.";
-                Log.Error(errorMsg);
+                logger.LogError(errorMsg);
                 throw new CfClientException(errorMsg);
             }
 
@@ -243,12 +249,12 @@ namespace io.harness.cfsdk.client.connector
             }
             catch (ApiException ex)
             {
-                Log.Error($"SDKCODE(init:1001):The SDK has failed to initialize due to the following authentication error: {ex.Message}");
-                Log.Error(ex.StackTrace);
+                logger.LogError(ex, $"SDKCODE(init:1001):The SDK has failed to initialize due to the following authentication error: {ex.Message}");
+
                 if (ex.StatusCode == (int)HttpStatusCode.Unauthorized || ex.StatusCode == (int)HttpStatusCode.Forbidden)
                 {
                     var errorMsg = $"SDKCODE(init:1001):The SDK has failed to initialize due to the following authentication error: Invalid apiKey {apiKey}. Defaults will be served.";
-                    Log.Error(errorMsg);
+                    logger.LogError(errorMsg);
                     throw new CfClientException(errorMsg);
                 }
                 throw new CfClientException(ex.Message);

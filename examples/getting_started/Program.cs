@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.client.api;
 using System.Threading;
-using Serilog;
 
 namespace getting_started
 {

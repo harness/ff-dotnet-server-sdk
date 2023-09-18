@@ -4,10 +4,10 @@ using io.harness.cfsdk.client.cache;
 using io.harness.cfsdk.client.connector;
 using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.HarnessOpenAPIService;
-using Serilog;
 using System;
 using System.Threading.Tasks;
 using System.Timers;
+using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.api.analytics
 {
@@ -23,17 +23,20 @@ namespace io.harness.cfsdk.client.api.analytics
     }
     internal class MetricsProcessor : IMetricsProcessor
     {
+        private readonly ILogger<MetricsProcessor> logger;
         private AnalyticsCache analyticsCache;
         private Timer timer;
         private AnalyticsPublisherService analyticsPublisherService;
         private IMetricCallback callback;
         private Config config;
-        public MetricsProcessor(IConnector connector, Config config, IMetricCallback callback, AnalyticsCache analyticsCache, AnalyticsPublisherService analyticsPublisherService)
+
+        public MetricsProcessor(IConnector connector, Config config, IMetricCallback callback, AnalyticsCache analyticsCache, AnalyticsPublisherService analyticsPublisherService, ILoggerFactory loggerFactory)
         {
             this.analyticsCache = analyticsCache;
             this.callback = callback;
             this.config = config;
             this.analyticsPublisherService = analyticsPublisherService;
+            this.logger = loggerFactory.CreateLogger<MetricsProcessor>();
         }
 
         public void Start()
@@ -65,11 +68,10 @@ namespace io.harness.cfsdk.client.api.analytics
 
             if (cacheSize > bufferSize)
             {
-                Log.Warning("Metric frequency map exceeded buffer size ({0} > {1}), force flushing", cacheSize, bufferSize);
+                logger.LogWarning("Metric frequency map exceeded buffer size ({0} > {1}), force flushing", cacheSize, bufferSize);
 
                 // If the map is starting to grow too much then push the metrics now and reset the counters
                 SendMetrics();
-
             }
             else
             {
@@ -81,7 +83,7 @@ namespace io.harness.cfsdk.client.api.analytics
 
         internal void Timer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            Log.Debug("Timer Elapsed - Processing/Sending analytics data");
+            logger.LogDebug("Timer Elapsed - Processing/Sending analytics data");
             SendMetrics();
         }
 
@@ -93,7 +95,7 @@ namespace io.harness.cfsdk.client.api.analytics
             }
             catch (CfClientException ex)
             {
-                Log.Warning("Failed to send analytics data to server", ex);
+                logger.LogError(ex, "Failed to send analytics data to server");
             }
         }
     }

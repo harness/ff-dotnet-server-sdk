@@ -3,11 +3,11 @@ using io.harness.cfsdk.client.cache;
 using io.harness.cfsdk.client.connector;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using Newtonsoft.Json.Linq;
-using Serilog;
 using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.api
 {
@@ -20,6 +20,9 @@ namespace io.harness.cfsdk.client.api
         IMetricCallback,
         IConnectionCallback
     {
+        private ILoggerFactory loggerFactory;
+        private ILogger logger;
+
         // Services
         private IAuthService authService;
         private IRepository repository;
@@ -33,38 +36,45 @@ namespace io.harness.cfsdk.client.api
         public event EventHandler<string> EvaluationChanged;
 
         private CfClient parent;
-        public InnerClient(CfClient parent) { this.parent = parent; }
-        public InnerClient(string apiKey, Config config, CfClient parent)
+        public InnerClient(CfClient parent, ILoggerFactory loggerFactory) { this.parent = parent;
+            this.loggerFactory = loggerFactory;
+            this.logger = loggerFactory.CreateLogger<InnerClient>();
+        }
+        public InnerClient(string apiKey, Config config, CfClient parent, ILoggerFactory loggerFactory)
         {
+            this.loggerFactory = loggerFactory;
             this.parent = parent;
+            this.logger = loggerFactory.CreateLogger<InnerClient>();
             Initialize(apiKey, config);
         }
 
-        public InnerClient(IConnector connector, Config config, CfClient parent)
+        public InnerClient(IConnector connector, Config config, CfClient parent, ILoggerFactory loggerFactory)
         {
+            this.loggerFactory = loggerFactory;
             this.parent = parent;
+            this.logger = loggerFactory.CreateLogger<InnerClient>();
             Initialize(connector, config);
         }
 
         public void Initialize(string apiKey, Config config)
         {
-            Initialize(new HarnessConnector(apiKey, config, this), config);
+            Initialize(new HarnessConnector(apiKey, config, this, loggerFactory), config);
         }
 
         public void Initialize(IConnector connector, Config config)
         {
             var analyticsCache = new AnalyticsCache();
             this.connector = connector;
-            this.authService = new AuthService(connector, config, this);
-            this.repository = new StorageRepository(config.Cache, config.Store, this);
-            this.polling = new PollingProcessor(connector, this.repository, config, this);
-            this.update = new UpdateProcessor(connector, this.repository, config, this);
-            this.evaluator = new Evaluator(this.repository, this);
-            this.metric = new MetricsProcessor(connector, config, this, analyticsCache, new AnalyticsPublisherService(connector, analyticsCache));
+            this.authService = new AuthService(connector, config, this, loggerFactory);
+            this.repository = new StorageRepository(config.Cache, config.Store, this, loggerFactory);
+            this.polling = new PollingProcessor(connector, this.repository, config, this, loggerFactory);
+            this.update = new UpdateProcessor(connector, this.repository, config, this, loggerFactory);
+            this.evaluator = new Evaluator(this.repository, this, loggerFactory);
+            this.metric = new MetricsProcessor(connector, config, this, analyticsCache, new AnalyticsPublisherService(connector, analyticsCache, loggerFactory), loggerFactory);
         }
         public void Start()
         {
-            Log.Debug("Authenticating");
+            logger.LogDebug("Authenticating");
             // Start Authentication flow
             this.authService.Start();
         }
@@ -88,12 +98,12 @@ namespace io.harness.cfsdk.client.api
 
         public void OnStreamConnected()
         {
-            Log.Information("SDKCODE(stream:5000): SSE stream connected ok");
+            logger.LogInformation("SDKCODE(stream:5000): SSE stream connected ok");
             this.polling.Stop();
         }
         public void OnStreamDisconnected()
         {
-            Log.Information("SDKCODE(stream:5001): SSE stream disconnected");
+            logger.LogInformation("SDKCODE(stream:5001): SSE stream disconnected");
             this.polling.Start();
         }
         #endregion
@@ -104,7 +114,7 @@ namespace io.harness.cfsdk.client.api
         public void OnAuthenticationSuccess()
         {
             // after successfull authentication, start
-            Log.Information("SDKCODE(auth:2000): Authenticated ok");
+            logger.LogInformation("SDKCODE(auth:2000): Authenticated ok");
 
             polling.Start();
             update.Start();
@@ -164,8 +174,8 @@ namespace io.harness.cfsdk.client.api
 
         private void OnNotifyInitializationCompleted()
         {
-            Log.Information("SDKCODE(init:1000): The SDK has successfully initialized");
-            Log.Information("SDK version: " + Assembly.GetExecutingAssembly().GetName().Version);
+            logger.LogInformation("SDKCODE(init:1000): The SDK has successfully initialized");
+            logger.LogInformation("SDK version: " + Assembly.GetExecutingAssembly().GetName().Version);
             InitializationCompleted?.Invoke(parent, EventArgs.Empty);
         }
         private void OnNotifyEvaluationChanged(string identifier)

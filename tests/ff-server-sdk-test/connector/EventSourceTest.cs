@@ -4,14 +4,11 @@ using System.Net.Http;
 using System.Threading;
 using io.harness.cfsdk.client.api;
 using io.harness.cfsdk.client.connector;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
 using NUnit.Framework;
-using NUnit.Framework.Internal.Execution;
-using Serilog;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
-using Serilog;
 using WireMock.Logging;
 using WireMock.Settings;
 
@@ -20,23 +17,20 @@ namespace ff_server_sdk_test.connector
     [TestFixture]
     public class EventSourceTest
     {
-
+        private static readonly ILoggerFactory _loggerFactory = LoggerFactory.Create(builder => { builder.AddConsole(); });
+        private static ILogger _logger;
         private WireMockServer server;
 
         [SetUp]
         public void StartMockServer()
         {
+            _logger = _loggerFactory.CreateLogger<EventSourceTest>();
+
             server = WireMockServer.Start(new WireMockServerSettings
             {
                 Logger = new WireMockConsoleLogger(),
                 ThrowExceptionWhenMatcherFails = true
             });
-
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Verbose()
-                .WriteTo.Console()
-                .CreateLogger();
-            
         }
 
         [TearDown]
@@ -57,20 +51,20 @@ namespace ff_server_sdk_test.connector
 
             public void Update(Message message, bool manual)
             {
-                Log.Information($"Test got stream update, domain={message.Domain} id={message.Identifier} event={message.Event} ver={message.Version} ");
+                _logger.LogInformation($"Test got stream update, domain={message.Domain} id={message.Identifier} event={message.Event} ver={message.Version} ");
                 Events.Add(message);
                 UpdateCount++;
             }
 
             public void OnStreamConnected()
             {
-                Log.Information("SDKCODE(stream:5000): SSE stream connected ok");
+                _logger.LogInformation("SDKCODE(stream:5000): SSE stream connected ok");
                 ConnectCount++;
             }
 
             public void OnStreamDisconnected()
             {
-                Log.Information("SDKCODE(stream:5001): SSE stream disconnected");
+                _logger.LogInformation("SDKCODE(stream:5001): SSE stream disconnected");
                 DisconnectCount++;
                 disconnectLatch.Signal();
             }
@@ -97,7 +91,7 @@ namespace ff_server_sdk_test.connector
             var callback = new TestCallback();
             Config config = new ConfigBuilder().ConfigUrl(server.Url + "/api/1.0").Build();
             var httpClient = SseHttpClient(config, "dummyapikey");
-            var eventSource = new EventSource(httpClient, "stream", config, callback);
+            var eventSource = new EventSource(httpClient, "stream", config, callback, _loggerFactory);
             eventSource.Start();
 
             callback.WaitForDisconnect();
@@ -138,7 +132,7 @@ namespace ff_server_sdk_test.connector
             var callback = new TestCallback();
             Config config = new ConfigBuilder().ConfigUrl(server.Url + "/api/1.0").Build();
             var httpClient = SseHttpClient(config, "dummyapikey");
-            var eventSource = new EventSource(httpClient, "stream", config, callback);
+            var eventSource = new EventSource(httpClient, "stream", config, callback, _loggerFactory);
             eventSource.Start();
 
             callback.WaitForDisconnect();

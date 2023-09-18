@@ -1,3 +1,13 @@
+
+echo ".NET version installed:"
+dotnet --version
+
+DOTNET_VERSION=$(dotnet --version | cut -d. -f1)
+if [ "$DOTNET_VERSION" -lt 7 ]; then
+	echo "FF .NET SDK requires .NET 7 or later to build. Aborting"
+	exit 1
+fi
+
 dotnet pack
 
 # Install Tools needed for build

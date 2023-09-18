@@ -1,32 +1,35 @@
-﻿using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System;
 using System.Timers;
+using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.polling
 {
     public class ShortTermPolling : IEvaluationPolling
     {
+        private readonly ILogger<ShortTermPolling> logger;
         private static int MINIMUM_POLLING_INTERVAL = 10000;
         private long pollingInterval;
         private Timer timer;
 
-        public ShortTermPolling(int time)
+        public ShortTermPolling(int time) : this(time, LoggerFactory.Create(builder => { builder.AddConsole(); }))
+        {
+        }
+
+        public ShortTermPolling(int time, ILoggerFactory loggerFactory)
         {
             pollingInterval = Math.Max(time, MINIMUM_POLLING_INTERVAL);
-
+            logger = loggerFactory.CreateLogger<ShortTermPolling>();
         }
 
         public void start(Action<object, ElapsedEventArgs> runnable)
         {
             if (timer != null)
             {
-                Log.Debug("POLLING timer - stopping before start");
+                logger.LogDebug("POLLING timer - stopping before start");
                 timer.Stop();
                 timer.Dispose();
             }
-            Log.Debug("POLLING timer - scheduling new one");
+            logger.LogDebug("POLLING timer - scheduling new one");
             timer = new Timer(pollingInterval);
             timer.Elapsed += new ElapsedEventHandler(runnable);
             timer.AutoReset = true;
@@ -38,11 +41,11 @@ namespace io.harness.cfsdk.client.polling
         {
             if (timer != null)
             {
-                Log.Debug("POLLING timer - stopping on exit");
+                logger.LogDebug("POLLING timer - stopping on exit");
                 timer.Stop();
                 timer.Dispose();
             }
-            Log.Debug("POLLING timer - stoped");
+            logger.LogDebug("POLLING timer - stoped");
         }
     }
 }

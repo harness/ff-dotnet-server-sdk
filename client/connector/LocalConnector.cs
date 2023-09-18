@@ -5,20 +5,27 @@ using io.harness.cfsdk.client.api;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using io.harness.cfsdk.HarnessOpenMetricsAPIService;
 using Newtonsoft.Json;
-using Serilog;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.connector
 {
     public class LocalConnector : IConnector
     {
+        private readonly ILogger<LocalConnector> logger;
         private string flagPath;
         private string segmentPath;
         private string metricPath;
         private string source;
-        public LocalConnector(string source)
+
+        public LocalConnector(string source) : this(source, LoggerFactory.Create(builder => { builder.AddConsole(); }))
         {
+        }
+
+        public LocalConnector(string source, ILoggerFactory loggerFactory)
+        {
+            this.logger = loggerFactory.CreateLogger<LocalConnector>();
             this.source = source;
 
             this.flagPath = Path.Combine(source, "flags");
@@ -61,7 +68,7 @@ namespace io.harness.cfsdk.client.connector
             }
             catch (Exception ex)
             {
-                Log.Error("Error accessing feature files.", ex);
+                logger.LogError(ex, "Error accessing feature files.");
             }
             return Task.FromResult((IEnumerable<FeatureConfig>)features);
         }
@@ -84,7 +91,7 @@ namespace io.harness.cfsdk.client.connector
             }
             catch(Exception ex)
             {
-                Log.Error("Error accessing segment files.", ex);
+                logger.LogError(ex, "Error accessing segment files.");
             }
             return Task.FromResult((IEnumerable<Segment>)segments);
         }
