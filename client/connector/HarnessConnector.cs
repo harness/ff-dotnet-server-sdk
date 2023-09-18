@@ -177,7 +177,7 @@ namespace io.harness.cfsdk.client.connector
                 };
                 try {
                     Log.Information("SDKCODE(metric:7000): Metrics thread started");
-                    await client.MetricsAsync(environment, cluster, metrics, cancelToken.Token);
+                    await client.MetricsAsync(environment, metrics, cancelToken.Token);
                     Log.Information("SDKCODE(metric:7001): Metrics thread exited");
                 }
                 catch (ApiException ex) {
