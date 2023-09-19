@@ -48,6 +48,7 @@ namespace io.harness.cfsdk.client.api.analytics
                 this.timer.AutoReset = true;
                 this.timer.Enabled = true;
                 this.timer.Start();
+                logger.LogInformation("SDKCODE(metric:7000): Metrics thread started");
             }
         }
 
@@ -58,6 +59,7 @@ namespace io.harness.cfsdk.client.api.analytics
             {
                 this.timer.Stop();
                 this.timer = null;
+                logger.LogInformation("SDKCODE(metric:7001): Metrics thread exited");
             }
         }
 

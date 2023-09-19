@@ -66,6 +66,12 @@ namespace io.harness.cfsdk.client.api
 
         private ILoggerFactory SetUpDefaultLogging(Config config)
         {
+            if (config != null && config.LoggerFactory != null)
+            {
+                return config.LoggerFactory;
+            }
+
+            // Default logging is to console
             return LoggerFactory.Create(builder =>
             {
                  builder

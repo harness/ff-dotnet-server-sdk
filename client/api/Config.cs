@@ -1,5 +1,6 @@
 ﻿using System;
 using io.harness.cfsdk.client.cache;
+using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.api
 {
@@ -68,6 +69,8 @@ namespace io.harness.cfsdk.client.api
 
         public long MetricsServiceAcceptableDuration { get => metricsServiceAcceptableDuration;  }
         internal long metricsServiceAcceptableDuration = 10000;
+
+        public ILoggerFactory LoggerFactory { get; set; }
 
         public Config(string configUrl, string eventUrl, bool streamEnabled, int pollIntervalInSeconds, bool analyticsEnabled, int frequency, int bufferSize,  int connectionTimeout, int readTimeout, int writeTimeout, bool debug, long metricsServiceAcceptableDuration)
         {
@@ -183,6 +186,13 @@ namespace io.harness.cfsdk.client.api
         public ConfigBuilder debug(bool debug)
         {
             this.configtobuild.debug = debug;
+            return this;
+        }
+
+        /** Set an ILoggerFactory for the SDK. note: cannot be used in conjunction with getInstance() */
+        public ConfigBuilder LoggerFactory(ILoggerFactory loggerFactory)
+        {
+            this.configtobuild.LoggerFactory = loggerFactory;
             return this;
         }
     }
