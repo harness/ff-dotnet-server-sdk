@@ -103,7 +103,7 @@ namespace io.harness.cfsdk.client.api
                 }
                 catch(Exception ex)
                 {
-                    logger.LogError(ex,$"Error processing flag: {message.Identifier} event: {message.Event}.");
+                    logger.LogError(ex,"Error processing flag: {identifier} event: {event}.", message.Identifier, message.Event);
                 }
             }
             else if (message.Domain.Equals("target-segment"))
@@ -122,7 +122,7 @@ namespace io.harness.cfsdk.client.api
                 }
                 catch(Exception ex)
                 {
-                    logger.LogError(ex,$"Error processing segment: {message.Identifier} event: {message.Event}.");
+                    logger.LogError(ex,"Error processing segment: {identifier} event: {event}.",  message.Identifier, message.Event);
                 }
             }
         }

@@ -51,7 +51,7 @@ namespace ff_server_sdk_test.connector
 
             public void Update(Message message, bool manual)
             {
-                _logger.LogInformation($"Test got stream update, domain={message.Domain} id={message.Identifier} event={message.Event} ver={message.Version} ");
+                _logger.LogInformation("Test got stream update, domain={domain} id={identifier} event={event} ver={version} ", message.Domain, message.Identifier, message.Event, message.Version);
                 Events.Add(message);
                 UpdateCount++;
             }

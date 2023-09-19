@@ -85,7 +85,7 @@ namespace io.harness.cfsdk.client.connector
                             continue;
                         }
 
-                        logger.LogInformation($"SDKCODE(stream:5002): SSE event received {message}");
+                        logger.LogInformation("SDKCODE(stream:5002): SSE event received {message}", message);
 
                         // parse message
                         var jsonMessage = JObject.Parse("{" + message + "}");
@@ -104,7 +104,7 @@ namespace io.harness.cfsdk.client.connector
             }
             catch (Exception e)
             {
-                logger.LogError(e, $"EventSource service threw an error: {e.Message} Retrying in {config.pollIntervalInSeconds}");
+                logger.LogError(e, "EventSource service threw an error: {reason} Retrying in {pollIntervalInSeconds}", e.Message, config.pollIntervalInSeconds);
                 Debug.WriteLine(e.ToString());
             }
             finally

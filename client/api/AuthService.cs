@@ -62,12 +62,12 @@ namespace io.harness.cfsdk.client.api
                 // Exception thrown on Authentication. Timer will retry authentication.
                 if (retries++ >= config.MaxAuthRetries)
                 {
-                    logger.LogError(ex, $"SDKCODE(auth:2001): Authentication failed. Max authentication retries reached {retries} - defaults will be served");
+                    logger.LogError(ex, "SDKCODE(auth:2001): Authentication failed. Max authentication retries reached {retries} - defaults will be served", retries);
                     Stop();
                 }
                 else
                 {
-                    logger.LogWarning(ex, $"SDKCODE(auth:2003): Retrying to authenticate. Retry ({retries}) in {config.pollIntervalInSeconds} Seconds. Reason: {ex.Message}");
+                    logger.LogWarning(ex, "SDKCODE(auth:2003): Retrying to authenticate. Retry {retries} in {pollIntervalInSeconds} seconds. Reason: {reason}", retries, config.pollIntervalInSeconds, ex.Message);
                 }
             }
         }

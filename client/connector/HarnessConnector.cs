@@ -187,13 +187,13 @@ namespace io.harness.cfsdk.client.connector
                     logger.LogInformation("SDKCODE(metric:7001): Metrics thread exited");
                 }
                 catch (ApiException ex) {
-                    logger.LogWarning(ex, $"SDKCODE(metric:7002): Posting metrics failed, reason: {ex.Message}");
+                    logger.LogWarning(ex, "SDKCODE(metric:7002): Posting metrics failed, reason: {reason}", ex.Message);
                 }
 
                 var endTime = DateTime.Now;
                 if ((endTime - startTime).TotalMilliseconds > config.MetricsServiceAcceptableDuration)
                 {
-                    logger.LogWarning($"Metrics post duration exceeded allowable=[{endTime - startTime}]");
+                    logger.LogWarning("Metrics post duration exceeded allowable=[{allowableTime}]", endTime - startTime);
                 }
 
                 return null;
@@ -202,7 +202,7 @@ namespace io.harness.cfsdk.client.connector
         public async Task<string> Authenticate()
         {
             if (string.IsNullOrWhiteSpace(apiKey)) {
-                var errorMsg = $"SDKCODE(init:1002):The SDK has failed to initialize due to a missing or empty API key.";
+                var errorMsg = "SDKCODE(init:1002):The SDK has failed to initialize due to a missing or empty API key.";
                 logger.LogError(errorMsg);
                 throw new CfClientException(errorMsg);
             }
@@ -249,11 +249,11 @@ namespace io.harness.cfsdk.client.connector
             }
             catch (ApiException ex)
             {
-                logger.LogError(ex, $"SDKCODE(init:1001):The SDK has failed to initialize due to the following authentication error: {ex.Message}");
+                logger.LogError(ex, "SDKCODE(init:1001):The SDK has failed to initialize due to the following authentication error: {reason}", ex.Message);
 
                 if (ex.StatusCode == (int)HttpStatusCode.Unauthorized || ex.StatusCode == (int)HttpStatusCode.Forbidden)
                 {
-                    var errorMsg = $"SDKCODE(init:1001):The SDK has failed to initialize due to the following authentication error: Invalid apiKey {apiKey}. Defaults will be served.";
+                    var errorMsg = "SDKCODE(init:1001):The SDK has failed to initialize due to the following authentication error: Invalid apiKey. Defaults will be served.";
                     logger.LogError(errorMsg);
                     throw new CfClientException(errorMsg);
                 }

@@ -77,7 +77,7 @@ namespace io.harness.cfsdk.client.api
                 intervalMs = 60000;
             }
 
-            logger.LogDebug($"SDKCODE(poll:4000): Polling started, intervalMs: {intervalMs}");
+            logger.LogDebug("SDKCODE(poll:4000): Polling started, intervalMs: {intervalMs}", intervalMs);
             // start timer which will initiate periodic reading of flags and segments
             pollTimer = new Timer(OnTimedEventAsync, null, 0, intervalMs);
         }
@@ -105,7 +105,7 @@ namespace io.harness.cfsdk.client.api
             }
             catch (CfClientException ex)
             {
-                logger.LogError(ex,$"Exception was raised when fetching flags data with the message {ex.Message}");
+                logger.LogError(ex,"Exception was raised when fetching flags data with the message {reason}", ex.Message);
                 throw;
             }
         }
@@ -123,7 +123,7 @@ namespace io.harness.cfsdk.client.api
             }
             catch (CfClientException ex)
             {
-                logger.LogError(ex, $"Exception was raised when fetching segments data with the message {ex.Message}");
+                logger.LogError(ex, "Exception was raised when fetching segments data with the message {reason}", ex.Message);
                 throw;
             }
         }
@@ -141,7 +141,7 @@ namespace io.harness.cfsdk.client.api
             }
             catch(Exception ex)
             {
-                logger.LogWarning(ex,$"Polling failed with error: {ex.Message}. Will retry in {config.pollIntervalInSeconds}");
+                logger.LogWarning(ex,"Polling failed with error: {reason}. Will retry in {pollIntervalInSeconds}", ex.Message, config.pollIntervalInSeconds);
                 callback.OnPollError(ex.Message);
             }
         }

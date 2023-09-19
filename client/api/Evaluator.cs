@@ -4,7 +4,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using io.harness.cfsdk.client.api.rules;
-using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
@@ -121,7 +120,12 @@ namespace io.harness.cfsdk.client.api
 
         private void logEvaluatiionFailureError(FeatureConfigKind kind, string featureKey, dto.Target target, string defaultValue)
         {
-            logger.LogWarning($"SDKCODE(eval:6001): Failed to evaluate {kind} variation for {{ \"target\": \"{target}\", \"flag\": \"{featureKey}\"}} and the default variation {defaultValue} is being returned");
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning(
+                    "SDKCODE(eval:6001): Failed to evaluate {kind} variation for {targetId}, flag {featureId} and the default variation {defaultValue} is being returned",
+                    kind, target.Identifier, featureKey, defaultValue);
+            }
         }
 
         private bool checkPreRequisite(FeatureConfig parentFeatureConfig, dto.Target target)
@@ -263,14 +267,23 @@ namespace io.harness.cfsdk.client.api
                     // check exclude list
                     if (segment.Excluded != null && segment.Excluded.Any(t => t.Identifier.Equals(target.Identifier)))
                     {
-                        logger.LogDebug($"Target {target.Name} excluded from segment {segment.Name} via exclude list");
+                        if (logger.IsEnabled(LogLevel.Debug))
+                        {
+                            logger.LogDebug("Target {targetName} excluded from segment {segmentName} via exclude list",
+                                target.Name, segment.Name);
+                        }
                         return false;
                     }
 
                     // check include list
                     if (segment.Included != null && segment.Included.Any(t => t.Identifier.Equals(target.Identifier)))
                     {
-                        logger.LogDebug($"Target {target.Name} included in segment {segment.Name} via include list");
+                        if (logger.IsEnabled(LogLevel.Debug))
+                        {
+                            logger.LogDebug("Target {targetName} included in segment {segmentName} via include list",
+                                target.Name, segment.Name);
+                        }
+
                         return true;
                     }
 

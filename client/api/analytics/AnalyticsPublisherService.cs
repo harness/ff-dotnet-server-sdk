@@ -64,7 +64,7 @@ namespace io.harness.cfsdk.client.api.analytics
                 {
                     // Clear the set because the cache is only invalidated when there is no
                     // exception, so the targets will reappear in the next iteration
-                    logger.LogError($"SDKCODE(stream:7002): Posting metrics failed, reason: {ex.Message}");
+                    logger.LogError("SDKCODE(stream:7002): Posting metrics failed, reason: {reason}", ex.Message);
                 }
             }
         }

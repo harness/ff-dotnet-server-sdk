@@ -68,7 +68,7 @@ namespace io.harness.cfsdk.client.api.analytics
 
             if (cacheSize > bufferSize)
             {
-                logger.LogWarning("Metric frequency map exceeded buffer size ({0} > {1}), force flushing", cacheSize, bufferSize);
+                logger.LogWarning("Metric frequency map exceeded buffer size ({cacheSize} > {bufferSize}), force flushing", cacheSize, bufferSize);
 
                 // If the map is starting to grow too much then push the metrics now and reset the counters
                 SendMetrics();

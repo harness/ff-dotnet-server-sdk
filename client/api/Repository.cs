@@ -86,11 +86,11 @@ namespace io.harness.cfsdk.client.api
             string key = FlagKey(identifier);
             if (store != null)
             {
-                logger.LogDebug($"Flag {identifier} successfully deleted from store");
+                logger.LogDebug("Flag {identifier} successfully deleted from store", identifier);
                 store.Delete(key);
             }
             this.cache.Delete(key);
-            logger.LogDebug($"Flag {identifier} successfully deleted from cache");
+            logger.LogDebug("Flag {identifier} successfully deleted from cache", identifier);
             if (this.callback != null)
             {
                 this.callback.OnFlagDeleted(identifier);
@@ -102,11 +102,11 @@ namespace io.harness.cfsdk.client.api
             string key = SegmentKey(identifier);
             if (store != null)
             {
-                logger.LogDebug($"Segment {identifier} successfully deleted from store");
+                logger.LogDebug("Segment {identifier} successfully deleted from store", identifier);
                 store.Delete(key);
             }
             this.cache.Delete(key);
-            logger.LogDebug($"Segment {identifier} successfully deleted from cache");
+            logger.LogDebug("Segment {identifier} successfully deleted from cache", identifier);
             if (this.callback != null)
             {
                 this.callback.OnSegmentDeleted(identifier);
@@ -146,7 +146,7 @@ namespace io.harness.cfsdk.client.api
             // or if version is equal 0 (or doesn't exist)
             if( current != null && featureConfig.Version != 0 && current.Version >= featureConfig.Version )
             {
-                logger.LogDebug($"Flag {identifier} already exists");
+                logger.LogDebug("Flag {identifier} already exists", identifier);
                 return;
             }
 
@@ -164,7 +164,7 @@ namespace io.harness.cfsdk.client.api
             // or if version is equal 0 (or doesn't exist)
             if (current != null && segment.Version != 0 && current.Version >= segment.Version)
             {
-                logger.LogDebug($"Segment {identifier} already exists");
+                logger.LogDebug("Segment {identifier} already exists", identifier);
                 return;
             }
 
@@ -180,12 +180,12 @@ namespace io.harness.cfsdk.client.api
         {
             if (this.store == null)
             {
-                logger.LogDebug($"Item {identifier} successfully cached");
+                logger.LogDebug("Item {identifier} successfully cached, identifier", identifier);
                 cache.Set(key, value);
             }
             else
             {
-                logger.LogDebug($"Item {identifier} successfully stored and cache invalidated");
+                logger.LogDebug("Item {identifier} successfully stored and cache invalidated", identifier);
                 store.Set(key, value);
                 cache.Delete(key);
             }

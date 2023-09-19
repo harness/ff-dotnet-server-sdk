@@ -25,7 +25,7 @@ namespace io.harness.cfsdk.client.connector
             this.logger = loggerFactory.CreateLogger<JsonContractResolver>();
         }
 
-        protected override JsonProperty CreateProperty(System.Reflection.MemberInfo member, MemberSerialization memberSerialization)
+        protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
         {
             var property = base.CreateProperty(member, memberSerialization);
             OverrideRequiredProperty(ref property);
@@ -35,7 +35,7 @@ namespace io.harness.cfsdk.client.connector
         protected override JsonObjectContract CreateObjectContract(Type objectType)
         {
             var contract = base.CreateObjectContract(objectType);
-            contract.ItemRequired = Required.Default;
+            OverrideRequiredProperty(ref contract);
             return contract;
         }
 
@@ -50,7 +50,7 @@ namespace io.harness.cfsdk.client.connector
         {
             if (property.NullValueHandling != NullValueHandling.Ignore ||
                 property.Required != Required.DisallowNull) return;
-            logger.LogDebug($"Changing JSON property '{property.PropertyName}' from Required.DisallowNull to Required.Default");
+            logger.LogDebug("Changing JSON property '{PropertyName}' from Required.DisallowNull to Required.Default", property.PropertyName);
             property.Required = Required.Default;
         }
         
@@ -58,7 +58,7 @@ namespace io.harness.cfsdk.client.connector
         {
             if (contract.ItemNullValueHandling != NullValueHandling.Ignore ||
                 contract.ItemRequired != Required.DisallowNull) return;
-            logger.LogDebug($"Changing JSON object contract '{contract}' from Required.DisallowNull to Required.Default");
+            logger.LogDebug("Changing JSON object contract '{contract}' from Required.DisallowNull to Required.Default", contract);
             contract.ItemRequired = Required.Default;
         }
     }
