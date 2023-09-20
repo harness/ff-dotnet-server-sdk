@@ -36,7 +36,7 @@ namespace getting_started
             while (true)
             {
                 bool resultBool = client.boolVariation(flagName, target, false);
-                Console.WriteLine("Flag variation " + resultBool);
+                Console.WriteLine($"Flag '{flagName}' = " + resultBool);
                 Thread.Sleep(10 * 1000);
             }
         }
