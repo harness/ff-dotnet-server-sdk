@@ -23,7 +23,7 @@ namespace getting_started
 
             // Create a feature flag client
             var client = new CfClient(apiKey, Config.Builder().LoggerFactory(loggerFactory).Build());
-            client.InitializeAndWait();
+            client.InitializeAndWait().Wait();
 
             // Create a target (different targets can get different results based on rules)
             Target target = Target.builder()
