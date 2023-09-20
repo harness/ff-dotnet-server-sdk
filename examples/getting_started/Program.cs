@@ -35,7 +35,7 @@ namespace getting_started
            // Loop forever reporting the state of the flag
             while (true)
             {
-                bool resultBool = CfClient.Instance.boolVariation(flagName, target, false);
+                bool resultBool = client.boolVariation(flagName, target, false);
                 Console.WriteLine("Flag variation " + resultBool);
                 Thread.Sleep(10 * 1000);
             }
