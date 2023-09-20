@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.client.api;
 using System.Threading;
+using Serilog;
+using Serilog.Extensions.Logging;
 
 namespace getting_started
 {
@@ -13,13 +15,20 @@ namespace getting_started
 
         static void Main(string[] args)
         {
+            var loggerFactory = new SerilogLoggerFactory(
+                new LoggerConfiguration()
+                    .MinimumLevel.Information()
+                    .WriteTo.Console()
+                    .CreateLogger());
+
             // Create a feature flag client
-            CfClient.Instance.Initialize(apiKey, Config.Builder().Build());
+            var client = new CfClient(apiKey, Config.Builder().LoggerFactory(loggerFactory).Build());
+            client.InitializeAndWait();
 
             // Create a target (different targets can get different results based on rules)
             Target target = Target.builder()
-                            .Name("Harness_Target_1")
-                            .Identifier("HT_1")
+                            .Name("DotNET SDK")
+                            .Identifier("dotnetsdk")
                             .Attributes(new Dictionary<string, string>(){{"email", "demo@harness.io"}})
                             .build();
 

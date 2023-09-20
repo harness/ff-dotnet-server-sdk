@@ -2,14 +2,15 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net5.0;net6.0;net7.0</TargetFrameworks>
+    <TargetFramework>net5.0</TargetFramework>
     <LangVersion>9.0</LangVersion>
     <RestoreSources>$(RestoreSources);https://api.nuget.org/v3/index.json</RestoreSources>
 
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ff-dotnet-server-sdk" Version="1.1.*" />
+    <PackageReference Include="ff-dotnet-server-sdk" Version="1.2.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="7.0.0"/>
     <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
   </ItemGroup>
 
