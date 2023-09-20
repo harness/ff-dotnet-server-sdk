@@ -6,7 +6,6 @@ using io.harness.cfsdk.client.dto;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
-using Serilog;
 using WireMock.Logging;
 using WireMock.Settings;
 using NUnit.Framework;
@@ -28,11 +27,6 @@ namespace ff_server_sdk_test.api
                 Logger = new WireMockConsoleLogger(),
                 ThrowExceptionWhenMatcherFails = true
             });
-
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Verbose()
-                .WriteTo.Console()
-                .CreateLogger();
         }
 
         [TearDown]
@@ -69,7 +63,7 @@ namespace ff_server_sdk_test.api
                     .Identifier("CfClientTest")
                     .build();
 
-            Log.Information("Running at " + server.Url);
+            Console.WriteLine("Running at " + server.Url);
 
             var client = new CfClient("dummy api key", Config.Builder()
                 .debug(true)

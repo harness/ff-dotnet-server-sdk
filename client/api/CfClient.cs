@@ -1,10 +1,9 @@
 ﻿using io.harness.cfsdk.client.connector;
 using Newtonsoft.Json.Linq;
-using Serilog;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 
 namespace io.harness.cfsdk.client.api
 {
@@ -36,7 +35,7 @@ namespace io.harness.cfsdk.client.api
         private static readonly Lazy<CfClient> lazy = new Lazy<CfClient>(() => new CfClient());
         public static ICfClient Instance { get { return lazy.Value; } }
 
-        private readonly InnerClient client = null;
+        private readonly InnerClient client;
 
         public event EventHandler InitializationCompleted
         {
@@ -54,19 +53,34 @@ namespace io.harness.cfsdk.client.api
         public CfClient(IConnector connector) : this(connector, Config.Builder().Build()) { }
         public CfClient()
         {
-            Log.Logger = new LoggerConfiguration().WriteTo.Debug().CreateLogger();
-            client = new InnerClient(this);
+            client = new InnerClient(this, SetUpDefaultLogging(null));
         }
         public CfClient(string apiKey, Config config)
         {
-            Log.Logger = new LoggerConfiguration().WriteTo.Debug().CreateLogger();
-            client = new InnerClient(apiKey, config, this);
+            client = new InnerClient(apiKey, config, this,  SetUpDefaultLogging(config));
         }
         public CfClient(IConnector connector, Config config)
         {
-            Log.Logger = new LoggerConfiguration().WriteTo.Debug().CreateLogger();
-            client = new InnerClient(connector, config, this);
+            client = new InnerClient(connector, config, this, SetUpDefaultLogging(config));
         }
+
+        private ILoggerFactory SetUpDefaultLogging(Config config)
+        {
+            if (config != null && config.LoggerFactory != null)
+            {
+                return config.LoggerFactory;
+            }
+
+            // Default logging is to console
+            return LoggerFactory.Create(builder =>
+            {
+                 builder
+                    .AddFilter("Microsoft", LogLevel.Warning)
+                    .AddFilter("System", LogLevel.Warning)
+                    .AddConsole();
+            });
+        }
+
         // start authentication with server
         public async Task InitializeAndWait()
         {

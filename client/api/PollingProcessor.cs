@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using io.harness.cfsdk.client.connector;
 using io.harness.cfsdk.HarnessOpenAPIService;
-using Serilog;
+using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.api
 {
@@ -43,6 +43,7 @@ namespace io.harness.cfsdk.client.api
     /// </summary>
     internal class PollingProcessor : IPollingProcessor
     {
+        private readonly ILogger<PollingProcessor> logger;
         private IConnector connector;
         private IRepository repository;
         private IPollCallback callback;
@@ -51,13 +52,14 @@ namespace io.harness.cfsdk.client.api
         private bool isInitialized = false;
         private SemaphoreSlim readyEvent;
 
-        public PollingProcessor(IConnector connector, IRepository repository, Config config, IPollCallback callback)
+        public PollingProcessor(IConnector connector, IRepository repository, Config config, IPollCallback callback, ILoggerFactory loggerFactory)
         {
             this.callback = callback;
             this.repository = repository;
             this.connector = connector;
             this.config = config;
             this.readyEvent = new SemaphoreSlim(0, 3);
+            this.logger = loggerFactory.CreateLogger<PollingProcessor>();
         }
         public async Task<bool> ReadyAsync()
         {
@@ -71,17 +73,17 @@ namespace io.harness.cfsdk.client.api
 
             if (intervalMs < 60000)
             {
-                Log.Warning("Poll interval cannot be less than 60 seconds");
+                logger.LogWarning("Poll interval cannot be less than 60 seconds");
                 intervalMs = 60000;
             }
 
-            Log.Debug($"SDKCODE(poll:4000): Polling started, intervalMs: {intervalMs}");
+            logger.LogDebug("SDKCODE(poll:4000): Polling started, intervalMs: {intervalMs}", intervalMs);
             // start timer which will initiate periodic reading of flags and segments
             pollTimer = new Timer(OnTimedEventAsync, null, 0, intervalMs);
         }
         public void Stop()
         {
-            Log.Debug("SDKCODE(poll:4001): Polling stopped");
+            logger.LogDebug("SDKCODE(poll:4001): Polling stopped");
             // stop timer
             if (pollTimer == null) return;
             pollTimer.Dispose();
@@ -92,9 +94,9 @@ namespace io.harness.cfsdk.client.api
         {
             try
             {
-                Log.Debug("Fetching flags started");
+                logger.LogDebug("Fetching flags started");
                 var flags = await this.connector.GetFlags();
-                Log.Debug("Fetching flags finished");
+                logger.LogDebug("Fetching flags finished");
                 foreach (var item in flags)
                 {
                     repository.SetFlag(item.Feature, item);
@@ -103,8 +105,7 @@ namespace io.harness.cfsdk.client.api
             }
             catch (CfClientException ex)
             {
-                Log.Error($"Exception was raised when fetching flags data with the message {ex.Message}");
-                Log.Error(ex.StackTrace);
+                logger.LogError(ex,"Exception was raised when fetching flags data with the message {reason}", ex.Message);
                 throw;
             }
         }
@@ -112,9 +113,9 @@ namespace io.harness.cfsdk.client.api
         {
             try
             {
-                Log.Debug("Fetching segments started");
+                logger.LogDebug("Fetching segments started");
                 IEnumerable<Segment> segments = await connector.GetSegments();
-                Log.Debug("Fetching segments finished");
+                logger.LogDebug("Fetching segments finished");
                 foreach (Segment item in segments)
                 {
                     repository.SetSegment(item.Identifier, item);
@@ -122,8 +123,7 @@ namespace io.harness.cfsdk.client.api
             }
             catch (CfClientException ex)
             {
-                Log.Error($"Exception was raised when fetching segments data with the message {ex.Message}");
-                Log.Error(ex.StackTrace);
+                logger.LogError(ex, "Exception was raised when fetching segments data with the message {reason}", ex.Message);
                 throw;
             }
         }
@@ -131,7 +131,7 @@ namespace io.harness.cfsdk.client.api
         {
             try
             {
-                Log.Debug("Running polling iteration");
+                logger.LogDebug("Running polling iteration");
                 await Task.WhenAll(new List<Task> { ProcessFlags(), ProcessSegments() });
 
                 if (isInitialized) return;
@@ -141,7 +141,7 @@ namespace io.harness.cfsdk.client.api
             }
             catch(Exception ex)
             {
-                Log.Warning($"Polling failed with error: {ex.Message}. Will retry in {config.pollIntervalInSeconds}");
+                logger.LogWarning(ex,"Polling failed with error: {reason}. Will retry in {pollIntervalInSeconds}", ex.Message, config.pollIntervalInSeconds);
                 callback.OnPollError(ex.Message);
             }
         }

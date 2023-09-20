@@ -1,23 +1,29 @@
 ﻿using System;
 using System.IO;
 using io.harness.cfsdk.client.api;
-using Serilog;
+using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.connector
 {
     public class FileWatcher : IDisposable, IService
     {
+        private readonly ILogger<FileWatcher> logger;
         private readonly string domain;
         private readonly string path;
         private readonly IUpdateCallback callback;
 
         private FileSystemWatcher watcher;
 
-        public FileWatcher(string domain, string path, IUpdateCallback callback)
+        public FileWatcher(string domain, string path, IUpdateCallback callback, ILoggerFactory loggerFactory)
         {
             this.domain = domain;
             this.callback = callback;
             this.path = path;
+            this.logger = loggerFactory.CreateLogger<FileWatcher>();
+        }
+
+        public FileWatcher(string domain, string path, IUpdateCallback callback) : this(domain, path, callback, LoggerFactory.Create(builder => { builder.AddConsole(); }))
+        {
         }
 
         private void Watcher_Deleted(object sender, FileSystemEventArgs e)
@@ -62,7 +68,7 @@ namespace io.harness.cfsdk.client.connector
             }
             catch(Exception ex)
             {
-                Log.Error($"Error creating fileWatcher at {path}", ex);
+                logger.LogError(ex, $"Error creating fileWatcher at {path}");
             }
         }
 

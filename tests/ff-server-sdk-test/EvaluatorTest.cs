@@ -5,6 +5,7 @@ using System.IO;
 using io.harness.cfsdk.client.api;
 using io.harness.cfsdk.client.cache;
 using io.harness.cfsdk.HarnessOpenAPIService;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -33,7 +34,7 @@ namespace ff_server_sdk_test
             Variation variation)
         {
             var targetName = target != null ? target.Name : "_no_target";
-            Serilog.Log.Information($"processEvaluation {featureConfig.Feature}, {targetName}, {variation.Value} ");
+            Console.WriteLine($"processEvaluation {featureConfig.Feature}, {targetName}, {variation.Value} ");
         }
     }
 
@@ -51,10 +52,11 @@ namespace ff_server_sdk_test
         // Initial Evaluator test setup
         static EvaluatorTest()
         {
+            var loggerFactory = LoggerFactory.Create(builder => { builder.AddConsole(); });
             var listener = new EvaluatorListener();
             cache = new FeatureSegmentCache();
-            repository = new StorageRepository(cache, null, null);
-            evaluator = new Evaluator(repository, listener);
+            repository = new StorageRepository(cache, null, null, loggerFactory);
+            evaluator = new Evaluator(repository, listener, loggerFactory);
         }
 
         private static void LoadSegments(List<Segment> segments)

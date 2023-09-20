@@ -1,17 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <!-- The SDK must be built with .NET 7 however we must also keep compatibility with .NET 5/6 hence SupportedOSPlatformVersion=9 below -->
         <TargetFrameworks>net5.0;net6.0;net7.0</TargetFrameworks>
+        <SupportedOSPlatformVersion>9.0</SupportedOSPlatformVersion>
         <LangVersion>9.0</LangVersion>
         <PackageId>ff-dotnet-server-sdk</PackageId>
         <RootNamespace>io.harness.cfsdk</RootNamespace>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-        <Version>1.1.10</Version>
+        <Version>1.2.0</Version>
         <PackOnBuild>true</PackOnBuild>
-        <PackageVersion>1.1.10</PackageVersion>
-        <AssemblyVersion>1.1.10</AssemblyVersion>
+        <PackageVersion>1.2.0</PackageVersion>
+        <AssemblyVersion>1.2.0</AssemblyVersion>
         <Authors>support@harness.io</Authors>
-        <Copyright>Copyright © 2023 </Copyright>
+        <Copyright>Copyright © 2023</Copyright>
         <PackageIconUrl>https://harness.io/icon-ff.svg</PackageIconUrl>
         <PackageLicenseUrl>https://github.com/drone/ff-dotnet-server-sdk/blob/main/LICENSE</PackageLicenseUrl>
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
@@ -33,10 +35,8 @@
 
     <ItemGroup>
         <PackageReference Include="Disruptor" Version="4.0.0" />
-        <PackageReference Include="JUnitTestLogger" Version="1.1.0" />
         <PackageReference Include="murmurhash" Version="1.0.3" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-        <PackageReference Include="Serilog" Version="2.10.0" />
         <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.15.0" />
         <PackageReference Include="System.Net.Http" Version="4.3.4" />
@@ -48,7 +48,8 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="Serilog.Sinks.Debug" Version="2.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
     </ItemGroup>
 
     <ItemGroup>
