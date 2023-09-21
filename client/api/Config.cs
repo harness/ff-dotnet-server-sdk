@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 using io.harness.cfsdk.client.cache;
 using Microsoft.Extensions.Logging;
 
@@ -71,6 +73,8 @@ namespace io.harness.cfsdk.client.api
         internal long metricsServiceAcceptableDuration = 10000;
 
         public ILoggerFactory LoggerFactory { get; set; }
+
+        public List<X509Certificate2> TlsTrustedCAs { get; set; } = new();
 
         public Config(string configUrl, string eventUrl, bool streamEnabled, int pollIntervalInSeconds, bool analyticsEnabled, int frequency, int bufferSize,  int connectionTimeout, int readTimeout, int writeTimeout, bool debug, long metricsServiceAcceptableDuration)
         {
@@ -189,11 +193,29 @@ namespace io.harness.cfsdk.client.api
             return this;
         }
 
-        /** Set an ILoggerFactory for the SDK. note: cannot be used in conjunction with getInstance() */
+        /**
+         * <summary>
+         * Set an ILoggerFactory for the SDK. note: cannot be used in conjunction with getInstance()
+         * <summary>
+         */
         public ConfigBuilder LoggerFactory(ILoggerFactory loggerFactory)
         {
             this.configtobuild.LoggerFactory = loggerFactory;
             return this;
         }
+
+        /**
+         * <summary>
+         * List of trusted CAs - for when the given config/event URLs are signed with a private CA. You
+         * should include intermediate CAs too to allow the HTTP client to build a full trust chain.
+         * </summary>
+         */
+        public ConfigBuilder TlsTrustedCAs( List<X509Certificate2> certs )
+        {
+            this.configtobuild.TlsTrustedCAs = certs;
+            return this;
+        }
+
+
     }
 }

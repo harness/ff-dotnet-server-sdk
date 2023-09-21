@@ -1,17 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Security;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using io.harness.cfsdk.client.api;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Serialization;
 
 namespace io.harness.cfsdk.client.connector
 {
@@ -43,17 +48,73 @@ namespace io.harness.cfsdk.client.connector
 
         private static readonly string sdkVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "";
 
-        private static HttpClient ApiHttpClient(Config config)
+        private static HttpClient CreateHttpClientWithTls(Config config, ILoggerFactory loggerFactory)
         {
-            HttpClient client = new HttpClient();
+            if (config.TlsTrustedCAs.IsNullOrEmpty())
+            {
+                return new HttpClient();
+            }
+
+            var logger = loggerFactory.CreateLogger<HarnessConnector>();
+            var handler = new HttpClientHandler();
+
+            handler.ServerCertificateCustomValidationCallback = delegate (HttpRequestMessage request, X509Certificate2 serverCertificate, X509Chain serverChain, SslPolicyErrors sslPolicyErrors)
+            {
+                logger.LogDebug("TLS: Validating server certificate {subject} for {url}", serverCertificate.Subject, request.RequestUri);
+
+                using var chain = new X509Chain(false);
+                chain.ChainPolicy.DisableCertificateDownloads = true;
+                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+                chain.ChainPolicy.CustomTrustStore.Clear();
+
+                foreach (var nextCa in config.TlsTrustedCAs)
+                {
+                    logger.LogDebug("TLS truststore: Adding cert: {subject}", nextCa.Subject);
+                    chain.ChainPolicy.CustomTrustStore.Add(nextCa);
+                }
+
+                foreach (var nextCa in serverChain.ChainElements)
+                {
+                    var builder = new StringBuilder();
+                    foreach (var status in nextCa.ChainElementStatus)
+                    {
+                        builder.Append(status.Status).Append(' ').Append(status.StatusInformation).Append(' ');
+                    }
+
+                    logger.LogDebug("TLS truststore: Adding server cert: {subject} chainStatus=[{status}]", nextCa.Certificate.Subject, builder.ToString());
+                    chain.ChainPolicy.CustomTrustStore.Add(nextCa.Certificate);
+                }
+
+                if (!chain.Build(serverCertificate))
+                {
+                  if (chain.ChainStatus.Any(s => s.Status != X509ChainStatusFlags.NoError))
+                  {
+                      logger.LogError("TLS: Certificate did not validate against trusted store (reason={reason}) for {url}",
+                          chain.ChainStatus.First(chain => chain.Status != X509ChainStatusFlags.NoError).Status,
+                          request.RequestUri);
+                  }
+
+                  return false;
+                }
+
+                return true;
+            };
+
+            return new HttpClient(handler, true);
+        }
+
+        private static HttpClient ApiHttpClient(Config config, ILoggerFactory loggerFactory)
+        {
+            HttpClient client = CreateHttpClientWithTls(config, loggerFactory);
             client.BaseAddress = new Uri(config.ConfigUrl);
             client.Timeout = TimeSpan.FromSeconds(config.ConnectionTimeout);
             client.DefaultRequestHeaders.Add("Harness-SDK-Info", $".Net {sdkVersion} Server");
             return client;
         }
-        private static HttpClient MetricHttpClient(Config config)
+        private static HttpClient MetricHttpClient(Config config, ILoggerFactory loggerFactory)
         {
-            HttpClient client = new HttpClient();
+            HttpClient client = CreateHttpClientWithTls(config, loggerFactory);
             client.BaseAddress = new Uri(config.EventUrl);
             client.Timeout = TimeSpan.FromSeconds(config.ConnectionTimeout);
             client.DefaultRequestHeaders.Add("Harness-SDK-Info", $".Net {sdkVersion} Client");
@@ -65,9 +126,9 @@ namespace io.harness.cfsdk.client.connector
             client.DefaultRequestHeaders.Add("Harness-EnvironmentID", environment);
             return client;
         }
-        private static HttpClient SseHttpClient(Config config, string apiKey)
+        private static HttpClient SseHttpClient(Config config, string apiKey, ILoggerFactory loggerFactory)
         {
-            HttpClient client = new HttpClient();
+            HttpClient client = CreateHttpClientWithTls(config, loggerFactory);
             client.BaseAddress = new Uri(config.ConfigUrl.EndsWith("/") ? config.ConfigUrl : config.ConfigUrl + "/" );
             client.DefaultRequestHeaders.Add("API-Key", apiKey);
             client.DefaultRequestHeaders.Add("Accept", "text /event-stream");
@@ -82,7 +143,7 @@ namespace io.harness.cfsdk.client.connector
         }
         
         public HarnessConnector(string apiKey, Config config, IConnectionCallback callback, ILoggerFactory loggerFactory)
-        : this(apiKey, config, callback, ApiHttpClient(config), MetricHttpClient(config), SseHttpClient(config, apiKey), loggerFactory)
+        : this(apiKey, config, callback, ApiHttpClient(config, loggerFactory), MetricHttpClient(config, loggerFactory), SseHttpClient(config, apiKey, loggerFactory), loggerFactory)
         {
            
         }

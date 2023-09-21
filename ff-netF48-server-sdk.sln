@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ff-server-sdk-example", "te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "getting_started", "examples\getting_started\getting_started.csproj", "{FD7316AF-9326-4D2A-B218-202A18916480}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tls-example", "tests\tls-example\tls-example.csproj", "{DED15A05-FEA2-4540-8D95-989332F9112A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{FD7316AF-9326-4D2A-B218-202A18916480}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FD7316AF-9326-4D2A-B218-202A18916480}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FD7316AF-9326-4D2A-B218-202A18916480}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DED15A05-FEA2-4540-8D95-989332F9112A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DED15A05-FEA2-4540-8D95-989332F9112A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DED15A05-FEA2-4540-8D95-989332F9112A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DED15A05-FEA2-4540-8D95-989332F9112A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
