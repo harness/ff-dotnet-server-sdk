@@ -7,8 +7,6 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Security;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
@@ -17,6 +15,7 @@ using io.harness.cfsdk.client.api;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Cryptography;
 
 namespace io.harness.cfsdk.client.connector
 {
@@ -60,7 +59,19 @@ namespace io.harness.cfsdk.client.connector
 
             handler.ServerCertificateCustomValidationCallback = delegate (HttpRequestMessage request, X509Certificate2 serverCertificate, X509Chain serverChain, SslPolicyErrors sslPolicyErrors)
             {
-                logger.LogDebug("TLS: Validating server certificate {subject} for {url}", serverCertificate.Subject, request.RequestUri);
+                logger.LogDebug("TLS: Validating server certificate {subject} for {url}, policyErrors={sslPolicyErrors}", serverCertificate.Subject, request.RequestUri, sslPolicyErrors);
+                PrintCert(logger, serverCertificate);
+
+                var requestHost = request.RequestUri?.Host;
+                var certHost = serverCertificate.GetNameInfo(X509NameType.DnsFromAlternativeName, false);
+                if (requestHost != certHost)
+                {
+                    logger.LogError("TLS: Hostname validation failed (sdk requested={reqhost} server cert wants={svrhost}) for {url}",
+                        requestHost,
+                        certHost,
+                        request.RequestUri);
+                    return false;
+                }
 
                 using var chain = new X509Chain(false);
                 chain.ChainPolicy.DisableCertificateDownloads = true;
@@ -72,6 +83,7 @@ namespace io.harness.cfsdk.client.connector
                 {
                     logger.LogDebug("TLS truststore: Adding cert: {subject}", nextCa.Subject);
                     chain.ChainPolicy.CustomTrustStore.Add(nextCa);
+                    PrintCert(logger, nextCa);
                 }
 
                 foreach (var nextCa in serverChain.ChainElements)
@@ -80,6 +92,7 @@ namespace io.harness.cfsdk.client.connector
                     foreach (var status in nextCa.ChainElementStatus)
                     {
                         builder.Append(status.Status).Append(' ').Append(status.StatusInformation).Append(' ');
+                        PrintCert(logger, nextCa.Certificate);
                     }
 
                     logger.LogDebug("TLS truststore: Adding server cert: {subject} chainStatus=[{status}]", nextCa.Certificate.Subject, builder.ToString());
@@ -97,6 +110,8 @@ namespace io.harness.cfsdk.client.connector
 
                   return false;
                 }
+
+                logger.LogDebug("TLS: Endpoint {hostname}:{port} is trusted", request.RequestUri?.Host ?? "", request.RequestUri?.Port ?? -1);
 
                 return true;
             };
@@ -324,6 +339,17 @@ namespace io.harness.cfsdk.client.connector
         {
             cancelToken.Cancel();
             currentStream.Close();
+        }
+
+        private static void PrintCert(ILogger logger, X509Certificate2 cert)
+        {
+            if (!logger.IsEnabled(LogLevel.Trace)) return;
+            logger.LogTrace(cert.ToString());
+            foreach (X509Extension ext in cert.Extensions)
+            {
+                AsnEncodedData asn = new AsnEncodedData(ext.Oid, ext.RawData);
+                logger.LogTrace("Oid Name: {name} Oid: {value} Data: {data}", ext.Oid?.FriendlyName, asn.Oid?.Value, asn.Format(true));
+            }
         }
     }
 }

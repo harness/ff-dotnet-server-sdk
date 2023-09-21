@@ -30,7 +30,7 @@ namespace io.harness.tls_example
             var trustedCerts = new List<X509Certificate2> { cert1 };
             
             var config = Config.Builder()
-                .ConfigUrl("https://localhost:8001/api/1.0")
+                .ConfigUrl("https://ffserver:8001/api/1.0")
                 .EventUrl("https://ffserver:8000/api/1.0")
                 .TlsTrustedCAs(trustedCerts)
                 .LoggerFactory(loggerFactory).Build();
