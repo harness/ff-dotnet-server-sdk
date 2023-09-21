@@ -66,7 +66,7 @@ namespace io.harness.cfsdk.client.connector
                 var certHost = serverCertificate.GetNameInfo(X509NameType.DnsFromAlternativeName, false);
                 if (requestHost != certHost)
                 {
-                    logger.LogError("TLS: Hostname validation failed (sdk requested={reqhost} server cert wants={svrhost}) for {url}",
+                    logger.LogError("SDKCODE(init:1005): TLS Hostname validation failed (sdk requested={reqhost} server cert wants={svrhost}) for {url}",
                         requestHost,
                         certHost,
                         request.RequestUri);
@@ -103,7 +103,7 @@ namespace io.harness.cfsdk.client.connector
                 {
                   if (chain.ChainStatus.Any(s => s.Status != X509ChainStatusFlags.NoError))
                   {
-                      logger.LogError("TLS: Certificate did not validate against trusted store (reason={reason}) for {url}",
+                      logger.LogError("SDKCODE(init:1004): TLS Certificate did not validate against trust store (reason={reason}) for {url}",
                           chain.ChainStatus.First(chain => chain.Status != X509ChainStatusFlags.NoError).Status,
                           request.RequestUri);
                   }
