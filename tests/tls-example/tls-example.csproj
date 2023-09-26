@@ -16,4 +16,9 @@
     <PackageReference Include="Serilog.Extensions.Logging" Version="6.0.0"/>
     <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
   </ItemGroup>
+
+  <Target Name="PostClean" AfterTargets="Clean">
+    <RemoveDir Directories="$(BaseIntermediateOutputPath)" ContinueOnError="true" /> <!-- remove obj -->
+    <RemoveDir Directories="$(BaseOutputPath)" ContinueOnError="true" /> <!-- remove bin -->
+  </Target>
 </Project>

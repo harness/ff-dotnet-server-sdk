@@ -169,4 +169,10 @@
             <Link>OpenAPIs\HarnessOpenAPIS.nswag</Link>
         </OpenApiReference>
     </ItemGroup>
+
+    <Target Name="PostClean" AfterTargets="Clean">
+        <RemoveDir Directories="$(BaseIntermediateOutputPath)" ContinueOnError="true" /><!-- obj -->
+        <RemoveDir Directories="$(BaseOutputPath)" ContinueOnError="true" /><!-- bin -->
+    </Target>
+
 </Project>
