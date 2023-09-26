@@ -29,8 +29,8 @@ namespace io.harness.cfsdk.client.connector
         private readonly ILogger<HarnessConnector> logger;
         private readonly ILoggerFactory loggerFactory;
         private string token;
-        private static string environment;
-        private static string accountID;
+        private static string _environment;
+        private static string _accountId;
         private string cluster;
 
         public HttpClient apiHttpClient { get; set; }
@@ -45,7 +45,7 @@ namespace io.harness.cfsdk.client.connector
         private IService currentStream;
         private readonly CancellationTokenSource cancelToken = new CancellationTokenSource();
 
-        private static readonly string sdkVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "";
+        private static readonly string SdkVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "";
 
         private static HttpClient CreateHttpClientWithTls(Config config, ILoggerFactory loggerFactory)
         {
@@ -124,7 +124,7 @@ namespace io.harness.cfsdk.client.connector
             HttpClient client = CreateHttpClientWithTls(config, loggerFactory);
             client.BaseAddress = new Uri(config.ConfigUrl);
             client.Timeout = TimeSpan.FromSeconds(config.ConnectionTimeout);
-            client.DefaultRequestHeaders.Add("Harness-SDK-Info", $".Net {sdkVersion} Server");
+            client.DefaultRequestHeaders.Add("Harness-SDK-Info", $".Net {SdkVersion} Server");
             return client;
         }
         private static HttpClient MetricHttpClient(Config config, ILoggerFactory loggerFactory)
@@ -132,13 +132,13 @@ namespace io.harness.cfsdk.client.connector
             HttpClient client = CreateHttpClientWithTls(config, loggerFactory);
             client.BaseAddress = new Uri(config.EventUrl);
             client.Timeout = TimeSpan.FromSeconds(config.ConnectionTimeout);
-            client.DefaultRequestHeaders.Add("Harness-SDK-Info", $".Net {sdkVersion} Client");
-            if (accountID != null)
+            client.DefaultRequestHeaders.Add("Harness-SDK-Info", $".Net {SdkVersion} Client");
+            if (_accountId != null)
             {
-                client.DefaultRequestHeaders.Add("Harness-AccountID", accountID);
+                client.DefaultRequestHeaders.Add("Harness-AccountID", _accountId);
 
             }
-            client.DefaultRequestHeaders.Add("Harness-EnvironmentID", environment);
+            client.DefaultRequestHeaders.Add("Harness-EnvironmentID", _environment);
             return client;
         }
         private static HttpClient SseHttpClient(Config config, string apiKey, ILoggerFactory loggerFactory)
@@ -147,11 +147,11 @@ namespace io.harness.cfsdk.client.connector
             client.BaseAddress = new Uri(config.ConfigUrl.EndsWith("/") ? config.ConfigUrl : config.ConfigUrl + "/" );
             client.DefaultRequestHeaders.Add("API-Key", apiKey);
             client.DefaultRequestHeaders.Add("Accept", "text /event-stream");
-            client.DefaultRequestHeaders.Add("Harness-SDK-Info", $".Net {sdkVersion} Server");
-            client.DefaultRequestHeaders.Add("Harness-EnvironmentID", environment);
-            if (accountID != null)
+            client.DefaultRequestHeaders.Add("Harness-SDK-Info", $".Net {SdkVersion} Server");
+            client.DefaultRequestHeaders.Add("Harness-EnvironmentID", _environment);
+            if (_accountId != null)
             {
-                client.DefaultRequestHeaders.Add("Harness-AccountID", accountID);
+                client.DefaultRequestHeaders.Add("Harness-AccountID", _accountId);
             }
             client.Timeout = TimeSpan.FromMinutes(1);
             return client;
@@ -226,20 +226,20 @@ namespace io.harness.cfsdk.client.connector
         }
         public async Task<IEnumerable<FeatureConfig>> GetFlags()
         {
-            return await ReauthenticateIfNeeded(() => harnessClient.ClientEnvFeatureConfigsGetAsync(environment, cluster, cancelToken.Token));
+            return await ReauthenticateIfNeeded(() => harnessClient.ClientEnvFeatureConfigsGetAsync(_environment, cluster, cancelToken.Token));
         }
         
         public async Task<IEnumerable<Segment>> GetSegments()
         {
-            return await ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(environment, cluster, cancelToken.Token));
+            return await ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(_environment, cluster, cancelToken.Token));
         }
         public Task<FeatureConfig> GetFlag(string identifier)
         {
-            return ReauthenticateIfNeeded(() => harnessClient.ClientEnvFeatureConfigsGetAsync(identifier, environment, cluster, cancelToken.Token));
+            return ReauthenticateIfNeeded(() => harnessClient.ClientEnvFeatureConfigsGetAsync(identifier, _environment, cluster, cancelToken.Token));
         }
         public Task<Segment> GetSegment(string identifier)
         {
-            return ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(identifier, environment, cluster, cancelToken.Token));
+            return ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(identifier, _environment, cluster, cancelToken.Token));
         }
         public IService Stream(IUpdateCallback updater)
         {
@@ -258,7 +258,7 @@ namespace io.harness.cfsdk.client.connector
                     BaseUrl = config.EventUrl
                 };
                 try {
-                    await client.MetricsAsync(environment, metrics, cancelToken.Token);
+                    await client.MetricsAsync(_environment, metrics, cancelToken.Token);
                 }
                 catch (ApiException ex) {
                     logger.LogWarning(ex, "SDKCODE(metric:7002): Posting metrics failed, reason: {reason}", ex.Message);
@@ -298,11 +298,11 @@ namespace io.harness.cfsdk.client.connector
                 // accountID is not sent when using the relay proxy
                 if (jwtToken.Payload.TryGetValue("accountID", out var accountIdValue) && accountIdValue != null)
                 {
-                    accountID = accountIdValue.ToString();
+                    _accountId = accountIdValue.ToString();
                 }                
-                environment = jwtToken.Payload["environment"].ToString();
+                _environment = jwtToken.Payload["environment"].ToString();
                 cluster = jwtToken.Payload["clusterIdentifier"].ToString();
-                var environmentIdentifier = jwtToken.Payload.ContainsKey("environmentIdentifier") ? jwtToken.Payload["clusterIdentifier"].ToString() : environment;
+                var environmentIdentifier = jwtToken.Payload.ContainsKey("environmentIdentifier") ? jwtToken.Payload["clusterIdentifier"].ToString() : _environment;
 
                 foreach (var httpClient in new[] { apiHttpClient, metricHttpClient, sseHttpClient })
                 {
@@ -313,9 +313,9 @@ namespace io.harness.cfsdk.client.connector
                         httpClient.DefaultRequestHeaders.Add("Harness-EnvironmentID", environmentIdentifier);
                     }
 
-                    if (!String.IsNullOrEmpty(accountID))
+                    if (!String.IsNullOrEmpty(_accountId))
                     {
-                        httpClient.DefaultRequestHeaders.Add("Harness-AccountID", accountID);
+                        httpClient.DefaultRequestHeaders.Add("Harness-AccountID", _accountId);
                     }
                 }
                 return token;

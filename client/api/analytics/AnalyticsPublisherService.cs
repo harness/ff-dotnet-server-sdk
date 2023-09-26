@@ -15,17 +15,17 @@ namespace io.harness.cfsdk.client.api.analytics
     {
         private readonly ILogger<AnalyticsPublisherService> logger;
 
-        private static readonly string FEATURE_NAME_ATTRIBUTE = "featureName";
-        private static readonly string VARIATION_VALUE_ATTRIBUTE = "featureValue";
-        private static readonly string VARIATION_IDENTIFIER_ATTRIBUTE = "variationIdentifier";
-        private static readonly string TARGET_ATTRIBUTE = "target";
-        private static readonly HashSet<dto.Target> globalTargetSet = new HashSet<dto.Target>();
-        private static readonly HashSet<dto.Target> stagingTargetSet = new HashSet<dto.Target>();
-        private static readonly string SDK_TYPE = "SDK_TYPE";
-        private static readonly string ANONYMOUS_TARGET = "anonymous";
-        private static readonly string SERVER = "server";
-        private static readonly string SDK_LANGUAGE = "SDK_LANGUAGE";
-        private static readonly string SDK_VERSION = "SDK_VERSION";
+        private static readonly string FeatureNameAttribute = "featureName";
+        private static readonly string VariationValueAttribute = "featureValue";
+        private static readonly string VariationIdentifierAttribute = "variationIdentifier";
+        private static readonly string TargetAttribute = "target";
+        private static readonly HashSet<dto.Target> GlobalTargetSet = new HashSet<dto.Target>();
+        private static readonly HashSet<dto.Target> StagingTargetSet = new HashSet<dto.Target>();
+        private static readonly string SdkType = "SDK_TYPE";
+        private static readonly string AnonymousTarget = "anonymous";
+        private static readonly string Server = "server";
+        private static readonly string SdkLanguage = "SDK_LANGUAGE";
+        private static readonly string SdkVersion = "SDK_VERSION";
 
         private readonly string sdkVersion = Assembly.GetExecutingAssembly().GetName().ToString();
         private readonly AnalyticsCache analyticsCache;
@@ -38,7 +38,7 @@ namespace io.harness.cfsdk.client.api.analytics
             this.logger = loggerFactory.CreateLogger<AnalyticsPublisherService>();
         }
 
-        public void sendDataAndResetCache()
+        public void SendDataAndResetCache()
         {
             IDictionary<Analytics, int> all = analyticsCache.GetAllElements();
 
@@ -46,7 +46,7 @@ namespace io.harness.cfsdk.client.api.analytics
             {
                 try
                 {
-                    Metrics metrics = prepareMessageBody(all);
+                    Metrics metrics = PrepareMessageBody(all);
                     if ((metrics.MetricsData != null && metrics.MetricsData.Count >0)
                         || (metrics.TargetData != null && metrics.TargetData.Count > 0))
                     {
@@ -54,8 +54,8 @@ namespace io.harness.cfsdk.client.api.analytics
                         connector.PostMetrics(metrics);
                     }
 
-                    stagingTargetSet.ToList().ForEach(element => globalTargetSet.Add(element));
-                    stagingTargetSet.Clear();
+                    StagingTargetSet.ToList().ForEach(element => GlobalTargetSet.Add(element));
+                    StagingTargetSet.Clear();
                     logger.LogDebug("Successfully sent analytics data to the server");
                     analyticsCache.resetCache();
                 }
@@ -68,7 +68,7 @@ namespace io.harness.cfsdk.client.api.analytics
             }
         }
 
-        private Metrics prepareMessageBody(IDictionary<Analytics, int> all)
+        private Metrics PrepareMessageBody(IDictionary<Analytics, int> all)
         {
             Metrics metrics = new Metrics();
             metrics.TargetData = new List<TargetData>();
@@ -87,10 +87,10 @@ namespace io.harness.cfsdk.client.api.analytics
 
                 FeatureConfig featureConfig = analytics.FeatureConfig;
                 Variation variation = analytics.Variation;
-                if (target != null && !globalTargetSet.Contains(target) && !target.IsPrivate)
+                if (target != null && !GlobalTargetSet.Contains(target) && !target.IsPrivate)
                 {
                     HashSet<string> privateAttributes = analytics.Target.PrivateAttributes;
-                    stagingTargetSet.Add(target);
+                    StagingTargetSet.Add(target);
                     Dictionary<string, string> attributes = target.Attributes;
                     attributes.ToList().ForEach(el =>
                        {
@@ -113,11 +113,11 @@ namespace io.harness.cfsdk.client.api.analytics
 
                     if (target.IsPrivate)
                     {
-                        setMetricsAttributes(metricsData, TARGET_ATTRIBUTE, ANONYMOUS_TARGET);
+                        SetMetricsAttributes(metricsData, TargetAttribute, AnonymousTarget);
                     }
                     else
                     {
-                        setMetricsAttributes(metricsData, TARGET_ATTRIBUTE, target.Identifier);
+                        SetMetricsAttributes(metricsData, TargetAttribute, target.Identifier);
                     }
                        
                     targetData.Identifier = target.Identifier;
@@ -128,21 +128,21 @@ namespace io.harness.cfsdk.client.api.analytics
                 metricsData.Timestamp = (long)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds;
                 metricsData.Count = entry.Value;
                 metricsData.MetricsType = MetricsDataMetricsType.FFMETRICS;
-                setMetricsAttributes(metricsData, FEATURE_NAME_ATTRIBUTE, featureConfig.Feature);
-                setMetricsAttributes(metricsData, VARIATION_IDENTIFIER_ATTRIBUTE, variation.Identifier);
-                setMetricsAttributes(metricsData, VARIATION_VALUE_ATTRIBUTE, variation.Value);
+                SetMetricsAttributes(metricsData, FeatureNameAttribute, featureConfig.Feature);
+                SetMetricsAttributes(metricsData, VariationIdentifierAttribute, variation.Identifier);
+                SetMetricsAttributes(metricsData, VariationValueAttribute, variation.Value);
 
-                setMetricsAttributes(metricsData, SDK_TYPE, SERVER);
+                SetMetricsAttributes(metricsData, SdkType, Server);
 
-                setMetricsAttributes(metricsData, SDK_LANGUAGE, ".NET");
-                setMetricsAttributes(metricsData, SDK_VERSION, sdkVersion);
+                SetMetricsAttributes(metricsData, SdkLanguage, ".NET");
+                SetMetricsAttributes(metricsData, SdkVersion, sdkVersion);
                 metrics.MetricsData.Add(metricsData);
             }
 
             return metrics;
         }
 
-        private void setMetricsAttributes(MetricsData metricsData, String key, String value)
+        private void SetMetricsAttributes(MetricsData metricsData, String key, String value)
         {
             KeyValue metricsAttributes = new KeyValue();
             metricsAttributes.Key = key;

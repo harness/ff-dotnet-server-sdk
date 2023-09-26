@@ -28,9 +28,8 @@ namespace io.harness.cfsdk.client.api
         private readonly IConnector connector;
         private readonly IRepository repository;
         private readonly IUpdateCallback callback;
-
+        private readonly Config config;
         private IService service;
-        private Config config;
 
         public UpdateProcessor(IConnector connector, IRepository repository, Config config, IUpdateCallback callback, ILoggerFactory loggerFactory)
         {

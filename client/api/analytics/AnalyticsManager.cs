@@ -87,7 +87,7 @@ namespace io.harness.cfsdk.client.api.analytics
         {
             try
             {
-                analyticsPublisherService.sendDataAndResetCache();
+                analyticsPublisherService.SendDataAndResetCache();
             }
             catch (CfClientException ex)
             {

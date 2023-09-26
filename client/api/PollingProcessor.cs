@@ -48,9 +48,9 @@ namespace io.harness.cfsdk.client.api
         private readonly IRepository repository;
         private readonly IPollCallback callback;
         private readonly Config config;
+        private readonly SemaphoreSlim readyEvent;
         private Timer pollTimer;
         private bool isInitialized = false;
-        private SemaphoreSlim readyEvent;
 
         public PollingProcessor(IConnector connector, IRepository repository, Config config, IPollCallback callback, ILoggerFactory loggerFactory)
         {

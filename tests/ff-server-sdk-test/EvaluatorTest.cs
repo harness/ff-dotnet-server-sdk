@@ -30,7 +30,7 @@ namespace ff_server_sdk_test
 {
     public class EvaluatorListener : IEvaluatorCallback
     {
-        public void evaluationProcessed(FeatureConfig featureConfig, io.harness.cfsdk.client.dto.Target target,
+        public void EvaluationProcessed(FeatureConfig featureConfig, io.harness.cfsdk.client.dto.Target target,
             Variation variation)
         {
             var targetName = target != null ? target.Name : "_no_target";

@@ -20,7 +20,6 @@ namespace io.harness.cfsdk.client.api
         double numberVariation(string key, dto.Target target, double defaultValue);
         JObject jsonVariation(string key, dto.Target target, JObject defaultValue);
 
-
         event EventHandler InitializationCompleted;
         event EventHandler<string> EvaluationChanged;
 

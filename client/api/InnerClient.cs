@@ -214,7 +214,7 @@ namespace io.harness.cfsdk.client.api
         {
             this.update.Update(message, manual);
         }
-        public void evaluationProcessed(FeatureConfig featureConfig, dto.Target target, Variation variation)
+        public void EvaluationProcessed(FeatureConfig featureConfig, dto.Target target, Variation variation)
         {
             this.metric.PushToCache(target, featureConfig, variation);
         }
