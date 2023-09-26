@@ -20,6 +20,7 @@
     <PackageReference Include="NUnit" Version="3.13.3" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.7.2" />
+    <PackageReference Include="NuGet.Frameworks" Version="6.5.1" /> <!-- Fixes CVE 2023-29337 -->
     <PackageReference Include="WireMock.Net" Version="1.5.35" />
   </ItemGroup>
 
