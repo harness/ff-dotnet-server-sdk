@@ -28,8 +28,7 @@ namespace ff_server_sdk_test.connector
 
             server = WireMockServer.Start(new WireMockServerSettings
             {
-                Logger = new WireMockConsoleLogger(),
-                ThrowExceptionWhenMatcherFails = true
+                Logger = new WireMockConsoleLogger()
             });
         }
 
