@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using io.harness.cfsdk.client.api;
 using io.harness.cfsdk.client.connector;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Moq.Protected;
 using NUnit.Framework;
@@ -17,8 +18,6 @@ namespace ff_server_sdk_test {
     [TestFixture]
     public class HarnessConnectorTest
     {
-        private static readonly ILoggerFactory _loggerFactory = LoggerFactory.Create(builder => { builder.AddConsole(); });
-        
         string fakeJwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" +
             ".eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJlbnZpcm9ubWVudCI6InRlc3QiLCJjbHVzdGVySWRlbnRpZmllciI6InRlc3QiLCJhY2NvdW50SUQiOiJ0ZXN0In0" +
             ".MVFJ6Sd0AObZkg3LxKYU9EBMn-t40tPJ-tFd0Ch5EiU";
@@ -55,7 +54,7 @@ namespace ff_server_sdk_test {
             var client = new Client(mockHttpClient);
             client.BaseUrl = "http://dummy:1234";
             var mockCallback = new Mock<TestCallback>();
-            var connector = new HarnessConnector("test", new Config(), mockCallback.Object, new HttpClient(), new HttpClient(), new HttpClient(), client, _loggerFactory);
+            var connector = new HarnessConnector("test", new Config(), mockCallback.Object, new HttpClient(), new HttpClient(), new HttpClient(), client, new NullLoggerFactory());
             await connector.Authenticate();
   
             //Act
@@ -74,7 +73,7 @@ namespace ff_server_sdk_test {
             var client = new Client(mockHttpClient);
             client.BaseUrl = "http://dummy:1234";
             var mockCallback = new Mock<TestCallback>();
-            var connector = new HarnessConnector("test", new Config(), mockCallback.Object, new HttpClient(), new HttpClient(), new HttpClient(), client, _loggerFactory);
+            var connector = new HarnessConnector("test", new Config(), mockCallback.Object, new HttpClient(), new HttpClient(), new HttpClient(), client, new NullLoggerFactory());
             await connector.Authenticate();
         
             //Act

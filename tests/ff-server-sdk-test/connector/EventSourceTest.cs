@@ -5,6 +5,7 @@ using System.Threading;
 using io.harness.cfsdk.client.api;
 using io.harness.cfsdk.client.connector;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
@@ -17,19 +18,12 @@ namespace ff_server_sdk_test.connector
     [TestFixture]
     public class EventSourceTest
     {
-        private static readonly ILoggerFactory _loggerFactory = LoggerFactory.Create(builder => { builder.AddConsole(); });
-        private static ILogger _logger;
         private WireMockServer server;
 
         [SetUp]
         public void StartMockServer()
         {
-            _logger = _loggerFactory.CreateLogger<EventSourceTest>();
-
-            server = WireMockServer.Start(new WireMockServerSettings
-            {
-                Logger = new WireMockConsoleLogger()
-            });
+            server = WireMockServer.Start(new WireMockServerSettings());
         }
 
         [TearDown]
@@ -50,20 +44,20 @@ namespace ff_server_sdk_test.connector
 
             public void Update(Message message, bool manual)
             {
-                _logger.LogInformation("Test got stream update, domain={domain} id={identifier} event={event} ver={version} ", message.Domain, message.Identifier, message.Event, message.Version);
+               Console.WriteLine("Test got stream update " + message);
                 Events.Add(message);
                 UpdateCount++;
             }
 
             public void OnStreamConnected()
             {
-                _logger.LogInformation("SDKCODE(stream:5000): SSE stream connected ok");
+                Console.WriteLine("SDKCODE(stream:5000): SSE stream connected ok");
                 ConnectCount++;
             }
 
             public void OnStreamDisconnected()
             {
-                _logger.LogInformation("SDKCODE(stream:5001): SSE stream disconnected");
+                Console.WriteLine("SDKCODE(stream:5001): SSE stream disconnected");
                 DisconnectCount++;
                 disconnectLatch.Signal();
             }
@@ -90,7 +84,7 @@ namespace ff_server_sdk_test.connector
             var callback = new TestCallback();
             Config config = new ConfigBuilder().ConfigUrl(server.Url + "/api/1.0").Build();
             var httpClient = SseHttpClient(config, "dummyapikey");
-            var eventSource = new EventSource(httpClient, "stream", config, callback, _loggerFactory);
+            var eventSource = new EventSource(httpClient, "stream", config, callback, new NullLoggerFactory());
             eventSource.Start();
 
             callback.WaitForDisconnect();
@@ -131,7 +125,7 @@ namespace ff_server_sdk_test.connector
             var callback = new TestCallback();
             Config config = new ConfigBuilder().ConfigUrl(server.Url + "/api/1.0").Build();
             var httpClient = SseHttpClient(config, "dummyapikey");
-            var eventSource = new EventSource(httpClient, "stream", config, callback, _loggerFactory);
+            var eventSource = new EventSource(httpClient, "stream", config, callback, new NullLoggerFactory());
             eventSource.Start();
 
             callback.WaitForDisconnect();
