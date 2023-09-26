@@ -14,10 +14,9 @@ namespace io.harness.cfsdk.client.connector
     public class LocalConnector : IConnector
     {
         private readonly ILogger<LocalConnector> logger;
-        private string flagPath;
-        private string segmentPath;
-        private string metricPath;
-        private string source;
+        private readonly string flagPath;
+        private readonly string segmentPath;
+        private readonly string metricPath;
 
         public LocalConnector(string source) : this(source, LoggerFactory.Create(builder => { builder.AddConsole(); }))
         {
@@ -26,8 +25,6 @@ namespace io.harness.cfsdk.client.connector
         public LocalConnector(string source, ILoggerFactory loggerFactory)
         {
             this.logger = loggerFactory.CreateLogger<LocalConnector>();
-            this.source = source;
-
             this.flagPath = Path.Combine(source, "flags");
             this.segmentPath = Path.Combine(source, "segments");
             this.metricPath = Path.Combine(source, "metrics");
@@ -114,9 +111,9 @@ namespace io.harness.cfsdk.client.connector
 
         private class FileWatcherService : IService, IDisposable
         {
-            private FileWatcher flagWatcher;
-            private FileWatcher segmentWatcher;
-            private IUpdateCallback callback;
+            private readonly FileWatcher flagWatcher;
+            private readonly FileWatcher segmentWatcher;
+            private readonly IUpdateCallback callback;
             public FileWatcherService(string flagPath, string segmentPath, IUpdateCallback callback)
             {
                 this.flagWatcher = new FileWatcher("flag", flagPath, callback);

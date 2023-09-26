@@ -27,8 +27,8 @@ namespace io.harness.cfsdk.client.api
     internal class Evaluator : IEvaluator
     {
         private readonly ILogger<Evaluator> logger;
-        private IRepository repository;
-        private IEvaluatorCallback callback;
+        private readonly IRepository repository;
+        private readonly IEvaluatorCallback callback;
 
         public Evaluator(IRepository repository, IEvaluatorCallback callback, ILoggerFactory loggerFactory)
         {

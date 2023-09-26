@@ -1,7 +1,5 @@
 ﻿using io.harness.cfsdk.client.dto;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace io.harness.cfsdk.client.api.analytics
 {

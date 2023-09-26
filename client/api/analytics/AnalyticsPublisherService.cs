@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.api.analytics
@@ -16,21 +15,21 @@ namespace io.harness.cfsdk.client.api.analytics
     {
         private readonly ILogger<AnalyticsPublisherService> logger;
 
-        private static string FEATURE_NAME_ATTRIBUTE = "featureName";
-        private static string VARIATION_VALUE_ATTRIBUTE = "featureValue";
-        private static string VARIATION_IDENTIFIER_ATTRIBUTE = "variationIdentifier";
-        private static string TARGET_ATTRIBUTE = "target";
-        private static HashSet<dto.Target> globalTargetSet = new HashSet<dto.Target>();
-        private static HashSet<dto.Target> stagingTargetSet = new HashSet<dto.Target>();
-        private static string SDK_TYPE = "SDK_TYPE";
-        private static string ANONYMOUS_TARGET = "anonymous";
-        private static string SERVER = "server";
-        private static string SDK_LANGUAGE = "SDK_LANGUAGE";
-        private static string SDK_VERSION = "SDK_VERSION";
+        private static readonly string FEATURE_NAME_ATTRIBUTE = "featureName";
+        private static readonly string VARIATION_VALUE_ATTRIBUTE = "featureValue";
+        private static readonly string VARIATION_IDENTIFIER_ATTRIBUTE = "variationIdentifier";
+        private static readonly string TARGET_ATTRIBUTE = "target";
+        private static readonly HashSet<dto.Target> globalTargetSet = new HashSet<dto.Target>();
+        private static readonly HashSet<dto.Target> stagingTargetSet = new HashSet<dto.Target>();
+        private static readonly string SDK_TYPE = "SDK_TYPE";
+        private static readonly string ANONYMOUS_TARGET = "anonymous";
+        private static readonly string SERVER = "server";
+        private static readonly string SDK_LANGUAGE = "SDK_LANGUAGE";
+        private static readonly string SDK_VERSION = "SDK_VERSION";
 
         private readonly string sdkVersion = Assembly.GetExecutingAssembly().GetName().ToString();
-        private AnalyticsCache analyticsCache;
-        private IConnector connector;
+        private readonly AnalyticsCache analyticsCache;
+        private readonly IConnector connector;
 
         public AnalyticsPublisherService(IConnector connector, AnalyticsCache analyticsCache, ILoggerFactory loggerFactory)
         {

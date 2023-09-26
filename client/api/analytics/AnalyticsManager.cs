@@ -1,11 +1,7 @@
-﻿using Disruptor;
-using Disruptor.Dsl;
-using io.harness.cfsdk.client.cache;
+﻿using io.harness.cfsdk.client.cache;
 using io.harness.cfsdk.client.connector;
 using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.HarnessOpenAPIService;
-using System;
-using System.Threading.Tasks;
 using System.Timers;
 using Microsoft.Extensions.Logging;
 
@@ -24,16 +20,14 @@ namespace io.harness.cfsdk.client.api.analytics
     internal class MetricsProcessor : IMetricsProcessor
     {
         private readonly ILogger<MetricsProcessor> logger;
-        private AnalyticsCache analyticsCache;
+        private readonly AnalyticsCache analyticsCache;
         private Timer timer;
-        private AnalyticsPublisherService analyticsPublisherService;
-        private IMetricCallback callback;
-        private Config config;
+        private readonly AnalyticsPublisherService analyticsPublisherService;
+        private readonly Config config;
 
         public MetricsProcessor(IConnector connector, Config config, IMetricCallback callback, AnalyticsCache analyticsCache, AnalyticsPublisherService analyticsPublisherService, ILoggerFactory loggerFactory)
         {
             this.analyticsCache = analyticsCache;
-            this.callback = callback;
             this.config = config;
             this.analyticsPublisherService = analyticsPublisherService;
             this.logger = loggerFactory.CreateLogger<MetricsProcessor>();

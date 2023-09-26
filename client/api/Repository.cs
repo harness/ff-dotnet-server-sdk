@@ -35,9 +35,9 @@ namespace io.harness.cfsdk.client.api
     internal class StorageRepository : IRepository
     {
         private readonly ILogger logger;
-        private ICache cache;
-        private IStore store;
-        private IRepositoryCallback callback;
+        private readonly ICache cache;
+        private readonly IStore store;
+        private readonly IRepositoryCallback callback;
         public StorageRepository(ICache cache, IStore store, IRepositoryCallback callback, ILoggerFactory loggerFactory)
         {
             this.cache = cache;

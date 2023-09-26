@@ -37,13 +37,13 @@ namespace io.harness.cfsdk.client.connector
         public HttpClient metricHttpClient { get; set; }
         public HttpClient sseHttpClient { get; set; }
 
-        private string apiKey;
-        private Config config;
-        private IConnectionCallback callback;
-        private Client harnessClient;
+        private readonly string apiKey;
+        private readonly Config config;
+        private readonly IConnectionCallback callback;
+        private readonly Client harnessClient;
 
         private IService currentStream;
-        private CancellationTokenSource cancelToken = new CancellationTokenSource();
+        private readonly CancellationTokenSource cancelToken = new CancellationTokenSource();
 
         private static readonly string sdkVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "";
 
@@ -104,7 +104,7 @@ namespace io.harness.cfsdk.client.connector
                   if (chain.ChainStatus.Any(s => s.Status != X509ChainStatusFlags.NoError))
                   {
                       logger.LogError("SDKCODE(init:1004): TLS Certificate did not validate against trust store (reason={reason}) for {url}",
-                          chain.ChainStatus.First(chain => chain.Status != X509ChainStatusFlags.NoError).Status,
+                          chain.ChainStatus.First(c => c.Status != X509ChainStatusFlags.NoError).Status,
                           request.RequestUri);
                   }
 

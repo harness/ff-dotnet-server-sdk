@@ -35,7 +35,7 @@ namespace io.harness.cfsdk.client.api
         public event EventHandler InitializationCompleted;
         public event EventHandler<string> EvaluationChanged;
 
-        private CfClient parent;
+        private readonly CfClient parent;
         public InnerClient(CfClient parent, ILoggerFactory loggerFactory) { this.parent = parent;
             this.loggerFactory = loggerFactory;
             this.logger = loggerFactory.CreateLogger<InnerClient>();

@@ -1,11 +1,10 @@
 ﻿using io.harness.cfsdk.HarnessOpenAPIService;
-using System;
 
 namespace io.harness.cfsdk.client.api.rules
 {
     public class DistributionProcessor
     {
-        private  Distribution distribution;
+        private readonly Distribution distribution;
 
         public DistributionProcessor(Serve serve)
         {

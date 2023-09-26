@@ -44,11 +44,11 @@ namespace io.harness.cfsdk.client.api
     internal class PollingProcessor : IPollingProcessor
     {
         private readonly ILogger<PollingProcessor> logger;
-        private IConnector connector;
-        private IRepository repository;
-        private IPollCallback callback;
+        private readonly IConnector connector;
+        private readonly IRepository repository;
+        private readonly IPollCallback callback;
+        private readonly Config config;
         private Timer pollTimer;
-        private Config config;
         private bool isInitialized = false;
         private SemaphoreSlim readyEvent;
 

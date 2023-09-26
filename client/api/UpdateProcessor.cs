@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 using io.harness.cfsdk.client.connector;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace io.harness.cfsdk.client.api
 {
@@ -27,9 +25,9 @@ namespace io.harness.cfsdk.client.api
     internal class UpdateProcessor : IUpdateCallback, IUpdateProcessor
     {
         private readonly ILogger logger;
-        private IConnector connector;
-        private IRepository repository;
-        private IUpdateCallback callback;
+        private readonly IConnector connector;
+        private readonly IRepository repository;
+        private readonly IUpdateCallback callback;
 
         private IService service;
         private Config config;

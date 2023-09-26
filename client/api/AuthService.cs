@@ -1,8 +1,6 @@
 ﻿using System;
 using io.harness.cfsdk.client.connector;
-using io.harness.cfsdk.HarnessOpenAPIService;
 using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.api
@@ -22,7 +20,7 @@ namespace io.harness.cfsdk.client.api
     /// </summary>
     internal class AuthService : IAuthService
     {
-        private ILogger logger;
+        private readonly ILogger logger;
         private readonly IConnector connector;
         private readonly Config config;
         private readonly IAuthCallback callback;

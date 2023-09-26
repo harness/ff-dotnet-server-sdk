@@ -8,7 +8,7 @@ namespace io.harness.cfsdk.client.polling
     {
         private readonly ILogger<ShortTermPolling> logger;
         private static int MINIMUM_POLLING_INTERVAL = 10000;
-        private long pollingInterval;
+        private readonly long pollingInterval;
         private Timer timer;
 
         public ShortTermPolling(int time) : this(time, LoggerFactory.Create(builder => { builder.AddConsole(); }))
