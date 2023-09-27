@@ -27,7 +27,7 @@ namespace io.harness.cfsdk.client.api.analytics
         private static readonly string SdkLanguage = "SDK_LANGUAGE";
         private static readonly string SdkVersion = "SDK_VERSION";
 
-        private readonly string sdkVersion = Assembly.GetExecutingAssembly().GetName().ToString();
+        private readonly string sdkVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "";
         private readonly AnalyticsCache analyticsCache;
         private readonly IConnector connector;
 
