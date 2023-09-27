@@ -124,7 +124,7 @@ namespace io.harness.cfsdk.client.api
             {
                 logger.LogWarning(
                     "SDKCODE(eval:6001): Failed to evaluate {kind} variation for {targetId}, flag {featureId} and the default variation {defaultValue} is being returned",
-                    kind, target.Identifier, featureKey, defaultValue);
+                    kind, target?.Identifier ?? "null target", featureKey, defaultValue);
             }
         }
 
