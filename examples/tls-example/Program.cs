@@ -1,4 +1,4 @@
-﻿
+
 using System.Security.Cryptography.X509Certificates;
 using io.harness.cfsdk.client.api;
 using Serilog;
@@ -8,7 +8,7 @@ namespace io.harness.tls_example
 {
     class Program
     {
-        private static string certAuthority1 =
+        private static string certAuthority1Pem =
             "-----BEGIN CERTIFICATE-----\n<<ADD YOUR CA CERTS HERE>>\n-----END CERTIFICATE-----";
         
         
@@ -16,8 +16,8 @@ namespace io.harness.tls_example
         {
             var apiKey = Environment.GetEnvironmentVariable("FF_API_KEY");
             if (apiKey == null) throw new ArgumentNullException("FF_API_KEY","FF_API_KEY env variable is not set");
-            var flagName = Environment.GetEnvironmentVariable("FF_FLAG_NAME");
-            if (flagName == null) flagName = "test";
+            var flagName = Environment.GetEnvironmentVariable("FF_FLAG_NAME") ?? "test";
+            var pem = Environment.GetEnvironmentVariable("FF_TLS_TRUSTED_CERT_PEM") ?? certAuthority1Pem;
             
             var loggerFactory = new SerilogLoggerFactory(
                 new LoggerConfiguration()
@@ -25,7 +25,7 @@ namespace io.harness.tls_example
                     .WriteTo.Console()
                     .CreateLogger());
 
-            var cert1 = pemToX509Cert(certAuthority1);
+            var cert1 = pemToX509Cert(pem);
 
             var trustedCerts = new List<X509Certificate2> { cert1 };
             
@@ -49,6 +49,8 @@ namespace io.harness.tls_example
 
         static X509Certificate2 pemToX509Cert(string pem)
         {
+            pem = pem.Replace("\\n", "");
+            pem = pem.Replace("\n", "");
             pem = pem
                 .Replace("-----BEGIN CERTIFICATE-----",null)
                 .Replace("-----END CERTIFICATE-----",null);
