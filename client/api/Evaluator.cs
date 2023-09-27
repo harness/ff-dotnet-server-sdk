@@ -70,7 +70,7 @@ namespace io.harness.cfsdk.client.api
             }
             else
             {
-                LogEvaluatiionFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
+                LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
                 return defaultValue;
             }
         }
@@ -84,7 +84,7 @@ namespace io.harness.cfsdk.client.api
             }
             else
             {
-                LogEvaluatiionFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
+                LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
                 return defaultValue;
             }
         }
@@ -99,7 +99,7 @@ namespace io.harness.cfsdk.client.api
             }
             else
             {
-                LogEvaluatiionFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
+                LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
                 return defaultValue;
             }
         }
@@ -113,12 +113,12 @@ namespace io.harness.cfsdk.client.api
             }
             else
             {
-                LogEvaluatiionFailureError(FeatureConfigKind.String, key, target, defaultValue);
+                LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
                 return defaultValue;
             }
         }
 
-        private void LogEvaluatiionFailureError(FeatureConfigKind kind, string featureKey, dto.Target target, string defaultValue)
+        private void LogEvaluationFailureError(FeatureConfigKind kind, string featureKey, dto.Target target, string defaultValue)
         {
             if (logger.IsEnabled(LogLevel.Warning))
             {
