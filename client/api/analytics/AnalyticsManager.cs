@@ -1,5 +1,4 @@
 ﻿using io.harness.cfsdk.client.cache;
-using io.harness.cfsdk.client.connector;
 using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using System.Timers;
@@ -7,17 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.api.analytics
 {
-    interface IMetricCallback
-    {
-
-    }
-    interface IMetricsProcessor
-    {
-        void Start();
-        void Stop();
-        void PushToCache(dto.Target target, FeatureConfig featureConfig, Variation variation);
-    }
-    internal class MetricsProcessor : IMetricsProcessor
+    internal class MetricsProcessor
     {
         private readonly ILogger<MetricsProcessor> logger;
         private readonly AnalyticsCache analyticsCache;
@@ -25,7 +14,7 @@ namespace io.harness.cfsdk.client.api.analytics
         private readonly AnalyticsPublisherService analyticsPublisherService;
         private readonly Config config;
 
-        public MetricsProcessor(IConnector connector, Config config, IMetricCallback callback, AnalyticsCache analyticsCache, AnalyticsPublisherService analyticsPublisherService, ILoggerFactory loggerFactory)
+        public MetricsProcessor(Config config, AnalyticsCache analyticsCache, AnalyticsPublisherService analyticsPublisherService, ILoggerFactory loggerFactory)
         {
             this.analyticsCache = analyticsCache;
             this.config = config;

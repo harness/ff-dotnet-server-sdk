@@ -17,11 +17,10 @@ namespace io.harness.cfsdk.client.api
         IPollCallback,
         IUpdateCallback,
         IEvaluatorCallback,
-        IMetricCallback,
         IConnectionCallback
     {
-        private ILoggerFactory loggerFactory;
-        private ILogger logger;
+        private readonly ILoggerFactory loggerFactory;
+        private readonly ILogger logger;
 
         // Services
         private IAuthService authService;
@@ -29,7 +28,7 @@ namespace io.harness.cfsdk.client.api
         private IPollingProcessor polling;
         private IUpdateProcessor update;
         private IEvaluator evaluator;
-        private IMetricsProcessor metric;
+        private MetricsProcessor metric;
         private IConnector connector;
 
         public event EventHandler InitializationCompleted;
@@ -70,7 +69,7 @@ namespace io.harness.cfsdk.client.api
             this.polling = new PollingProcessor(connector, this.repository, config, this, loggerFactory);
             this.update = new UpdateProcessor(connector, this.repository, config, this, loggerFactory);
             this.evaluator = new Evaluator(this.repository, this, loggerFactory);
-            this.metric = new MetricsProcessor(connector, config, this, analyticsCache, new AnalyticsPublisherService(connector, analyticsCache, loggerFactory), loggerFactory);
+            this.metric = new MetricsProcessor(config, analyticsCache, new AnalyticsPublisherService(connector, analyticsCache, loggerFactory), loggerFactory);
         }
         public void Start()
         {
