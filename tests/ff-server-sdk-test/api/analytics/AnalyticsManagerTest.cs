@@ -30,7 +30,7 @@ namespace ff_server_sdk_test.api.analytics
             var featureConfig1 = CreateFeatureConfig("feature1");
             var analytics = new Analytics(featureConfig1, target, variation, EventType.METRICS);
 
-            var sut = new MetricsProcessor(new LocalConnector("TEST"), new Config(), null, analyticsCacheMock, analyticsPublisherServiceMock, new NullLoggerFactory());
+            var sut = new MetricsProcessor(new Config(), analyticsCacheMock, analyticsPublisherServiceMock, new NullLoggerFactory());
 
             // Act
             sut.PushToCache(target, featureConfig1, variation);
@@ -55,7 +55,7 @@ namespace ff_server_sdk_test.api.analytics
             var featureConfig = CreateFeatureConfig("feature1");
             var analytics = new Analytics(featureConfig, target, variation, EventType.METRICS);
 
-            var sut = new MetricsProcessor(new LocalConnector("TEST"), new Config(), null, analyticsCacheMock, analyticsPublisherServiceMock, new NullLoggerFactory());
+            var sut = new MetricsProcessor(new Config(), analyticsCacheMock, analyticsPublisherServiceMock, new NullLoggerFactory());
 
             // Act
             sut.PushToCache(target, featureConfig, variation);
@@ -88,7 +88,7 @@ namespace ff_server_sdk_test.api.analytics
             var analytics1 = new Analytics(featureConfig1, target, variation, EventType.METRICS);
             var analytics2 = new Analytics(featureConfig2, target, variation, EventType.METRICS);
 
-            var sut = new MetricsProcessor(new LocalConnector("TEST"), new Config(), null, analyticsCacheMock, analyticsPublisherServiceMock, new NullLoggerFactory());
+            var sut = new MetricsProcessor(new Config(), analyticsCacheMock, analyticsPublisherServiceMock, new NullLoggerFactory());
 
             // Act
             sut.PushToCache(target, featureConfig1, variation);
@@ -119,7 +119,7 @@ namespace ff_server_sdk_test.api.analytics
             var analytics1 = new Analytics(featureConfig1, target, variation, EventType.METRICS);
             var analytics2 = new Analytics(featureConfig2, target, variation, EventType.METRICS);
 
-            var sut = new MetricsProcessor(new LocalConnector("TEST"), new Config(), null, analyticsCacheMock, analyticsPublisherServiceMock, new NullLoggerFactory());
+            var sut = new MetricsProcessor(new Config(), analyticsCacheMock, analyticsPublisherServiceMock, new NullLoggerFactory());
 
             // Act
             sut.PushToCache(target, featureConfig1, variation);
@@ -149,7 +149,7 @@ namespace ff_server_sdk_test.api.analytics
             var target = new io.harness.cfsdk.client.dto.Target();
             var variation = new Variation();
 
-            var sut = new MetricsProcessor(connectorMock.Object, configMock, null, analyticsCacheMock, analyticsPublisherServiceMock, new NullLoggerFactory());
+            var sut = new MetricsProcessor(configMock, analyticsCacheMock, analyticsPublisherServiceMock, new NullLoggerFactory());
 
             // Act - set cachesize > buffer
             sut.PushToCache(target, CreateFeatureConfig("feature1"), variation);
