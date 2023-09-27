@@ -36,6 +36,8 @@ namespace io.harness.cfsdk.client.api
         }
         public void Start()
         {
+            if (authTimer != null) return;
+
             this.retries = 0;
             // initiate authentication
             authTimer = new Timer(OnTimedEvent, null, 0, config.PollIntervalInMiliSeconds);

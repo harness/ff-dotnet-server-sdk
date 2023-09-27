@@ -70,6 +70,7 @@ namespace io.harness.cfsdk.client.api
             this.update = new UpdateProcessor(connector, this.repository, config, this, loggerFactory);
             this.evaluator = new Evaluator(this.repository, this, loggerFactory);
             this.metric = new MetricsProcessor(config, analyticsCache, new AnalyticsPublisherService(connector, analyticsCache, loggerFactory), loggerFactory);
+            Start();
         }
         public void Start()
         {
