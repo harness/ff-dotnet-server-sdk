@@ -146,7 +146,7 @@ namespace io.harness.cfsdk.client.api
             // or if version is equal 0 (or doesn't exist)
             if( current != null && featureConfig.Version != 0 && current.Version >= featureConfig.Version )
             {
-                logger.LogDebug("Flag {identifier} already exists", identifier);
+                logger.LogTrace("Flag {identifier} already exists", identifier);
                 return;
             }
 
@@ -164,7 +164,7 @@ namespace io.harness.cfsdk.client.api
             // or if version is equal 0 (or doesn't exist)
             if (current != null && segment.Version != 0 && current.Version >= segment.Version)
             {
-                logger.LogDebug("Segment {identifier} already exists", identifier);
+                logger.LogTrace("Segment {identifier} already exists", identifier);
                 return;
             }
 
