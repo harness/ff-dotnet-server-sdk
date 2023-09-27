@@ -260,7 +260,7 @@ namespace io.harness.cfsdk.client.connector
                 try {
                     await client.MetricsAsync(_environment, metrics, cancelToken.Token);
                 }
-                catch (ApiException ex) {
+                catch (Exception ex) {
                     logger.LogWarning(ex, "SDKCODE(metric:7002): Posting metrics failed, reason: {reason}", ex.Message);
                 }
 
