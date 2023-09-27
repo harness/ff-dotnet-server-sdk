@@ -22,6 +22,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.7.2" />
     <PackageReference Include="NuGet.Frameworks" Version="6.5.1" /> <!-- Fixes CVE 2023-29337 -->
     <PackageReference Include="WireMock.Net" Version="1.5.36" />
+    <PackageReference Include="JUnitTestLogger" Version="1.1.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -41,4 +42,10 @@
     <Folder Include="api\" />
     <Folder Include="api\analytics\" />
   </ItemGroup>
+
+  <Target Name="PostClean" AfterTargets="Clean">
+    <RemoveDir Directories="$(BaseIntermediateOutputPath)" ContinueOnError="true" /> <!-- remove obj -->
+    <RemoveDir Directories="$(BaseOutputPath)" ContinueOnError="true" /> <!-- remove bin -->
+  </Target>
+
 </Project>

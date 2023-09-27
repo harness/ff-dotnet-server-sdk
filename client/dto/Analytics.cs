@@ -6,24 +6,20 @@ namespace io.harness.cfsdk.client.dto
 {
     public class Analytics : IEquatable<Analytics>
     {
-        private FeatureConfig featureConfig;
-        private Target target;
-        private Variation variation;
-        private EventType eventType = EventType.METRICS;
+        private readonly FeatureConfig featureConfig;
+        private readonly Target target;
+        private readonly Variation variation;
 
-        public FeatureConfig FeatureConfig { get => featureConfig; set => featureConfig = value; }
-        public Target Target { get => target; set => target = value; }
-        public Variation Variation { get => variation; set => variation = value; }
-        public EventType EventType { get => eventType; set => eventType = value; }
+        public FeatureConfig FeatureConfig { get => featureConfig; }
+        public Target Target { get => target; }
+        public Variation Variation { get => variation; }
 
-        public Analytics(FeatureConfig _featureConfig, Target _target, Variation _variation, EventType _eventType)
+        public Analytics(FeatureConfig featureConfig, Target target, Variation variation, EventType eventType)
         {
-            FeatureConfig = _featureConfig;
-            Target = _target;
-            Variation = _variation;
-            EventType = _eventType;
+            this.featureConfig = featureConfig;
+            this.target = target;
+            this.variation = variation;
         }
-        public Analytics() { }
 
         public override bool Equals(object obj)
         {

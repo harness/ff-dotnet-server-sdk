@@ -18,7 +18,6 @@ dotnet tool install --global dotnet-reportgenerator-globaltool
 dotnet tool restore
 
 # Install Libraries needed for build and buld
-dotnet add package JUnitTestLogger --version 1.1.0 
 dotnet restore ff-netF48-server-sdk.csproj
 dotnet build ff-netF48-server-sdk.csproj --no-restore
 

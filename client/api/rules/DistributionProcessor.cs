@@ -1,11 +1,10 @@
 ﻿using io.harness.cfsdk.HarnessOpenAPIService;
-using System;
 
 namespace io.harness.cfsdk.client.api.rules
 {
     public class DistributionProcessor
     {
-        private  Distribution distribution;
+        private readonly Distribution distribution;
 
         public DistributionProcessor(Serve serve)
         {
@@ -34,7 +33,7 @@ namespace io.harness.cfsdk.client.api.rules
 
         private bool isEnabled(dto.Target target, int percentage)
         {
-            object value = Evaluator.getAttrValue(target, distribution.BucketBy);
+            object value = Evaluator.GetAttrValue(target, distribution.BucketBy);
 
             string identifier = "";
             if (value != null)

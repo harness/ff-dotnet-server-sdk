@@ -12,7 +12,7 @@ namespace io.harness.cfsdk.client.api
     public class FileMapStore : IStore
     {
         private readonly ILogger<FileMapStore> logger;
-        private string storeName;
+        private readonly string storeName;
 
         public FileMapStore(string name, ILoggerFactory loggerFactory)
         {

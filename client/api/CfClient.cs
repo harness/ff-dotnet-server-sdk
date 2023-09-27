@@ -3,7 +3,6 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Console;
 
 namespace io.harness.cfsdk.client.api
 {
@@ -20,7 +19,6 @@ namespace io.harness.cfsdk.client.api
         string stringVariation(string key, dto.Target target, string defaultValue);
         double numberVariation(string key, dto.Target target, double defaultValue);
         JObject jsonVariation(string key, dto.Target target, JObject defaultValue);
-
 
         event EventHandler InitializationCompleted;
         event EventHandler<string> EvaluationChanged;

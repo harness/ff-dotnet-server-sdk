@@ -55,111 +55,8 @@
     <ItemGroup>
         <WCFMetadata Include="Connected Services" />
     </ItemGroup>
-
+    
     <ItemGroup>
-        <Compile Remove="TestA\Program.cs" />
-        <Compile Remove="TestA\obj\Debug\net5.0\.NETCoreApp,Version=v5.0.AssemblyAttributes.cs" />
-        <Compile Remove="TestA\obj\Debug\net5.0\TestA.AssemblyInfo.cs" />
-        <Compile Remove="ff-server-sdk-test\TestModel.cs" />
-        <Compile Remove="ff-server-sdk-test\EvaluatorTest.cs" />
-        <Compile Remove="ff-server-sdk-test\obj\Debug\net5.0\.NETCoreApp,Version=v5.0.AssemblyAttributes.cs" />
-        <Compile Remove="ff-server-sdk-test\obj\Debug\net5.0\ff-server-sdk-test.AssemblyInfo.cs" />
-        <Compile Remove="TestA\obj\Debug\net5.0\ff-server-sdk-example.AssemblyInfo.cs" />
-    </ItemGroup>
-    <ItemGroup>
-        <None Remove="TestA\obj\TestA.csproj.nuget.g.props" />
-        <None Remove="TestA\obj\TestA.csproj.nuget.g.targets" />
-        <None Remove="TestA\obj\project.assets.json" />
-        <None Remove="TestA\obj\project.nuget.cache" />
-        <None Remove="TestA\obj\TestA.csproj.nuget.dgspec.json" />
-        <None Remove="TestA\obj\Debug\net5.0\TestA.assets.cache" />
-        <None Remove="TestA\obj\Debug\net5.0\TestA.csproj.AssemblyReference.cache" />
-        <None Remove="TestA\obj\Debug\net5.0\TestA.GeneratedMSBuildEditorConfig.editorconfig" />
-        <None Remove="TestA\obj\Debug\net5.0\TestA.AssemblyInfoInputs.cache" />
-        <None Remove="TestA\obj\Debug\net5.0\TestA.csproj.CoreCompileInputs.cache" />
-        <None Remove="TestA\obj\Debug\net5.0\TestA.dll" />
-        <None Remove="TestA\obj\Debug\net5.0\TestA.pdb" />
-        <None Remove="TestA\obj\Debug\net5.0\ref\TestA.dll" />
-        <None Remove="TestA\bin\Debug\net5.0\Microsoft.IdentityModel.Tokens.dll" />
-        <None Remove="TestA\bin\Debug\net5.0\Microsoft.IdentityModel.Logging.dll" />
-        <None Remove="TestA\bin\Debug\net5.0\Microsoft.IdentityModel.JsonWebTokens.dll" />
-        <None Remove="TestA\bin\Debug\net5.0\MurmurHash.dll" />
-        <None Remove="TestA\bin\Debug\net5.0\Newtonsoft.Json.dll" />
-        <None Remove="TestA\bin\Debug\net5.0\Disruptor.dll" />
-        <None Remove="TestA\bin\Debug\net5.0\ff-netF48-server-sdk.dll" />
-        <None Remove="TestA\bin\Debug\net5.0\System.IdentityModel.Tokens.Jwt.dll" />
-        <None Remove="TestA\bin\Debug\net5.0\Serilog.dll" />
-        <None Remove="TestA\bin\Debug\net5.0\ff-netF48-server-sdk.pdb" />
-        <None Remove="TestA\obj\Debug\net5.0\TestA.csproj.CopyComplete" />
-        <None Remove="TestA\bin\Debug\net5.0\TestA.deps.json" />
-        <None Remove="TestA\obj\Debug\net5.0\TestA.genruntimeconfig.cache" />
-        <None Remove="TestA\bin\Debug\net5.0\TestA.runtimeconfig.json" />
-        <None Remove="TestA\bin\Debug\net5.0\TestA.runtimeconfig.dev.json" />
-        <None Remove="TestA\bin\Debug\net5.0\TestA.dll" />
-        <None Remove="TestA\bin\Debug\net5.0\ref\TestA.dll" />
-        <None Remove="TestA\bin\Debug\net5.0\TestA.pdb" />
-        <None Remove="TestA\obj\Debug\net5.0\TestA.csproj.FileListAbsolute.txt" />
-        <None Remove="ff-server-sdk-test\obj\ff-server-sdk-test.csproj.nuget.g.props" />
-        <None Remove="ff-server-sdk-test\obj\ff-server-sdk-test.csproj.nuget.g.targets" />
-        <None Remove="ff-server-sdk-test\obj\ff-server-sdk-test.csproj.nuget.dgspec.json" />
-        <None Remove="ff-server-sdk-test\obj\project.nuget.cache" />
-        <None Remove="ff-server-sdk-test\obj\project.assets.json" />
-        <None Remove="ff-server-sdk-test\obj\Debug\netcoreapp3.1\ff-server-sdk-test.assets.cache" />
-        <None Remove="ff-server-sdk-test\obj\Debug\netcoreapp3.1\ff-server-sdk-test.csproj.AssemblyReference.cache" />
-        <None Remove="ff-server-sdk-test\obj\Debug\net5.0\ff-server-sdk-test.csproj.AssemblyReference.cache" />
-        <None Remove="ff-server-sdk-test\obj\Debug\net5.0\ff-server-sdk-test.csproj.FileListAbsolute.txt" />
-        <None Remove="ff-server-sdk-test\obj\Debug\net5.0\ff-server-sdk-test.assets.cache" />
-        <None Remove="TestA\.DS_Store" />
-        <None Remove="TestA\obj\ff-server-sdk-example.csproj.nuget.g.targets" />
-        <None Remove="TestA\obj\ff-server-sdk-example.csproj.nuget.g.props" />
-        <None Remove="TestA\obj\ff-server-sdk-example.csproj.nuget.dgspec.json" />
-        <None Remove="TestA\obj\Debug\net5.0\ff-server-sdk-example.assets.cache" />
-        <None Remove="TestA\obj\Debug\net5.0\ff-server-sdk-example.csproj.AssemblyReference.cache" />
-        <None Remove="TestA\bin\.DS_Store" />
-        <None Remove="TestA\bin\Debug\.DS_Store" />
-        <None Remove="TestA\bin\Debug\net5.0\.DS_Store" />
-        <None Remove="TestA\bin\Debug\net5.0\local\.DS_Store" />
-        <None Remove="TestA\bin\Debug\net5.0\local\flags\flag2.json" />
-        <None Remove="TestA\bin\Debug\net5.0\local\flags\flag3.json" />
-        <None Remove="TestA\bin\Debug\net5.0\local\flags\flag3" />
-        <None Remove="TestA\bin\Debug\net5.0\local\flags\flag1.json" />
-        <None Remove="TestA\bin\Debug\net5.0\local\segments\segment1.json" />
-        <None Remove="ff-server-sdk-test\obj\Debug\net5.0\ff-server-sdk-test.csproj.AssemblyReference.cache" />
-        <None Remove="ff-server-sdk-test\obj\Debug\net5.0\ff-server-sdk-test.GeneratedMSBuildEditorConfig.editorconfig" />
-        <None Remove="ff-server-sdk-test\obj\Debug\net5.0\ff-server-sdk-test.AssemblyInfoInputs.cache" />
-        <None Remove="ff-server-sdk-test\obj\Debug\net5.0\ff-server-sdk-test.csproj.CoreCompileInputs.cache" />
-        <None Remove="ff-server-sdk-test\obj\Debug\net5.0\ff-server-sdk-test.dll" />
-        <None Remove="ff-server-sdk-test\obj\Debug\net5.0\ref\ff-server-sdk-test.dll" />
-        <None Remove="ff-server-sdk-test\obj\Debug\net5.0\ff-server-sdk-test.pdb" />
-        <None Remove="ff-server-sdk-test\bin\Debug\net5.0\ff-netF48-server-sdk.pdb" />
-        <None Remove="ff-server-sdk-test\bin\Debug\net5.0\ff-netF48-server-sdk.dll" />
-        <None Remove="ff-server-sdk-test\obj\Debug\net5.0\ff-server-sdk-test.csproj.CopyComplete" />
-        <None Remove="ff-server-sdk-test\bin\Debug\net5.0\nunit.engine.api.dll" />
-        <None Remove="ff-server-sdk-test\bin\Debug\net5.0\NUnit3.TestAdapter.pdb" />
-        <None Remove="ff-server-sdk-test\bin\Debug\net5.0\nunit.engine.core.dll" />
-        <None Remove="ff-server-sdk-test\bin\Debug\net5.0\testcentric.engine.metadata.dll" />
-        <None Remove="ff-server-sdk-test\bin\Debug\net5.0\nunit.engine.dll" />
-        <None Remove="ff-server-sdk-test\bin\Debug\net5.0\NUnit3.TestAdapter.dll" />
-        <None Remove="ff-server-sdk-test\bin\Debug\net5.0\ff-server-sdk-test.deps.json" />
-        <None Remove="ff-server-sdk-test\bin\Debug\net5.0\ff-server-sdk-test.dll" />
-        <None Remove="ff-server-sdk-test\bin\Debug\net5.0\ref\ff-server-sdk-test.dll" />
-        <None Remove="ff-server-sdk-test\bin\Debug\net5.0\ff-server-sdk-test.pdb" />
-        <None Remove="TestA\obj\Debug\net5.0\ff-server-sdk-example.csproj.AssemblyReference.cache" />
-        <None Remove="TestA\obj\Debug\net5.0\ff-server-sdk-example.GeneratedMSBuildEditorConfig.editorconfig" />
-        <None Remove="TestA\obj\Debug\net5.0\ff-server-sdk-example.AssemblyInfoInputs.cache" />
-        <None Remove="TestA\obj\Debug\net5.0\ff-server-sdk-example.csproj.CoreCompileInputs.cache" />
-        <None Remove="TestA\obj\Debug\net5.0\ff-server-sdk-example.dll" />
-        <None Remove="TestA\obj\Debug\net5.0\ff-server-sdk-example.pdb" />
-        <None Remove="TestA\obj\Debug\net5.0\ref\ff-server-sdk-example.dll" />
-        <None Remove="TestA\obj\Debug\net5.0\ff-server-sdk-example.csproj.CopyComplete" />
-        <None Remove="TestA\bin\Debug\net5.0\ff-server-sdk-example.deps.json" />
-        <None Remove="TestA\obj\Debug\net5.0\ff-server-sdk-example.genruntimeconfig.cache" />
-        <None Remove="TestA\bin\Debug\net5.0\ff-server-sdk-example.runtimeconfig.json" />
-        <None Remove="TestA\bin\Debug\net5.0\ff-server-sdk-example.runtimeconfig.dev.json" />
-        <None Remove="TestA\bin\Debug\net5.0\ff-server-sdk-example.dll" />
-        <None Remove="TestA\bin\Debug\net5.0\ref\ff-server-sdk-example.dll" />
-        <None Remove="TestA\bin\Debug\net5.0\ff-server-sdk-example.pdb" />
-        <None Remove="TestA\obj\Debug\net5.0\ff-server-sdk-example.csproj.FileListAbsolute.txt" />
         <None Remove="NSwag.ApiDescription.Client" />
         <None Remove="Microsoft.Extensions.ApiDescription.Client" />
         <None Remove="Connected Services\HarnessOpenAPIService\HarnessOpenAPIS.nswag" />
@@ -169,4 +66,10 @@
             <Link>OpenAPIs\HarnessOpenAPIS.nswag</Link>
         </OpenApiReference>
     </ItemGroup>
+
+    <Target Name="PostClean" AfterTargets="Clean">
+        <RemoveDir Directories="$(BaseIntermediateOutputPath)" ContinueOnError="true" /><!-- obj -->
+        <RemoveDir Directories="$(BaseOutputPath)" ContinueOnError="true" /><!-- bin -->
+    </Target>
+
 </Project>

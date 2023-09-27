@@ -1,5 +1,4 @@
-﻿using System;
-namespace io.harness.cfsdk.client.connector
+﻿namespace io.harness.cfsdk.client.connector
 {
     public interface IService
     {

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using io.harness.cfsdk.client.api;
 using io.harness.cfsdk.client.connector;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NUnit.Framework;
 
@@ -18,8 +19,6 @@ namespace ff_server_sdk_test
     [TestFixture]
     public class InnerClient
     {
-        private static readonly ILoggerFactory _loggerFactory = LoggerFactory.Create(builder => { builder.AddConsole(); });
-
         [Test]
         public async Task shouldOnlyAuthenticateOnceIfSuccessful()
         {
@@ -29,7 +28,7 @@ namespace ff_server_sdk_test
                 .Setup(a => a.Authenticate())
                 .ReturnsAsync("Done");
             // Act
-            var a = new AuthService(mockConnector.Object, new Config { pollIntervalInSeconds = 1 }, new FakeAuth(), _loggerFactory);
+            var a = new AuthService(mockConnector.Object, new Config { pollIntervalInSeconds = 1 }, new FakeAuth(), new NullLoggerFactory());
             a.Start();
             
             // Verify
@@ -49,7 +48,7 @@ namespace ff_server_sdk_test
                 .ReturnsAsync("DONE");
             
             // Act
-            var a = new AuthService(mockConnector.Object, new Config { pollIntervalInSeconds = 1 }, new FakeAuth(), _loggerFactory);
+            var a = new AuthService(mockConnector.Object, new Config { pollIntervalInSeconds = 1 }, new FakeAuth(), new NullLoggerFactory());
             a.Start();
             
             // Verify
@@ -69,7 +68,7 @@ namespace ff_server_sdk_test
                 .ReturnsAsync("DONE");
             
             // Act
-            var a = new AuthService(mockConnector.Object, new Config { pollIntervalInSeconds = 1, maxAuthRetries = 1}, new FakeAuth(), _loggerFactory);
+            var a = new AuthService(mockConnector.Object, new Config { pollIntervalInSeconds = 1, maxAuthRetries = 1}, new FakeAuth(), new NullLoggerFactory());
             a.Start();
             
             // Verify

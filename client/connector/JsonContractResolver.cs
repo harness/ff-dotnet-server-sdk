@@ -50,7 +50,7 @@ namespace io.harness.cfsdk.client.connector
         {
             if (property.NullValueHandling != NullValueHandling.Ignore ||
                 property.Required != Required.DisallowNull) return;
-            logger.LogDebug("Changing JSON property '{PropertyName}' from Required.DisallowNull to Required.Default", property.PropertyName);
+            logger.LogTrace("Changing JSON property '{PropertyName}' from Required.DisallowNull to Required.Default", property.PropertyName);
             property.Required = Required.Default;
         }
         
@@ -58,7 +58,7 @@ namespace io.harness.cfsdk.client.connector
         {
             if (contract.ItemNullValueHandling != NullValueHandling.Ignore ||
                 contract.ItemRequired != Required.DisallowNull) return;
-            logger.LogDebug("Changing JSON object contract '{contract}' from Required.DisallowNull to Required.Default", contract);
+            logger.LogTrace("Changing JSON object contract '{contract}' from Required.DisallowNull to Required.Default", contract);
             contract.ItemRequired = Required.Default;
         }
     }

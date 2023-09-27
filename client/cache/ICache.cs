@@ -1,19 +1,17 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 
 namespace io.harness.cfsdk.client.cache
 {
-    internal interface ICache<K, V>
+    internal interface ICache<TK, TV>
     {
 
-        void PutAll(ICollection<KeyValuePair<K, V>> keyValuePairs);
+        void PutAll(ICollection<KeyValuePair<TK, TV>> keyValuePairs);
 
-        void Put(K key, V value);
-        void Put(KeyValuePair<K, V> keyValuePair);
+        void Put(TK key, TV value);
+        void Put(KeyValuePair<TK, TV> keyValuePair);
        
-        V getIfPresent(K  key);
+        TV getIfPresent(TK  key);
     }
 
     public interface ICache

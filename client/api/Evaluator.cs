@@ -14,7 +14,7 @@ namespace io.harness.cfsdk.client.api
 {
     interface IEvaluatorCallback
     {
-        void evaluationProcessed(FeatureConfig featureConfig, dto.Target target, Variation variation);
+        void EvaluationProcessed(FeatureConfig featureConfig, dto.Target target, Variation variation);
     }
     interface IEvaluator
     {
@@ -27,8 +27,8 @@ namespace io.harness.cfsdk.client.api
     internal class Evaluator : IEvaluator
     {
         private readonly ILogger<Evaluator> logger;
-        private IRepository repository;
-        private IEvaluatorCallback callback;
+        private readonly IRepository repository;
+        private readonly IEvaluatorCallback callback;
 
         public Evaluator(IRepository repository, IEvaluatorCallback callback, ILoggerFactory loggerFactory)
         {
@@ -45,7 +45,7 @@ namespace io.harness.cfsdk.client.api
             ICollection<Prerequisite> prerequisites = featureConfig.Prerequisites;
             if (prerequisites != null && prerequisites.Count > 0)
             {
-                bool prereq = checkPreRequisite(featureConfig, target);
+                bool prereq = CheckPreRequisite(featureConfig, target);
                 if( !prereq)
                 {
                     return featureConfig.Variations.FirstOrDefault(v => v.Identifier.Equals(featureConfig.OffVariation));
@@ -55,7 +55,7 @@ namespace io.harness.cfsdk.client.api
             Variation var = Evaluate(featureConfig, target);
             if(var != null && callback != null)
             {
-                this.callback.evaluationProcessed(featureConfig, target, var);
+                this.callback.EvaluationProcessed(featureConfig, target, var);
             }
             return var;
         }
@@ -70,7 +70,7 @@ namespace io.harness.cfsdk.client.api
             }
             else
             {
-                logEvaluatiionFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
+                LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
                 return defaultValue;
             }
         }
@@ -84,7 +84,7 @@ namespace io.harness.cfsdk.client.api
             }
             else
             {
-                logEvaluatiionFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
+                LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
                 return defaultValue;
             }
         }
@@ -99,7 +99,7 @@ namespace io.harness.cfsdk.client.api
             }
             else
             {
-                logEvaluatiionFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
+                LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
                 return defaultValue;
             }
         }
@@ -113,22 +113,22 @@ namespace io.harness.cfsdk.client.api
             }
             else
             {
-                logEvaluatiionFailureError(FeatureConfigKind.String, key, target, defaultValue);
+                LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
                 return defaultValue;
             }
         }
 
-        private void logEvaluatiionFailureError(FeatureConfigKind kind, string featureKey, dto.Target target, string defaultValue)
+        private void LogEvaluationFailureError(FeatureConfigKind kind, string featureKey, dto.Target target, string defaultValue)
         {
             if (logger.IsEnabled(LogLevel.Warning))
             {
                 logger.LogWarning(
                     "SDKCODE(eval:6001): Failed to evaluate {kind} variation for {targetId}, flag {featureId} and the default variation {defaultValue} is being returned",
-                    kind, target.Identifier, featureKey, defaultValue);
+                    kind, target?.Identifier ?? "null target", featureKey, defaultValue);
             }
         }
 
-        private bool checkPreRequisite(FeatureConfig parentFeatureConfig, dto.Target target)
+        private bool CheckPreRequisite(FeatureConfig parentFeatureConfig, dto.Target target)
         {
             if (parentFeatureConfig.Prerequisites != null && parentFeatureConfig.Prerequisites.Count > 0)
             {
@@ -155,7 +155,7 @@ namespace io.harness.cfsdk.client.api
                         return false;
                     }
 
-                    if (!checkPreRequisite(preReqFeatureConfig, target))
+                    if (!CheckPreRequisite(preReqFeatureConfig, target))
                     {
                         return false;
                     }
@@ -318,7 +318,7 @@ namespace io.harness.cfsdk.client.api
                 return IsTargetIncludedOrExcludedInSegment(clause.Values.ToList(), target);
             }
 
-            object attrValue = getAttrValue(target, clause.Attribute);
+            object attrValue = GetAttrValue(target, clause.Attribute);
             if(attrValue == null)
             {
                 return false;
@@ -349,7 +349,7 @@ namespace io.harness.cfsdk.client.api
             }
         }
 
-        public static object getAttrValue(dto.Target target, string attribute)
+        public static object GetAttrValue(dto.Target target, string attribute)
         {
             switch (attribute)
             {

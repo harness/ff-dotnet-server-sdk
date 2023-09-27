@@ -1,39 +1,22 @@
-﻿using Disruptor;
-using Disruptor.Dsl;
-using io.harness.cfsdk.client.cache;
-using io.harness.cfsdk.client.connector;
+﻿using io.harness.cfsdk.client.cache;
 using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.HarnessOpenAPIService;
-using System;
-using System.Threading.Tasks;
 using System.Timers;
 using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.api.analytics
 {
-    interface IMetricCallback
-    {
-
-    }
-    interface IMetricsProcessor
-    {
-        void Start();
-        void Stop();
-        void PushToCache(dto.Target target, FeatureConfig featureConfig, Variation variation);
-    }
-    internal class MetricsProcessor : IMetricsProcessor
+    internal class MetricsProcessor
     {
         private readonly ILogger<MetricsProcessor> logger;
-        private AnalyticsCache analyticsCache;
+        private readonly AnalyticsCache analyticsCache;
         private Timer timer;
-        private AnalyticsPublisherService analyticsPublisherService;
-        private IMetricCallback callback;
-        private Config config;
+        private readonly AnalyticsPublisherService analyticsPublisherService;
+        private readonly Config config;
 
-        public MetricsProcessor(IConnector connector, Config config, IMetricCallback callback, AnalyticsCache analyticsCache, AnalyticsPublisherService analyticsPublisherService, ILoggerFactory loggerFactory)
+        public MetricsProcessor(Config config, AnalyticsCache analyticsCache, AnalyticsPublisherService analyticsPublisherService, ILoggerFactory loggerFactory)
         {
             this.analyticsCache = analyticsCache;
-            this.callback = callback;
             this.config = config;
             this.analyticsPublisherService = analyticsPublisherService;
             this.logger = loggerFactory.CreateLogger<MetricsProcessor>();
@@ -93,7 +76,7 @@ namespace io.harness.cfsdk.client.api.analytics
         {
             try
             {
-                analyticsPublisherService.sendDataAndResetCache();
+                analyticsPublisherService.SendDataAndResetCache();
             }
             catch (CfClientException ex)
             {
