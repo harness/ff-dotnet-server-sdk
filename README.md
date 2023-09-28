@@ -18,8 +18,6 @@ For a sample FF .NET SDK project, see our [test .NET project](examples/getting_s
 ![FeatureFlags](https://github.com/harness/ff-python-server-sdk/raw/main/docs/images/ff-gui.png)
 
 ## Requirements
-[.NET Framework >= 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net48)<br>
-or<br>
 [.Net 5.0.104](https://docs.microsoft.com/en-us/nuget/quickstart/install-and-use-a-package-using-the-dotnet-cli) or newer (dotnet --version)<br>
 The library is packaged as multi-target supporting `net5.0`, `net6.0` and `net7.0`.
 
@@ -61,8 +59,15 @@ namespace getting_started
 
         static void Main(string[] args)
         {
+            // Configure your logger
+            var loggerFactory = new SerilogLoggerFactory(
+                new LoggerConfiguration()
+                    .MinimumLevel.Information()
+                    .WriteTo.Console()
+                    .CreateLogger());
+
             // Create a feature flag client
-            CfClient.Instance.Initialize(apiKey, Config.Builder().Build());
+            CfClient.Instance.Initialize(apiKey, Config.Builder().LoggerFactory(loggerFactory).Build());
 
             // Create a target (different targets can get different results based on rules)
             Target target = Target.builder()
@@ -96,7 +101,7 @@ If you dont have the right version of dotnet installed locally, or dont want to 
 use docker to quicky get started
 
 ```bash
-docker run -v $(pwd):/app -w /app -e FF_API_KEY=$FF_API_KEY mcr.microsoft.com/dotnet/sdk:5.0 dotnet run --project examples/getting_started/
+docker run -v $(pwd):/app -w /app -e FF_API_KEY=$FF_API_KEY mcr.microsoft.com/dotnet/sdk:6.0 dotnet run --framework net6.0 --project examples/getting_started/
 ```
 
 ### Additional Reading
