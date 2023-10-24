@@ -2,3 +2,6 @@
 bin
 obj
 .vscode
+*.user
+*.bak
+.idea
