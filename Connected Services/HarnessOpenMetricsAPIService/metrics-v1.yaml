@@ -19,6 +19,7 @@ paths:
       operationId: postMetrics
       parameters:
         - $ref: '#/components/parameters/environmentPathParam'
+        - $ref: '#/components/parameters/clusterQueryOptionalParam'
       requestBody:
         content:
           application/json:
@@ -125,6 +126,13 @@ components:
       scheme: bearer
       bearerFormat: JWT
   parameters:
+    clusterQueryOptionalParam:
+      name: cluster
+      in: query
+      required: false
+      description: Unique identifier for the cluster for the account
+      schema:
+        type: string
     environmentPathParam:
       name: environmentUUID
       in: path

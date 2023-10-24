@@ -60,11 +60,12 @@ namespace io.harness.cfsdk.HarnessOpenMetricsAPIService
         /// Send metrics to Analytics server
         /// </remarks>
         /// <param name="environmentUUID">environment parameter in query.</param>
+        /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task MetricsAsync(string environmentUUID, Metrics body)
+        public virtual System.Threading.Tasks.Task MetricsAsync(string environmentUUID, string cluster, Metrics body)
         {
-            return MetricsAsync(environmentUUID, body, System.Threading.CancellationToken.None);
+            return MetricsAsync(environmentUUID, cluster, body, System.Threading.CancellationToken.None);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -75,16 +76,22 @@ namespace io.harness.cfsdk.HarnessOpenMetricsAPIService
         /// Send metrics to Analytics server
         /// </remarks>
         /// <param name="environmentUUID">environment parameter in query.</param>
+        /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task MetricsAsync(string environmentUUID, Metrics body, System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task MetricsAsync(string environmentUUID, string cluster, Metrics body, System.Threading.CancellationToken cancellationToken)
         {
             if (environmentUUID == null)
                 throw new System.ArgumentNullException("environmentUUID");
 
             var urlBuilder_ = new System.Text.StringBuilder();
-            urlBuilder_.Append(BaseUrl != null ? BaseUrl.TrimEnd('/') : "").Append("/metrics/{environmentUUID}");
+            urlBuilder_.Append(BaseUrl != null ? BaseUrl.TrimEnd('/') : "").Append("/metrics/{environmentUUID}?");
             urlBuilder_.Replace("{environmentUUID}", System.Uri.EscapeDataString(ConvertToString(environmentUUID, System.Globalization.CultureInfo.InvariantCulture)));
+            if (cluster != null)
+            {
+                urlBuilder_.Append(System.Uri.EscapeDataString("cluster") + "=").Append(System.Uri.EscapeDataString(ConvertToString(cluster, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
+            }
+            urlBuilder_.Length--;
 
             var client_ = _httpClient;
             var disposeClient_ = false;

@@ -16,6 +16,7 @@ using io.harness.cfsdk.HarnessOpenAPIService;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
+using Newtonsoft.Json;
 
 namespace io.harness.cfsdk.client.connector
 {
@@ -258,7 +259,7 @@ namespace io.harness.cfsdk.client.connector
                     BaseUrl = config.EventUrl
                 };
                 try {
-                    await client.MetricsAsync(_environment, metrics, cancelToken.Token);
+                    await client.MetricsAsync(_environment, cluster, metrics, cancelToken.Token);
                 }
                 catch (Exception ex) {
                     logger.LogWarning(ex, "SDKCODE(metric:7002): Posting metrics failed, reason: {reason}", ex.Message);
