@@ -65,7 +65,16 @@ namespace io.harness.cfsdk.client.connector
 
                 var requestHost = request.RequestUri?.Host;
                 var certHost = serverCertificate.GetNameInfo(X509NameType.DnsFromAlternativeName, false);
-                if (requestHost != certHost)
+
+                if (requestHost == null || certHost == null)
+                {
+                    logger.LogError("Missing hostname/certhost");
+                    return false;
+                }
+
+                var match = IPAddress.TryParse(certHost, out _) ? requestHost.Equals(certHost) : requestHost.EndsWith(certHost);
+
+                if (!match)
                 {
                     logger.LogError("SDKCODE(init:1005): TLS Hostname validation failed (sdk requested={reqhost} server cert wants={svrhost}) for {url}",
                         requestHost,
