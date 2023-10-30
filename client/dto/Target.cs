@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace io.harness.cfsdk.client.dto
 {
@@ -20,6 +21,7 @@ namespace io.harness.cfsdk.client.dto
             attributes = new Dictionary<string, string>();
         }
 
+        [Obsolete("isPrivate and privateAttributes will be removed in a future release use other constructor instead")]
         public Target(string identifier, string name, Dictionary<string, string> attributes, bool isPrivate, HashSet<string> privateAttributes)
         {
             if (attributes == null)
@@ -37,10 +39,30 @@ namespace io.harness.cfsdk.client.dto
             PrivateAttributes = privateAttributes;
         }
 
+        public Target(string identifier, string name, Dictionary<string, string> attributes)
+        {
+            if (attributes == null)
+            {
+                Attributes = new Dictionary<string, string>();
+            }
+            else
+            {
+                Attributes = attributes;
+            }
+
+            Identifier = identifier;
+            Name = name;
+            IsPrivate = false;
+        }
+
         public string Name { get => name; set => name = value; }
         public string Identifier { get => identifier; set => identifier = value; }
         public Dictionary<string, string> Attributes { get => attributes; set => attributes = value; }
+
+        [Obsolete("Private attributes will be removed in a future release")]
         public bool IsPrivate { get => isPrivate; set => isPrivate = value; }
+
+        [Obsolete("Private attributes will be removed in a future release")]
         public HashSet<string> PrivateAttributes { get => privateAttributes; set => privateAttributes = value; }
 
         public override string ToString()
@@ -82,11 +104,15 @@ namespace io.harness.cfsdk.client.dto
             this.attributes = attributes;
             return this;
         }
+
+        [Obsolete("Private attributes will be removed in a future release")]
         public TargetBuilder IsPrivate(bool isPrivate)
         {
             this.isPrivate = isPrivate;
             return this;
         }
+
+        [Obsolete("Private attributes will be removed in a future release")]
         public TargetBuilder PrivateAttributes(HashSet<string> privateAttributes)
         {
             this.privateAttributes = privateAttributes;
