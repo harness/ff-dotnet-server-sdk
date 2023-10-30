@@ -21,7 +21,7 @@ namespace io.harness.cfsdk.client.dto
             attributes = new Dictionary<string, string>();
         }
 
-        [Obsolete("privateAttributes will be removed in a future release use other constructor instead")]
+        [Obsolete("isPrivate and privateAttributes will be removed in a future release use other constructor instead")]
         public Target(string identifier, string name, Dictionary<string, string> attributes, bool isPrivate, HashSet<string> privateAttributes)
         {
             if (attributes == null)
@@ -58,8 +58,11 @@ namespace io.harness.cfsdk.client.dto
         public string Name { get => name; set => name = value; }
         public string Identifier { get => identifier; set => identifier = value; }
         public Dictionary<string, string> Attributes { get => attributes; set => attributes = value; }
+
+        [Obsolete("Private attributes will be removed in a future release")]
         public bool IsPrivate { get => isPrivate; set => isPrivate = value; }
-        [Obsolete("Private attributes not supportted and will be removed in a future release")]
+
+        [Obsolete("Private attributes will be removed in a future release")]
         public HashSet<string> PrivateAttributes { get => privateAttributes; set => privateAttributes = value; }
 
         public override string ToString()
