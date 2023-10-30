@@ -39,7 +39,7 @@ namespace io.harness.cfsdk.client.dto
             PrivateAttributes = privateAttributes;
         }
 
-        public Target(string identifier, string name, Dictionary<string, string> attributes, bool isPrivate)
+        public Target(string identifier, string name, Dictionary<string, string> attributes)
         {
             if (attributes == null)
             {
@@ -52,7 +52,7 @@ namespace io.harness.cfsdk.client.dto
 
             Identifier = identifier;
             Name = name;
-            IsPrivate = isPrivate;
+            IsPrivate = false;
         }
 
         public string Name { get => name; set => name = value; }
