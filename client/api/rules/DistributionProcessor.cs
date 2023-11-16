@@ -6,12 +6,14 @@ namespace io.harness.cfsdk.client.api.rules
     public class DistributionProcessor
     {
         private readonly ILogger<Evaluator> logger;
+        private readonly ILoggerFactory loggerFactory;
         private readonly Distribution distribution;
 
         public DistributionProcessor(Serve serve, ILoggerFactory loggerFactory)
         {
             this.distribution = serve.Distribution;
             this.logger = loggerFactory.CreateLogger<Evaluator>();
+            this.loggerFactory = loggerFactory;
         }
 
         public string loadKeyName(dto.Target target)
@@ -23,10 +25,12 @@ namespace io.harness.cfsdk.client.api.rules
             }
 
             string variation = "";
+            int totalPercentage = 0;
             foreach (WeightedVariation weightedVariation in distribution.Variations)
             {
                 variation = weightedVariation.Variation;
-                if (isEnabled(target, weightedVariation.Weight))
+                totalPercentage += weightedVariation.Weight;
+                if (isEnabled(target, totalPercentage))
                 {
                     return variation;
                 }
@@ -38,7 +42,6 @@ namespace io.harness.cfsdk.client.api.rules
         {
             string bucketBy = distribution.BucketBy;
             string value = Evaluator.GetAttrValue(target, bucketBy);
-
             if (string.IsNullOrEmpty(value))
             {
                 string oldBB = bucketBy;
@@ -53,7 +56,7 @@ namespace io.harness.cfsdk.client.api.rules
                 logger.LogWarning("SDKCODE(eval:6002): BucketBy attribute not found in target attributes, falling back to 'identifier': missing={missing_attr}, using value={value}", oldBB, value);
             }
 
-            Strategy strategy = new Strategy(value, bucketBy);
+            Strategy strategy = new Strategy(value, bucketBy, loggerFactory);
             int bucketId = strategy.loadNormalizedNumber();
             if (logger.IsEnabled(LogLevel.Debug))
             {
