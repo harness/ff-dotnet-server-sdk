@@ -7,27 +7,25 @@ namespace io.harness.cfsdk.client.api.rules
 {
     public class Strategy
     {
-        public static readonly int ONE_HUNDRED = 100;
-
-        private readonly string identifier;
+        private readonly string value;
         private readonly string bucketBy;
 
-        public Strategy(String identifier, String bucketBy)
+        public Strategy(String value, String bucketBy)
         {
-            this.identifier = identifier;
+            this.value = value;
             this.bucketBy = bucketBy;
         }
 
         public int loadNormalizedNumber()
         {
-            return loadNormalizedNumberWithNormalizer(ONE_HUNDRED);
+            return loadNormalizedNumberWithNormalizer(100);
         }
 
         public int loadNormalizedNumberWithNormalizer(int normalizer)
         {
-            byte[] value = Encoding.ASCII.GetBytes(bucketBy + ":" + identifier);
-            HashAlgorithm hasher = MurmurHash.Create32(seed: 4294967295);
-            long hashcode = hasher.ComputeHash(value).GetHashCode();
+            byte[] valueBytes = Encoding.ASCII.GetBytes(bucketBy + ":" + value);
+            HashAlgorithm hasher = MurmurHash.Create32(seed: 0);
+            var hashcode = (uint)BitConverter.ToInt32(hasher.ComputeHash(valueBytes), 0);
             return (int)(hashcode % normalizer) + 1;
         }
     }
