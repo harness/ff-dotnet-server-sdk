@@ -27,6 +27,7 @@ namespace io.harness.cfsdk.client.api
     internal class Evaluator : IEvaluator
     {
         private readonly ILogger<Evaluator> logger;
+        private readonly ILoggerFactory loggerFactory;
         private readonly IRepository repository;
         private readonly IEvaluatorCallback callback;
 
@@ -35,6 +36,7 @@ namespace io.harness.cfsdk.client.api
             this.repository = repository;
             this.callback = callback;
             this.logger = loggerFactory.CreateLogger<Evaluator>();
+            this.loggerFactory = loggerFactory;
         }
         private Variation EvaluateVariation(string key, dto.Target target, FeatureConfigKind kind)
         {
@@ -233,7 +235,7 @@ namespace io.harness.cfsdk.client.api
                 {
                     if(servingRule.Serve.Distribution != null)
                     {
-                        DistributionProcessor distributionProcessor = new DistributionProcessor(servingRule.Serve);
+                        DistributionProcessor distributionProcessor = new DistributionProcessor(servingRule.Serve, loggerFactory);
                         return distributionProcessor.loadKeyName(target);
                     }
                     if( servingRule.Serve.Variation != null)
@@ -254,7 +256,7 @@ namespace io.harness.cfsdk.client.api
                 return null;
             }
 
-            DistributionProcessor distributionProcessor = new DistributionProcessor(featureConfig.DefaultServe);
+            DistributionProcessor distributionProcessor = new DistributionProcessor(featureConfig.DefaultServe, loggerFactory);
             return distributionProcessor.loadKeyName(target);
         }
         private bool IsTargetIncludedOrExcludedInSegment(List<string> segmentList, dto.Target target)
@@ -349,7 +351,7 @@ namespace io.harness.cfsdk.client.api
             }
         }
 
-        public static object GetAttrValue(dto.Target target, string attribute)
+        public static string GetAttrValue(dto.Target target, string attribute)
         {
             switch (attribute)
             {
