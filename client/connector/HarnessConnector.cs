@@ -55,7 +55,7 @@ namespace io.harness.cfsdk.client.connector
                 return new HttpClient();
             }
 
-#if NETSTANDARD
+#if (NETSTANDARD || NET461)
             throw new NotSupportedException("Custom TLS certificates require .net5.0 target or greater");
 #else
             var logger = loggerFactory.CreateLogger<HarnessConnector>();

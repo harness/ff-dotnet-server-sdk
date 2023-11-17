@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <!-- The SDK must be built with .NET 7 however we must also keep compatibility with .NET 5/6 hence SupportedOSPlatformVersion=9 below -->
-        <TargetFrameworks>netstandard2.0;netstandard2.1;net5.0;net6.0;net7.0</TargetFrameworks>
+        <TargetFrameworks>netstandard2.0;netstandard2.1;net461;net5.0;net6.0;net7.0</TargetFrameworks>
         <SupportedOSPlatformVersion>9.0</SupportedOSPlatformVersion>
         <LangVersion>9.0</LangVersion>
         <PackageId>ff-dotnet-server-sdk</PackageId>
