@@ -55,6 +55,9 @@ namespace io.harness.cfsdk.client.connector
                 return new HttpClient();
             }
 
+#if (NETSTANDARD || NET461)
+            throw new NotSupportedException("Custom TLS certificates require .net5.0 target or greater");
+#else
             var logger = loggerFactory.CreateLogger<HarnessConnector>();
             var handler = new HttpClientHandler();
 
@@ -127,6 +130,8 @@ namespace io.harness.cfsdk.client.connector
             };
 
             return new HttpClient(handler, true);
+
+#endif // NETSTANDARD
         }
 
         private static HttpClient ApiHttpClient(Config config, ILoggerFactory loggerFactory)
