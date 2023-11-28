@@ -8,5 +8,9 @@ namespace io.harness.cfsdk.client.api
         {
           
         }
+
+        public CfClientException(string  errorMessage, Exception innerException) : base(errorMessage, innerException)
+        {
+        }
     }
 }

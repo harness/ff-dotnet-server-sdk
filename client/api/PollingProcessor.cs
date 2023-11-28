@@ -107,7 +107,7 @@ namespace io.harness.cfsdk.client.api
             }
             catch (CfClientException ex)
             {
-                logger.LogError(ex,"Exception was raised when fetching flags data with the message {reason}", ex.Message);
+                logger.LogError(ex,"Exception was raised when fetching flags data with the message: {reason}", ex.Message);
                 throw;
             }
         }
@@ -126,7 +126,7 @@ namespace io.harness.cfsdk.client.api
             }
             catch (CfClientException ex)
             {
-                logger.LogError(ex, "Exception was raised when fetching segments data with the message {reason}", ex.Message);
+                logger.LogError(ex, "Exception was raised when fetching segments data with the message: {reason}", ex.Message);
                 throw;
             }
         }

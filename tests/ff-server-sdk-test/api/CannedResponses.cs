@@ -16,8 +16,7 @@ namespace ff_server_sdk_test.api
     {
         public static string MakeEmptyBody()
         {
-            return
-                "[]";
+            return "[]";
         }
 
         public static string MakeFeatureConfigBodyWithVariationToTargetMapSetToNull()
