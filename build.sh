@@ -1,4 +1,3 @@
-
 echo ".NET version installed:"
 dotnet --version
 
