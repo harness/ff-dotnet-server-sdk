@@ -352,8 +352,8 @@ namespace io.harness.cfsdk.client.connector
 
         public void Close()
         {
-            cancelToken.Cancel();
-            currentStream.Close();
+            cancelToken?.Cancel();
+            currentStream?.Close();
         }
 
         private static void PrintCert(ILogger logger, X509Certificate2 cert)
