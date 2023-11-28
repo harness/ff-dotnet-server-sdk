@@ -79,7 +79,8 @@ namespace ff_server_sdk_test.api
                 initLatch.Signal();
             };
 
-            client.InitializeAndWait();
+            var success = client.InitializeAndWait().Wait(10000);
+            Assert.IsTrue(success, "timeout while waiting for InitializeAndWait()");
 
             var ok = initLatch.Wait(TimeSpan.FromMinutes(2));
             Assert.That(ok, Is.True, "failed to init in time");

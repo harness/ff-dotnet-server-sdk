@@ -66,6 +66,24 @@ namespace ff_server_sdk_test {
         }
         
         [Test]
+        public async Task ShouldReAuthWhenGetFlagsReturns403()
+        {
+            //Arrange
+            var mockHttpClient = MockedHttpClient(new HttpResponseMessage { StatusCode = HttpStatusCode.Forbidden });
+            var client = new Client(mockHttpClient);
+            var mockCallback = new Mock<TestCallback>();
+            var connector = new HarnessConnector("test", new Config(), mockCallback.Object, new HttpClient(), new HttpClient(), new HttpClient(), client);
+            await connector.Authenticate();
+
+            //Act
+            var exception = Assert.ThrowsAsync<CfClientException>(async () => await connector.GetFlags());
+
+            //Assert
+            Assert.That(exception!.Message.Contains("The HTTP status code of the response was not expected (403)"));
+            mockCallback.Verify(it => it.OnReauthenticateRequested());
+        }
+
+        [Test]
         public async Task ShouldNotReAuthWhenGetFlagReturns400()
         {
             //Arrange
