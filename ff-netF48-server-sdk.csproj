@@ -1,14 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+        <TargetFrameworks>netstandard2.0;net461;net5.0;net6.0;net7.0</TargetFrameworks>
+        <SupportedOSPlatformVersion>9.0</SupportedOSPlatformVersion>
+        <LangVersion>9.0</LangVersion>
         <PackageId>ff-dotnet-server-sdk</PackageId>
         <RootNamespace>io.harness.cfsdk</RootNamespace>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-        <Version>1.1.9</Version>
+        <Version>1.1.10</Version>
         <PackOnBuild>true</PackOnBuild>
-        <PackageVersion>1.1.9</PackageVersion>
-        <AssemblyVersion>1.1.9</AssemblyVersion>
+        <PackageVersion>1.1.10</PackageVersion>
+        <AssemblyVersion>1.1.10</AssemblyVersion>
         <Authors>support@harness.io</Authors>
         <Copyright>Copyright © 2023 </Copyright>
         <PackageIconUrl>https://harness.io/icon-ff.svg</PackageIconUrl>

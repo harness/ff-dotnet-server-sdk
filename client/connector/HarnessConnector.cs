@@ -248,8 +248,8 @@ namespace io.harness.cfsdk.client.connector
 
         public void Close()
         {
-            cancelToken.Cancel();
-            currentStream.Close();
+            cancelToken?.Cancel();
+            currentStream?.Close();
         }
     }
 }
