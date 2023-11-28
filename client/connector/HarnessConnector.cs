@@ -232,11 +232,11 @@ namespace io.harness.cfsdk.client.connector
                     logger.LogError("Initiate reauthentication");
                     callback.OnReauthenticateRequested();
                 }
-                throw new CfClientException(ex.Message);
+                throw new CfClientException(ex.Message, ex);
             }
             catch (Exception ex)
             {
-                throw new CfClientException(ex.Message);
+                throw new CfClientException(ex.Message, ex);
             }
         }
         public async Task<IEnumerable<FeatureConfig>> GetFlags()
@@ -352,8 +352,8 @@ namespace io.harness.cfsdk.client.connector
 
         public void Close()
         {
-            cancelToken.Cancel();
-            currentStream.Close();
+            cancelToken?.Cancel();
+            currentStream?.Close();
         }
 
         private static void PrintCert(ILogger logger, X509Certificate2 cert)

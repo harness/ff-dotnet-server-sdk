@@ -14,10 +14,44 @@ namespace ff_server_sdk_test.api
 
     public static class CannedResponses
     {
+        public static string MakeEmptyBody()
+        {
+            return "[]";
+        }
+
         public static string MakeFeatureConfigBodyWithVariationToTargetMapSetToNull()
         {
             return
                 "[{\"variationToTargetMap\":null,\"project\":\"Project\",\"environment\":\"Environment\",\"feature\":\"FeatureWithVariationToTargetMapSetAsNull\",\"state\":\"on\",\"kind\":\"string\",\"variations\":[ { \"identifier\": \"on\", \"name\": \"on\", \"value\": \"on\" } ],\"rules\":[],\"defaultServe\":{  \"variation\":\"on\"  },\"offVariation\":\"off\",\"prerequisites\":[],\"version\":1}]";
+        }
+
+        public static string MakeMultiFeatureConfigBody(int times)
+        {
+            var flags = new List<FeatureConfig>();
+
+            for (int i = 0; i < times; i++)
+            {
+                var flag = new FeatureConfig
+                {
+                    Feature = "Feature"+i,
+                    Environment = "Environment",
+                    Kind = FeatureConfigKind.Boolean,
+                    Prerequisites = new List<Prerequisite>(),
+                    Project = "Project",
+                    Rules = new List<ServingRule>(),
+                    State = FeatureState.On,
+                    Variations = new List<Variation>(),
+                    Version = 1,
+                    AdditionalProperties = new Dictionary<string, object>(),
+                    DefaultServe = new Serve(),
+                    OffVariation = "off"
+                };
+                flags.Add(flag);
+            }
+            
+            var body = JsonConvert.SerializeObject(flags, new JsonSerializerSettings());
+            Console.WriteLine("feature config to return: " + body);
+            return body;
         }
 
         public static string MakeFeatureConfigBody()

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Threading;
 using io.harness.cfsdk.client.connector;
@@ -97,7 +98,8 @@ namespace io.harness.cfsdk.client.api
                 logger.LogDebug("Fetching flags started");
                 var flags = await this.connector.GetFlags();
                 logger.LogDebug("Fetching flags finished");
-                foreach (var item in flags)
+ 
+                foreach (var item in flags.ToArray())
                 {
                     repository.SetFlag(item.Feature, item);
                 }
@@ -105,7 +107,7 @@ namespace io.harness.cfsdk.client.api
             }
             catch (CfClientException ex)
             {
-                logger.LogError(ex,"Exception was raised when fetching flags data with the message {reason}", ex.Message);
+                logger.LogError(ex,"Exception was raised when fetching flags data with the message: {reason}", ex.Message);
                 throw;
             }
         }
@@ -116,14 +118,15 @@ namespace io.harness.cfsdk.client.api
                 logger.LogDebug("Fetching segments started");
                 IEnumerable<Segment> segments = await connector.GetSegments();
                 logger.LogDebug("Fetching segments finished");
-                foreach (Segment item in segments)
+
+                foreach (Segment item in segments.ToArray())
                 {
                     repository.SetSegment(item.Identifier, item);
                 }
             }
             catch (CfClientException ex)
             {
-                logger.LogError(ex, "Exception was raised when fetching segments data with the message {reason}", ex.Message);
+                logger.LogError(ex, "Exception was raised when fetching segments data with the message: {reason}", ex.Message);
                 throw;
             }
         }
