@@ -71,6 +71,7 @@ namespace io.harness.cfsdk.client.api
         /// call <c>Initialize()</c> manually.
         /// </para>
         /// </summary>
+        [Obsolete("this method will be made internal in a future release of the SDK. Use one of the other constructors")]
         public CfClient()
         {
             client = new InnerClient(this, SetUpDefaultLogging(null));
