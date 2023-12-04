@@ -59,7 +59,7 @@ Log.Logger = new LoggerConfiguration()
 
 ### Number variation
 
-* `public double numberVariation(string key, dto.Target target, int defaultValue)`
+* `public double numberVariation(string key, dto.Target target, double defaultValue)`
 
 ### String variation
 
