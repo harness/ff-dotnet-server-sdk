@@ -5,3 +5,4 @@ obj
 *.user
 *.bak
 .idea
+tests/ff-server-sdk-test/junit.xml

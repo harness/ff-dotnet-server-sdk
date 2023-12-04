@@ -80,8 +80,8 @@ namespace ff_server_sdk_test.api
                 initLatch.Signal();
             };
 
-            var success = client.InitializeAndWait().Wait(10000);
-            Assert.IsTrue(success, "timeout while waiting for InitializeAndWait()");
+            var success = client.WaitForInitialization(10_000);
+            Assert.IsTrue(success, "timeout while waiting for WaitForInitialization()");
 
             var ok = initLatch.Wait(TimeSpan.FromMinutes(2));
             Assert.That(ok, Is.True, "failed to init in time");
@@ -138,8 +138,8 @@ namespace ff_server_sdk_test.api
                 initLatch.Signal();
             };
 
-            var success = client.InitializeAndWait().Wait(10000);
-            Assert.IsTrue(success, "timeout while waiting for InitializeAndWait()");
+            var success = client.WaitForInitialization(10_000);
+            Assert.IsTrue(success, "timeout while waiting for WaitForInitialization()");
 
             var ok = initLatch.Wait(TimeSpan.FromSeconds(30));
             Assert.That(ok, Is.True, "failed to init in time");

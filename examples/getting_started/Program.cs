@@ -23,7 +23,7 @@ namespace getting_started
 
             // Create a feature flag client
             var client = new CfClient(apiKey, Config.Builder().LoggerFactory(loggerFactory).Build());
-            client.InitializeAndWait().Wait();
+            client.WaitForInitialization();
 
             // Create a target (different targets can get different results based on rules)
             Target target = Target.builder()
@@ -32,11 +32,15 @@ namespace getting_started
                             .Attributes(new Dictionary<string, string>(){{"email", "demo@harness.io"}})
                             .build();
 
+            // Add some sample events
+            client.InitializationCompleted += (sender, e) => { Console.WriteLine("NOTIFICATION: Initialization Completed"); };
+            client.EvaluationChanged += (sender, identifier) => { Console.WriteLine($"NOTIFICATION: Flag changed for '{identifier}'"); };
+
            // Loop forever reporting the state of the flag
             while (true)
             {
                 bool resultBool = client.boolVariation(flagName, target, false);
-                Console.WriteLine($"Flag '{flagName}' = " + resultBool);
+                Console.WriteLine($"POLL: Flag '{flagName}' = " + resultBool);
                 Thread.Sleep(10 * 1000);
             }
         }

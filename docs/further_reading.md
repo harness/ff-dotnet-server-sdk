@@ -59,7 +59,7 @@ Log.Logger = new LoggerConfiguration()
 
 ### Number variation
 
-* `public double numberVariation(string key, dto.Target target, int defaultValue)`
+* `public double numberVariation(string key, dto.Target target, double defaultValue)`
 
 ### String variation
 
@@ -72,13 +72,13 @@ Log.Logger = new LoggerConfiguration()
 
 ## Waiting for Initialization
 
-The user can call InitializeAndWait to block and wait for the SDK
+The user can call WaitForInitialization() to block and wait for the SDK
 ```c#
 // Creates instance of a client
 var client = new CfClient(API_KEY, Config.Builder().Build());
 
 // Starts authentication and asynchronously wait for initialisation to complete
-await client.InitializeAndWait();
+client.WaitForInitialization();
 ```
 
 ## Connector

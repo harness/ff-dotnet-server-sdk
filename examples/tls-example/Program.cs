@@ -36,7 +36,7 @@ namespace io.harness.tls_example
                 .LoggerFactory(loggerFactory).Build();
             var client = new CfClient(apiKey, config);
 
-            await client.InitializeAndWait();
+            client.WaitForInitialization();
 
             while (true)
             {
