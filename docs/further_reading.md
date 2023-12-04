@@ -78,7 +78,7 @@ The user can call InitializeAndWait to block and wait for the SDK
 var client = new CfClient(API_KEY, Config.Builder().Build());
 
 // Starts authentication and asynchronously wait for initialisation to complete
-await client.InitializeAndWait();
+client.WaitForInitialization();
 ```
 
 ## Connector
