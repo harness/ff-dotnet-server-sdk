@@ -13,7 +13,10 @@ namespace io.harness.cfsdk.client.api
         Task Initialize(IConnector connector);
         Task Initialize(IConnector connector, Config config);
 
+        [Obsolete("This has been deprecated since its name is confusing implies it calls initialize when it does not, use WaitForInitialization() instead")]
         Task InitializeAndWait();
+        void WaitForInitialization();
+        bool WaitForInitialization(int timeoutMs);
 
         bool boolVariation(string key, dto.Target target, bool defaultValue);
         string stringVariation(string key, dto.Target target, string defaultValue);

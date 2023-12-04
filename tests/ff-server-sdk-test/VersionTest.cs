@@ -37,7 +37,7 @@ namespace ff_server_sdk_test
 
             SaveSegment(remoteSegment);
 
-            await client.InitializeAndWait();
+            client.WaitForInitialization(30_000);
         }
 
         private void SaveSegment(Segment seg)

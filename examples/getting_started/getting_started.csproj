@@ -9,7 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ff-dotnet-server-sdk" Version="1.2.*" />
+    <ProjectReference Include="..\..\ff-netF48-server-sdk.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Serilog.Extensions.Logging" Version="6.0.0"/>
     <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
   </ItemGroup>

@@ -72,7 +72,7 @@ Log.Logger = new LoggerConfiguration()
 
 ## Waiting for Initialization
 
-The user can call InitializeAndWait to block and wait for the SDK
+The user can call WaitForInitialization() to block and wait for the SDK
 ```c#
 // Creates instance of a client
 var client = new CfClient(API_KEY, Config.Builder().Build());
