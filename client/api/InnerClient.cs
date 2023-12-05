@@ -134,9 +134,17 @@ namespace io.harness.cfsdk.client.api
         /// <returns></returns>
         internal bool WaitForSdkToBeReady(int timeoutMs)
         {
-            var result = sdkReadyLatch.Wait(timeoutMs);
-            logger.LogTrace("Got sdkReadyLatch signal, WaitForSdkToBeReady now released");
-            return result;
+            var success = sdkReadyLatch.Wait(timeoutMs);
+            if (success)
+            {
+                logger.LogTrace("Got sdkReadyLatch signal, WaitForSdkToBeReady now released");
+            }
+            else
+            {
+                logger.LogWarning("Did not get a signal on sdkReadyLatch within given timeout");
+            }
+
+            return success;
         }
 
         #endregion
