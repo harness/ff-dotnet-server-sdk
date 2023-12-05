@@ -7,7 +7,7 @@ using Serilog.Extensions.Logging;
 
 namespace ff_server_sdk_test
 {
-    [Ignore("This test is designed for running manually with an FF_API_KEY env variable")]
+    [Ignore("This test is designed for running manually with an FF_API_KEY env variable + a bool flag named 'test' set to true")]
     public class InitTest
     {
         private string apiKey = Environment.GetEnvironmentVariable("FF_API_KEY");
@@ -41,6 +41,7 @@ namespace ff_server_sdk_test
             {
                 var result = client.boolVariation("test", target, false);
                 Console.WriteLine(testName + " " + i + " got " + result);
+                Assert.IsTrue(result);
             }
         }
 
