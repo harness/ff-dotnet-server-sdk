@@ -70,6 +70,7 @@ namespace io.harness.cfsdk.client.connector
         {
             try
             {
+                Debug.Assert(httpClient != null);
 
                 logger.LogDebug("Starting EventSource service.");
                 using (Stream stream = await this.httpClient.GetStreamAsync(url))

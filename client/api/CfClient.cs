@@ -44,6 +44,10 @@ namespace io.harness.cfsdk.client.api
         /// </code>
         /// For scenarios where multiple SDK instances are needed (e.g. different server api keys) you will need
         /// construct <c>CfClient()</c> directly and call <c>Initialize()</c> for each instance.
+        /// <para>
+        /// This instance will be shared by all code that uses <c>CfClient.Instance</c> so any state set by
+        /// <c>Initialize()</c>, such as logging factories will be seen by all other users of <c>CfClient.Instance</c>.
+        /// </para>
         /// </summary>
         public static ICfClient Instance { get { return lazy.Value; } }
 
@@ -108,7 +112,9 @@ namespace io.harness.cfsdk.client.api
         [Obsolete("This has been deprecated since its name is confusing implies it calls initialize when it does not, use WaitForInitialization() instead")]
         public async Task InitializeAndWait()
         {
-            await client.StartAsync();
+            client.Start();
+            client.WaitForSdkToBeReady(-1);
+            await Task.CompletedTask;
         }
 
         /// <summary>
@@ -117,19 +123,19 @@ namespace io.harness.cfsdk.client.api
         /// </summary>
         public void WaitForInitialization()
         {
-            client.StartAsync().Wait();
+            client.WaitForSdkToBeReady(-1);
         }
 
         /// <summary>
         /// See <see cref="WaitForInitialization()"/>
         /// </summary>
-        /// <param name="timeoutMs"></param>
+        /// <param name="timeoutMs">Time in milliseconds to wait</param>
         /// <returns>true if SDK authenticated ok and populated it cache within the given timeout.
         /// false means the cache may not have gotten populated and default variations may be served.
         /// Consider increasing the timeout in this case.</returns>
         public bool WaitForInitialization(int timeoutMs)
         {
-            return client.StartAsync().Wait(timeoutMs);
+            return client.WaitForSdkToBeReady(timeoutMs);
         }
 
         /// <summary>
@@ -139,7 +145,8 @@ namespace io.harness.cfsdk.client.api
         /// should use <c>await</c> to allow the operation to complete and the cache to populate. If you don't
         /// call 'await' you may get defaults returned (SDKCODE 6001). Example:
         /// <code>
-        /// await CfClient.Instance.Initialize(ApiKey, config);
+        /// CfClient.Instance.Initialize(apiKey, config);
+        /// CfClient.Instance.WaitForInitialization();
         /// </code>
         /// or
         /// <code>
@@ -183,7 +190,8 @@ namespace io.harness.cfsdk.client.api
         public async Task Initialize(string apiKey, Config config)
         {
             client.Initialize(apiKey, config);
-            await client.StartAsync();
+            client.Start();
+            await Task.CompletedTask;
         }
 
         /// <summary>
@@ -194,7 +202,8 @@ namespace io.harness.cfsdk.client.api
         public async Task Initialize(IConnector connector, Config config)
         {
             client.Initialize(connector, config);
-            await client.StartAsync();
+            client.Start();
+            await Task.CompletedTask;
         }
 
         // read values
@@ -206,7 +215,15 @@ namespace io.harness.cfsdk.client.api
         // force message
         public void Update(Message msg) { client.Update(msg, true);  }
 
-        public void Close() { client.Close();  }
+        public void Close()
+        {
+            if (this == Instance)
+            {
+                return;
+            }
+
+            client?.Close();
+        }
 
     }
 }

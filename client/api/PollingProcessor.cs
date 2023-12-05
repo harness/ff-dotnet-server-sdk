@@ -29,11 +29,6 @@ namespace io.harness.cfsdk.client.api
         /// Start periodic pooling
         /// </summary>
         void Start();
-        /// <summary>
-        /// async function, returns after initial set of flags and segments are returned 
-        /// </summary>
-        /// <returns>true</returns>
-        Task<bool> ReadyAsync();
     }
 
     /// <summary>
@@ -59,13 +54,7 @@ namespace io.harness.cfsdk.client.api
             this.repository = repository;
             this.connector = connector;
             this.config = config;
-            this.readyEvent = new SemaphoreSlim(0, 3);
             this.logger = loggerFactory.CreateLogger<PollingProcessor>();
-        }
-        public async Task<bool> ReadyAsync()
-        {
-            await readyEvent.WaitAsync();
-            return true;
         }
 
         public void Start()
@@ -78,9 +67,12 @@ namespace io.harness.cfsdk.client.api
                 intervalMs = 60000;
             }
 
+            logger.LogDebug("Populate cache for first time after authentication");
+            Task.WhenAll(new List<Task> { ProcessFlags(), ProcessSegments() }).Wait();
+
             logger.LogDebug("SDKCODE(poll:4000): Polling started, intervalMs: {intervalMs}", intervalMs);
             // start timer which will initiate periodic reading of flags and segments
-            pollTimer = new Timer(OnTimedEventAsync, null, 0, intervalMs);
+            pollTimer = new Timer(OnTimedEventAsync, null, intervalMs, intervalMs);
         }
         public void Stop()
         {
