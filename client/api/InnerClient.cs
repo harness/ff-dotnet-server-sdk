@@ -4,8 +4,10 @@ using io.harness.cfsdk.client.connector;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -19,8 +21,8 @@ namespace io.harness.cfsdk.client.api
         IEvaluatorCallback,
         IConnectionCallback
     {
-        private readonly ILoggerFactory loggerFactory;
-        private readonly ILogger logger;
+        private ILoggerFactory loggerFactory;
+        private ILogger logger;
 
         // Services
         private IAuthService authService;
@@ -35,6 +37,8 @@ namespace io.harness.cfsdk.client.api
         public event EventHandler<string> EvaluationChanged;
 
         private readonly CfClient parent;
+        private readonly CountdownEvent sdkReadyLatch = new CountdownEvent(1);
+
         public InnerClient(CfClient parent, ILoggerFactory loggerFactory) { this.parent = parent;
             this.loggerFactory = loggerFactory;
             this.logger = loggerFactory.CreateLogger<InnerClient>();
@@ -57,6 +61,11 @@ namespace io.harness.cfsdk.client.api
 
         public void Initialize(string apiKey, Config config)
         {
+            if (config.LoggerFactory != null)
+            {
+                this.loggerFactory = config.LoggerFactory;
+                this.logger = loggerFactory.CreateLogger<InnerClient>();
+            }
             Initialize(new HarnessConnector(apiKey, config, this, loggerFactory), config);
         }
 
@@ -72,27 +81,21 @@ namespace io.harness.cfsdk.client.api
             this.metric = new MetricsProcessor(config, analyticsCache, new AnalyticsPublisherService(connector, analyticsCache, loggerFactory), loggerFactory);
             Start();
         }
-        public void Start()
+        internal void Start()
         {
-            logger.LogDebug("Authenticating");
             // Start Authentication flow
+            Debug.Assert(authService != null, "CfClient has not been constructed properly - check you are using the right instance");
             this.authService.Start();
         }
-        public async Task WaitToInitialize()
+        private void WaitToInitialize()
         {
-            var initWork = new[] {
-                this.polling.ReadyAsync()
-            };
-
-            // We finished with initialization when Polling processor returns.
-            await Task.WhenAll(initWork);
-
+            sdkReadyLatch.Wait();
             OnNotifyInitializationCompleted();
         }
-        public async Task StartAsync()
+        public void StartAsync()
         {
             Start();
-            await WaitToInitialize();
+            WaitToInitialize();
         }
         #region Stream callback
 
@@ -113,12 +116,27 @@ namespace io.harness.cfsdk.client.api
         #region Authentication callback
         public void OnAuthenticationSuccess()
         {
-            // after successfull authentication, start
             logger.LogInformation("SDKCODE(auth:2000): Authenticated ok");
 
             polling.Start();
             update.Start();
             metric.Start();
+
+            logger.LogTrace("Signal sdkReadyLatch to release");
+            sdkReadyLatch.Signal();
+            logger.LogInformation("SDKCODE(init:1000): The SDK has successfully initialized");
+        }
+
+        /// <summary>
+        /// SDK has authenticated and at least one poll of flags has happened
+        /// </summary>
+        /// <param name="timeoutMs"></param>
+        /// <returns></returns>
+        internal bool WaitForSdkToBeReady(int timeoutMs)
+        {
+            var result = sdkReadyLatch.Wait(timeoutMs);
+            logger.LogTrace("Got sdkReadyLatch signal, WaitForSdkToBeReady now released");
+            return result;
         }
 
         #endregion
@@ -174,7 +192,6 @@ namespace io.harness.cfsdk.client.api
 
         private void OnNotifyInitializationCompleted()
         {
-            logger.LogInformation("SDKCODE(init:1000): The SDK has successfully initialized");
             logger.LogInformation("SDK version: " + Assembly.GetExecutingAssembly().GetName().Version);
             InitializationCompleted?.Invoke(parent, EventArgs.Empty);
         }
@@ -202,12 +219,13 @@ namespace io.harness.cfsdk.client.api
 
         public void Close()
         {
-            this.connector.Close();
-            this.authService.Stop();
-            this.repository.Close();
-            this.polling.Stop();
-            this.update.Stop();
-            this.metric.Stop();
+            this.connector?.Close();
+            this.authService?.Stop();
+            this.repository?.Close();
+            this.polling?.Stop();
+            this.update?.Stop();
+            this.metric?.Stop();
+            logger.LogDebug("InnerClient was closed");
         }
 
         public void Update(Message message, bool manual)

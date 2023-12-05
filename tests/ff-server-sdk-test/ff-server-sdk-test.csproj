@@ -24,6 +24,8 @@
     <PackageReference Include="WireMock.Net" Version="1.5.36" />
     <PackageReference Include="JUnitTestLogger" Version="1.1.0" />
     <PackageReference Include="WireMock.Net.FluentAssertions" Version="1.5.35" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="6.0.0"/>
+    <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
   </ItemGroup>
 
   <ItemGroup>
