@@ -68,7 +68,7 @@ namespace io.harness.cfsdk.client.api
             }
 
             logger.LogDebug("Populate cache for first time after authentication");
-            Task.WhenAll(new List<Task> { ProcessFlags(), ProcessSegments() });
+            Task.WhenAll(new List<Task> { ProcessFlags(), ProcessSegments() }).Wait();
 
             logger.LogDebug("SDKCODE(poll:4000): Polling started, intervalMs: {intervalMs}", intervalMs);
             // start timer which will initiate periodic reading of flags and segments
