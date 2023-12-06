@@ -37,11 +37,12 @@ namespace io.harness.cfsdk.client.api
         public event EventHandler<string> EvaluationChanged;
 
         private readonly CfClient parent;
-        private readonly CountdownEvent sdkReadyLatch = new CountdownEvent(1);
+        private CountdownEvent sdkReadyLatch = new(1);
 
         public InnerClient(CfClient parent, ILoggerFactory loggerFactory) { this.parent = parent;
             this.loggerFactory = loggerFactory;
             this.logger = loggerFactory.CreateLogger<InnerClient>();
+            this.sdkReadyLatch.Reset(1);
         }
         public InnerClient(string apiKey, Config config, CfClient parent, ILoggerFactory loggerFactory)
         {
@@ -72,6 +73,7 @@ namespace io.harness.cfsdk.client.api
         public void Initialize(IConnector connector, Config config)
         {
             var analyticsCache = new AnalyticsCache();
+            this.sdkReadyLatch.Reset(1);
             this.connector = connector;
             this.authService = new AuthService(connector, config, this, loggerFactory);
             this.repository = new StorageRepository(config.Cache, config.Store, this, loggerFactory);
@@ -90,7 +92,6 @@ namespace io.harness.cfsdk.client.api
         private void WaitToInitialize()
         {
             sdkReadyLatch.Wait();
-            OnNotifyInitializationCompleted();
         }
         public void StartAsync()
         {
@@ -126,6 +127,7 @@ namespace io.harness.cfsdk.client.api
             sdkReadyLatch.Signal();
             logger.LogInformation("SDKCODE(init:1000): The SDK has successfully initialized");
             logger.LogInformation("SDK version: " + Assembly.GetExecutingAssembly().GetName().Version);
+            OnNotifyInitializationCompleted();
         }
 
         /// <summary>
