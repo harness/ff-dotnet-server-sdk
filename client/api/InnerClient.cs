@@ -37,7 +37,7 @@ namespace io.harness.cfsdk.client.api
         public event EventHandler<string> EvaluationChanged;
 
         private readonly CfClient parent;
-        private CountdownEvent sdkReadyLatch = new(1);
+        private readonly CountdownEvent sdkReadyLatch = new(1);
 
         public InnerClient(CfClient parent, ILoggerFactory loggerFactory) { this.parent = parent;
             this.loggerFactory = loggerFactory;
