@@ -138,7 +138,7 @@ namespace io.harness.cfsdk.client.connector
         {
             HttpClient client = CreateHttpClientWithTls(config, loggerFactory);
             client.BaseAddress = new Uri(config.ConfigUrl);
-            client.Timeout = TimeSpan.FromSeconds(config.ConnectionTimeout);
+            client.Timeout = TimeSpan.FromMilliseconds(config.ConnectionTimeout);
             client.DefaultRequestHeaders.Add("Harness-SDK-Info", $".Net {SdkVersion} Server");
             return client;
         }
@@ -146,7 +146,7 @@ namespace io.harness.cfsdk.client.connector
         {
             HttpClient client = CreateHttpClientWithTls(config, loggerFactory);
             client.BaseAddress = new Uri(config.EventUrl);
-            client.Timeout = TimeSpan.FromSeconds(config.ConnectionTimeout);
+            client.Timeout = TimeSpan.FromMilliseconds(config.ConnectionTimeout);
             client.DefaultRequestHeaders.Add("Harness-SDK-Info", $".Net {SdkVersion} Client");
             if (_accountId != null)
             {
