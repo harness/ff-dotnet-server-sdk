@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ff-netF48-server-sdk", "ff-
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ff-server-sdk-test", "tests\ff-server-sdk-test\ff-server-sdk-test.csproj", "{3645967A-6A1E-42EA-B49B-1B863A202354}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ff-server-sdk-example", "tests\ff-server-sdk-example\ff-server-sdk-example.csproj", "{0CE8570E-1054-4A72-B526-02D580A309C9}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "getting_started", "examples\getting_started\getting_started.csproj", "{FD7316AF-9326-4D2A-B218-202A18916480}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tls-example", "examples\tls-example\tls-example.csproj", "{1CEC6ABB-EFF8-42B0-B693-47DBD1455199}"
