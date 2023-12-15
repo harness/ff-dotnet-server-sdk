@@ -74,6 +74,53 @@ namespace io.harness.cfsdk.client.dto
         {
             return !string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(identifier);
         }
+        
+        
+        public override bool Equals(object obj)
+        {
+            if (obj is Target other)
+            {
+                if (Identifier != other.Identifier)
+                {
+                    return false;
+                }
+                return AreDictionariesEqual(attributes, other.attributes);
+            }
+            return false;
+        }
+        
+        public override int GetHashCode()
+        {
+            unchecked // Overflow is fine, just wrap
+            {
+                int hash = 17;
+
+                // Hash code for Identifier
+                hash = hash * 31 + (Identifier != null ? Identifier.GetHashCode() : 0);
+
+                // Combine hash codes for each key-value pair in the dictionary
+                foreach (var pair in attributes)
+                {
+                    hash = hash * 31 + (pair.Key != null ? pair.Key.GetHashCode() : 0);
+                    hash = hash * 31 + (pair.Value != null ? pair.Value.GetHashCode() : 0);
+                }
+
+                return hash;
+            }
+        }
+
+        private static bool AreDictionariesEqual(Dictionary<string, string> dict1, Dictionary<string, string> dict2)
+        {
+            if (dict1.Count != dict2.Count) 
+                return false;
+
+            foreach (var pair in dict1)
+            {
+                if (!dict2.TryGetValue(pair.Key, out var value) || value != pair.Value)
+                    return false;
+            }
+            return true;
+        }
     }
 
     public class TargetBuilder

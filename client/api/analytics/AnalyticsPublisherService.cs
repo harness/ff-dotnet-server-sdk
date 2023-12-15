@@ -58,7 +58,8 @@ namespace io.harness.cfsdk.client.api.analytics
                     foreach (var uniqueTarget in StagingTargetSet.Keys)
                     {
                         GlobalTargetSet.TryAdd(uniqueTarget, 0);
-                    }                    StagingTargetSet.Clear();
+                    }                    
+                    StagingTargetSet.Clear();
                     logger.LogDebug("Successfully sent analytics data to the server");
                     analyticsCache.resetCache();
                 }
