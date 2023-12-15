@@ -87,7 +87,8 @@ namespace io.harness.cfsdk.client.dto
         
         public override int GetHashCode()
         {
-            unchecked // Overflow is fine, just wrap
+            // Overflow is fine, just wrap
+            unchecked 
             {
                 int hash = 17;
 
