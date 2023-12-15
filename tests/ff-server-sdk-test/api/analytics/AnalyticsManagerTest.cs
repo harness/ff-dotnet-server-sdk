@@ -193,7 +193,7 @@ namespace ff_server_sdk_test.api.analytics
             // Trigger the push to GlobalTargetSet
             analyticsPublisherService.SendDataAndResetCache();
 
-            Assert.IsTrue(AnalyticsPublisherService.GlobalTargetSet.ContainsKey(target1), "Target should be pushed to GlobalTargetSet");
+            Assert.IsTrue(AnalyticsPublisherService.SeenTargets.ContainsKey(target1), "Target should be pushed to GlobalTargetSet");
         }
 
         [Test]
@@ -253,8 +253,7 @@ namespace ff_server_sdk_test.api.analytics
             // Trigger the push to GlobalTargetSet
             analyticsPublisherService.SendDataAndResetCache();
             
-            Assert.IsTrue(AnalyticsPublisherService.GlobalTargetSet.Count == 31);
-
+            Assert.IsTrue(AnalyticsPublisherService.SeenTargets.Count == 31);
         }
 
         
