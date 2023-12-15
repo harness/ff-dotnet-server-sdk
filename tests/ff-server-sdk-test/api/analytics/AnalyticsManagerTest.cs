@@ -7,6 +7,7 @@ using Moq;
 using io.harness.cfsdk.client.api.analytics;
 using io.harness.cfsdk.client.api;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using io.harness.cfsdk.HarnessOpenMetricsAPIService;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -161,7 +162,84 @@ namespace ff_server_sdk_test.api.analytics
             connectorMock.Verify(a => a.PostMetrics(It.IsAny<Metrics>()), Times.Once);
             Assert.That(analyticsCacheMock.GetAllElements().Count, Is.EqualTo(0));
         }
+        
+        [Test]
+        public void Should_Push_Targets_To_GlobalTargetSet_Using_MetricsProcessor()
+        {
+            // Arrange
+            var analyticsCache = new AnalyticsCache();
+            var connectorMock = new Mock<IConnector>();
+            var loggerFactory = new NullLoggerFactory();
+            var analyticsPublisherService = new AnalyticsPublisherService(connectorMock.Object, analyticsCache, loggerFactory);
+            var metricsProcessor = new MetricsProcessor(new Config(), analyticsCache, analyticsPublisherService, loggerFactory);
 
+            var target1 = io.harness.cfsdk.client.dto.Target.builder()
+                .Name("unique_name_1")
+                .Identifier("unique_identifier_1")
+                .Attributes(new Dictionary<string, string>(){{"email", "demo@harness.io"}})
+                .build();
+
+            var featureConfig1 = CreateFeatureConfig("feature1");
+            var variation1 = new Variation();
+
+            // Act
+            metricsProcessor.PushToCache(target1, featureConfig1, variation1);
+
+            // Trigger the push to GlobalTargetSet
+            analyticsPublisherService.SendDataAndResetCache();
+
+            // Assert
+            var targetExistsInGlobalSet = AnalyticsPublisherService.GlobalTargetSet.ContainsKey(target1);
+            Assert.IsTrue(targetExistsInGlobalSet, "Target should be pushed to GlobalTargetSet");
+        }
+
+        [Test]
+        public void Should_Handle_Concurrent_Pushes_To_GlobalTargetSet_Correctly()
+        {
+            // Arrange
+            var analyticsCache = new AnalyticsCache();
+            var connectorMock = new Mock<IConnector>();
+            var loggerFactory = new NullLoggerFactory();
+            var analyticsPublisherService = new AnalyticsPublisherService(connectorMock.Object, analyticsCache, loggerFactory);
+            var metricsProcessor = new MetricsProcessor(new Config(), analyticsCache, analyticsPublisherService, loggerFactory);
+
+            int numberOfThreads = 10;
+            var tasks = new List<Task>();
+            var targets = new List<io.harness.cfsdk.client.dto.Target>();
+
+            // Act
+            for (int i = 0; i < numberOfThreads; i++)
+            {
+                var target = io.harness.cfsdk.client.dto.Target.builder()
+                    .Name($"unique_name_{i}")
+                    .Identifier($"unique_identifier_{i}")
+                    .Attributes(new Dictionary<string, string>(){{"email", $"demo{i}@harness.io"}})
+                    .build();
+                targets.Add(target);
+
+                var task = Task.Run(() =>
+                {
+                    var featureConfig = CreateFeatureConfig($"feature{i}");
+                    var variation = new Variation();
+                    metricsProcessor.PushToCache(target, featureConfig, variation);
+                });
+                tasks.Add(task);
+            }
+
+            Task.WhenAll(tasks).Wait();
+
+            // Trigger the push to GlobalTargetSet
+            analyticsPublisherService.SendDataAndResetCache();
+
+            // Assert
+            foreach (var target in targets)
+            {
+                var targetExistsInGlobalSet = AnalyticsPublisherService.GlobalTargetSet.ContainsKey(target);
+                Assert.IsTrue(targetExistsInGlobalSet, $"Target {target.Identifier} should be pushed to GlobalTargetSet");
+            }
+        }
+
+        
         private FeatureConfig CreateFeatureConfig(string feature)
         {
             return new FeatureConfig
