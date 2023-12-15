@@ -240,9 +240,7 @@ namespace ff_server_sdk_test.api.analytics
                     .Identifier($"another_different_identifier_{i}")
                     .Attributes(new Dictionary<string, string>(){{"email", $"12456demo{i}@harness.io"}})
                     .build();
-
                 
-        
                 var task = Task.Run(() =>
                 {
                     var featureConfig = CreateFeatureConfig($"feature{i}");
