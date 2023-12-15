@@ -232,7 +232,7 @@ namespace ff_server_sdk_test.api.analytics
                 var differentIdentifierToTarget1 = io.harness.cfsdk.client.dto.Target.builder()
                     .Name($"unique_names_{i}")
                     .Identifier($"different_identifier_{i}")
-                    .Attributes(new Dictionary<string, string>(){{"email", $"demw2222o{i}@harness.io"}})
+                    .Attributes(new Dictionary<string, string>(){{"email", $"demo{i}@harness.io"}})
                     .build();
                 
         
