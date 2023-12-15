@@ -20,6 +20,8 @@ namespace io.harness.cfsdk.client.api.analytics
         private static readonly string VariationValueAttribute = "featureValue";
         private static readonly string VariationIdentifierAttribute = "variationIdentifier";
         private static readonly string TargetAttribute = "target";
+        private static readonly string GlobalTargetIdentifier = "__global__cf_target";
+        private static readonly string GlobalTargetName = "Global Target";
         internal static readonly ConcurrentDictionary<dto.Target, byte> SeenTargets = new ConcurrentDictionary<dto.Target, byte>();
         private static readonly ConcurrentDictionary<dto.Target, byte> StagingSeenTargets = new ConcurrentDictionary<dto.Target, byte>();
         private static readonly string SdkType = "SDK_TYPE";
@@ -121,7 +123,7 @@ namespace io.harness.cfsdk.client.api.analytics
                     }
                     else
                     {
-                        SetMetricsAttributes(metricsData, TargetAttribute, target.Identifier);
+                        SetMetricsAttributes(metricsData, TargetAttribute, GlobalTargetIdentifier);
                     }
                        
                     targetData.Identifier = target.Identifier;
