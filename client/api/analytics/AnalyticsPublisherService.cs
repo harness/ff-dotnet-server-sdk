@@ -4,6 +4,7 @@ using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using io.harness.cfsdk.HarnessOpenMetricsAPIService;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -19,8 +20,8 @@ namespace io.harness.cfsdk.client.api.analytics
         private static readonly string VariationValueAttribute = "featureValue";
         private static readonly string VariationIdentifierAttribute = "variationIdentifier";
         private static readonly string TargetAttribute = "target";
-        private static readonly HashSet<dto.Target> GlobalTargetSet = new HashSet<dto.Target>();
-        private static readonly HashSet<dto.Target> StagingTargetSet = new HashSet<dto.Target>();
+        private static readonly ConcurrentDictionary<dto.Target, byte> GlobalTargetSet = new ConcurrentDictionary<dto.Target, byte>();
+        private static readonly ConcurrentDictionary<dto.Target, byte> StagingTargetSet = new ConcurrentDictionary<dto.Target, byte>();
         private static readonly string SdkType = "SDK_TYPE";
         private static readonly string AnonymousTarget = "anonymous";
         private static readonly string Server = "server";
@@ -54,8 +55,10 @@ namespace io.harness.cfsdk.client.api.analytics
                         connector.PostMetrics(metrics);
                     }
 
-                    StagingTargetSet.ToList().ForEach(element => GlobalTargetSet.Add(element));
-                    StagingTargetSet.Clear();
+                    foreach (var uniqueTarget in StagingTargetSet.Keys)
+                    {
+                        GlobalTargetSet.TryAdd(uniqueTarget, 0);
+                    }                    StagingTargetSet.Clear();
                     logger.LogDebug("Successfully sent analytics data to the server");
                     analyticsCache.resetCache();
                 }
@@ -87,10 +90,10 @@ namespace io.harness.cfsdk.client.api.analytics
 
                 FeatureConfig featureConfig = analytics.FeatureConfig;
                 Variation variation = analytics.Variation;
-                if (target != null && !GlobalTargetSet.Contains(target) && !target.IsPrivate)
+                if (target != null && !GlobalTargetSet.ContainsKey(target) && !target.IsPrivate)
                 {
                     HashSet<string> privateAttributes = analytics.Target.PrivateAttributes;
-                    StagingTargetSet.Add(target);
+                    StagingTargetSet.TryAdd(target, 0);
                     Dictionary<string, string> attributes = target.Attributes;
                     attributes.ToList().ForEach(el =>
                        {
