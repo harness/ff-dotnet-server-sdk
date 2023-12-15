@@ -203,7 +203,7 @@ namespace ff_server_sdk_test.api.analytics
             var analyticsPublisherService = new AnalyticsPublisherService(connectorMock.Object, analyticsCache, loggerFactory);
             var metricsProcessor = new MetricsProcessor(new Config(), analyticsCache, analyticsPublisherService, loggerFactory);
 
-            int numberOfThreads = 10;
+            const int numberOfThreads = 10;
             var tasks = new List<Task>();
             var targets = new List<io.harness.cfsdk.client.dto.Target>();
 
