@@ -235,6 +235,13 @@ namespace ff_server_sdk_test.api.analytics
                     .Attributes(new Dictionary<string, string>(){{"email", $"demo{i}@harness.io"}})
                     .build();
                 
+                var differentIdentifierAndAttributesToTarget1 = io.harness.cfsdk.client.dto.Target.builder()
+                    .Name($"unique_names_{i}")
+                    .Identifier($"another_different_identifier_{i}")
+                    .Attributes(new Dictionary<string, string>(){{"email", $"12456demo{i}@harness.io"}})
+                    .build();
+
+                
         
                 var task = Task.Run(() =>
                 {
@@ -244,6 +251,7 @@ namespace ff_server_sdk_test.api.analytics
                     metricsProcessor.PushToCache(sameAsTarget1, featureConfig, variation);
                     metricsProcessor.PushToCache(differentAttributesToTarget1, featureConfig, variation);
                     metricsProcessor.PushToCache(differentIdentifierToTarget1, featureConfig, variation);
+                    metricsProcessor.PushToCache(differentIdentifierAndAttributesToTarget1, featureConfig, variation);
                 });
                 tasks.Add(task);
             }
@@ -253,7 +261,7 @@ namespace ff_server_sdk_test.api.analytics
             // Trigger the push to GlobalTargetSet
             analyticsPublisherService.SendDataAndResetCache();
             
-            Assert.IsTrue(AnalyticsPublisherService.SeenTargets.Count == 31);
+            Assert.IsTrue(AnalyticsPublisherService.SeenTargets.Count == 41);
         }
 
         
