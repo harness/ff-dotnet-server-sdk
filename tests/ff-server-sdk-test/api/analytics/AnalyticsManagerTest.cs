@@ -207,7 +207,6 @@ namespace ff_server_sdk_test.api.analytics
         
             const int numberOfThreads = 10;
             var tasks = new List<Task>();
-            var targets = new List<io.harness.cfsdk.client.dto.Target>();
             
         
             for (int i = 0; i < numberOfThreads; i++)
@@ -224,14 +223,27 @@ namespace ff_server_sdk_test.api.analytics
                     .Attributes(new Dictionary<string, string>(){{"email", $"demo{i}@harness.io"}})
                     .build();
                 
-                targets.Add(target);
-                targets.Add(sameAsTarget1);
+                var differentAttributesToTarget1 = io.harness.cfsdk.client.dto.Target.builder()
+                    .Name($"unique_names_{i}")
+                    .Identifier($"unique_identifier_{i}")
+                    .Attributes(new Dictionary<string, string>(){{"email", $"demo12456{i}@harness.io"}})
+                    .build();
+                
+                var differentIdentifierToTarget1 = io.harness.cfsdk.client.dto.Target.builder()
+                    .Name($"unique_names_{i}")
+                    .Identifier($"different_identifier_{i}")
+                    .Attributes(new Dictionary<string, string>(){{"email", $"demw2222o{i}@harness.io"}})
+                    .build();
+                
         
                 var task = Task.Run(() =>
                 {
                     var featureConfig = CreateFeatureConfig($"feature{i}");
                     var variation = new Variation();
                     metricsProcessor.PushToCache(target, featureConfig, variation);
+                    metricsProcessor.PushToCache(sameAsTarget1, featureConfig, variation);
+                    metricsProcessor.PushToCache(differentAttributesToTarget1, featureConfig, variation);
+                    metricsProcessor.PushToCache(differentIdentifierToTarget1, featureConfig, variation);
                 });
                 tasks.Add(task);
             }
@@ -240,13 +252,8 @@ namespace ff_server_sdk_test.api.analytics
         
             // Trigger the push to GlobalTargetSet
             analyticsPublisherService.SendDataAndResetCache();
-        
-            foreach (var target in targets)
-            {
-                var targetExistsInGlobalSet = AnalyticsPublisherService.GlobalTargetSet.ContainsKey(target);
-                Assert.IsTrue(targetExistsInGlobalSet, $"Target {target.Identifier} should be pushed to GlobalTargetSet");
-                Assert.IsTrue(AnalyticsPublisherService.GlobalTargetSet.Count == 11);
-            }
+            
+            Assert.IsTrue(AnalyticsPublisherService.GlobalTargetSet.Count == 31);
 
         }
 

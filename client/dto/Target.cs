@@ -80,11 +80,7 @@ namespace io.harness.cfsdk.client.dto
         {
             if (obj is Target other)
             {
-                if (Identifier != other.Identifier)
-                {
-                    return false;
-                }
-                return AreDictionariesEqual(attributes, other.attributes);
+                return Identifier == other.Identifier && AreDictionariesEqual(attributes, other.attributes);
             }
             return false;
         }
