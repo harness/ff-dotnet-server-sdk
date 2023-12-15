@@ -166,7 +166,6 @@ namespace ff_server_sdk_test.api.analytics
         [Test]
         public void Should_Push_Targets_To_GlobalTargetSet_Using_MetricsProcessor()
         {
-            // Arrange
             var analyticsCache = new AnalyticsCache();
             var connectorMock = new Mock<IConnector>();
             var loggerFactory = new NullLoggerFactory();
@@ -182,13 +181,11 @@ namespace ff_server_sdk_test.api.analytics
             var featureConfig1 = CreateFeatureConfig("feature1");
             var variation1 = new Variation();
 
-            // Act
             metricsProcessor.PushToCache(target1, featureConfig1, variation1);
 
             // Trigger the push to GlobalTargetSet
             analyticsPublisherService.SendDataAndResetCache();
 
-            // Assert
             var targetExistsInGlobalSet = AnalyticsPublisherService.GlobalTargetSet.ContainsKey(target1);
             Assert.IsTrue(targetExistsInGlobalSet, "Target should be pushed to GlobalTargetSet");
         }
@@ -196,7 +193,6 @@ namespace ff_server_sdk_test.api.analytics
         [Test]
         public void Should_Handle_Concurrent_Pushes_To_GlobalTargetSet_Correctly()
         {
-            // Arrange
             var analyticsCache = new AnalyticsCache();
             var connectorMock = new Mock<IConnector>();
             var loggerFactory = new NullLoggerFactory();
@@ -206,8 +202,9 @@ namespace ff_server_sdk_test.api.analytics
             const int numberOfThreads = 10;
             var tasks = new List<Task>();
             var targets = new List<io.harness.cfsdk.client.dto.Target>();
+            
+            var duplicateTargets = new List<io.harness.cfsdk.client.dto.Target>();
 
-            // Act
             for (int i = 0; i < numberOfThreads; i++)
             {
                 var target = io.harness.cfsdk.client.dto.Target.builder()
@@ -215,7 +212,15 @@ namespace ff_server_sdk_test.api.analytics
                     .Identifier($"unique_identifier_{i}")
                     .Attributes(new Dictionary<string, string>(){{"email", $"demo{i}@harness.io"}})
                     .build();
+                
+                var sameAsTarget1 = io.harness.cfsdk.client.dto.Target.builder()
+                    .Name($"unique_name_{i}")
+                    .Identifier($"unique_identifier_{i}")
+                    .Attributes(new Dictionary<string, string>(){{"email", $"demo{i}@harness.io"}})
+                    .build();
+                
                 targets.Add(target);
+                duplicateTargets.Add(sameAsTarget1);
 
                 var task = Task.Run(() =>
                 {
@@ -231,11 +236,17 @@ namespace ff_server_sdk_test.api.analytics
             // Trigger the push to GlobalTargetSet
             analyticsPublisherService.SendDataAndResetCache();
 
-            // Assert
             foreach (var target in targets)
             {
                 var targetExistsInGlobalSet = AnalyticsPublisherService.GlobalTargetSet.ContainsKey(target);
                 Assert.IsTrue(targetExistsInGlobalSet, $"Target {target.Identifier} should be pushed to GlobalTargetSet");
+                Assert.IsTrue(AnalyticsPublisherService.GlobalTargetSet.Count == 11);
+            }
+            
+            foreach (var duplicateTarget in duplicateTargets)
+            {
+                var targetExistsInGlobalSet = AnalyticsPublisherService.GlobalTargetSet.ContainsKey(duplicateTarget);
+                Assert.IsFalse(targetExistsInGlobalSet, $"Target {duplicateTarget.Identifier} should not be pushed to GlobalTargetSet");
             }
         }
 
