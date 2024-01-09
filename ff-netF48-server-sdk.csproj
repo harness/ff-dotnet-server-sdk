@@ -38,7 +38,7 @@
         <PackageReference Include="murmurhash" Version="1.0.3" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
-        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.15.0" />
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.34.0" />
         <PackageReference Include="System.Net.Http" Version="4.3.4" />
         <PackageReference Include="NSwag.ApiDescription.Client" Version="13.0.5">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
