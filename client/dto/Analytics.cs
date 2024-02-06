@@ -36,8 +36,8 @@ namespace io.harness.cfsdk.client.dto
         public EvaluationAnalytics(FeatureConfig featureConfig, Variation variation, Target target)
             : base(target)
         {
-            this.FeatureConfig = featureConfig;
-            this.Variation = variation;
+            FeatureConfig = featureConfig;
+            Variation = variation;
         }
         
         public FeatureConfig FeatureConfig { get; }
