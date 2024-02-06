@@ -64,25 +64,29 @@ namespace io.harness.cfsdk.client.api.analytics
             }
             else
             {
-                // Create evaluation metrics
-                // Since 1.4.2, we use the global target identifier for evaluation metrics. 
-                var evaluationAnalytics = createEvaluationAnalytics(featureConfig, variation);
+                PushToEvaluationAnalyticsCache(featureConfig, variation);
 
                 // Create target metrics 
-                Analytics targetAnalytics = new TargetAnalytics(target);
-                var count = analyticsCache.getIfPresent(evaluationAnalytics);
+                PushToTargetAnalyticsCache(target);
 
             }
         }
 
-        private Analytics createEvaluationAnalytics(FeatureConfig featureConfig, Variation variation)
+        private void PushToEvaluationAnalyticsCache(FeatureConfig featureConfig, Variation variation)
         {
+            // Since 1.4.2, we use the global target identifier for evaluation metrics. 
             var globalTarget = new Target(EvaluationAnalytics.GlobalTargetIdentifier,
                 EvaluationAnalytics.GlobalTargetName, null);
             Analytics evaluationAnalytics = new EvaluationAnalytics(featureConfig, variation, globalTarget);
             var evaluationCount = analyticsCache.getIfPresent(evaluationAnalytics);
             analyticsCache.Put(evaluationAnalytics, evaluationCount + 1);
-            return evaluationAnalytics;
+        }
+        
+        private void PushToTargetAnalyticsCache(Target target)
+        {
+            Analytics evaluationAnalytics = new TargetAnalytics(target);
+            var evaluationCount = analyticsCache.getIfPresent(evaluationAnalytics);
+            analyticsCache.Put(evaluationAnalytics, evaluationCount + 1);
         }
 
         internal void Timer_Elapsed(object sender, ElapsedEventArgs e)
