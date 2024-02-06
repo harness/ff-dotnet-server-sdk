@@ -30,8 +30,8 @@ namespace io.harness.cfsdk.client.dto
     {
         // The global target is used when we don't want to use the actual target in the evaluation metrics
         // payload.  Since 1.4.2 the global target has been used.
-        private static readonly string GlobalTargetIdentifier = "__global__cf_target";
-        private static readonly string GlobalTargetName = "Global Target";
+        public static readonly string GlobalTargetIdentifier = "__global__cf_target";
+        public static readonly string GlobalTargetName = "Global Target";
         private readonly FeatureConfig featureConfig;
         private readonly Variation variation;
 
