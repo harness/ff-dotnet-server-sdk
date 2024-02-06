@@ -16,8 +16,6 @@ namespace io.harness.cfsdk.client.api.analytics
         private static readonly string VariationValueAttribute = "featureValue";
         private static readonly string VariationIdentifierAttribute = "variationIdentifier";
         private static readonly string TargetAttribute = "target";
-        private static readonly string GlobalTargetIdentifier = "__global__cf_target";
-        private static readonly string GlobalTargetName = "Global Target";
         internal static readonly ConcurrentDictionary<Target, byte> SeenTargets = new();
         private static readonly ConcurrentDictionary<Target, byte> StagingSeenTargets = new();
         private static readonly string SdkType = "SDK_TYPE";
@@ -86,23 +84,42 @@ namespace io.harness.cfsdk.client.api.analytics
                     metricsData.Count = count;
                     metricsData.MetricsType = MetricsDataMetricsType.FFMETRICS;
 
-                    SetMetricsAttributes(metricsData, FeatureNameAttribute, evaluationAnalytics.FeatureConfig);
+                    SetMetricsAttributes(metricsData, FeatureNameAttribute, evaluationAnalytics.FeatureConfig.Feature);
                     SetMetricsAttributes(metricsData, VariationIdentifierAttribute,
                         evaluationAnalytics.Variation.Identifier);
                     SetMetricsAttributes(metricsData, VariationValueAttribute, evaluationAnalytics.Variation.Value);
-                    SetMetricsAttributes(metricsData, TargetAttribute, GlobalTargetIdentifier);
+                    SetMetricsAttributes(metricsData, TargetAttribute, evaluationAnalytics.Target.Identifier);
                     SetCommonSdkAttributes(metricsData);
 
                     metrics.MetricsData.Add(metricsData);
                 }
                 else if (analytics is TargetAnalytics targetAnalytics)
                 {
-                    // Handle Target Analytics
-                    var targetData = new TargetData();
-                    // Populate targetData based on targetAnalytics.Target
-                    // ...
+                    var target = targetAnalytics.Target;
+                    if (target != null && !SeenTargets.ContainsKey(target) && !target.IsPrivate)
+                    {
+                        var targetData = new TargetData
+                        {
+                            Identifier = target.Identifier,
+                            Name = target.Name,
+                            Attributes = new List<KeyValue>(),
+                        };
 
-                    metrics.TargetData.Add(targetData);
+                        // Add target attributes, respecting private attributes
+                        foreach (var attribute in target.Attributes)
+                        {
+                            if (target.PrivateAttributes == null || !target.PrivateAttributes.Contains(attribute.Key))
+                            {
+                                targetData.Attributes.Add(new KeyValue
+                                    { Key = attribute.Key, Value = attribute.Value });
+                            }
+                        }
+
+                        // Add to StagingSeenTargets for future reference
+                        StagingSeenTargets.TryAdd(target, 0);
+
+                        metrics.TargetData.Add(targetData);
+                    }
                 }
             }
 
