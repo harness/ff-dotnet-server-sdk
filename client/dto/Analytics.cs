@@ -32,29 +32,31 @@ namespace io.harness.cfsdk.client.dto
         // payload.  Since 1.4.2 the global target has been used.
         public static readonly string GlobalTargetIdentifier = "__global__cf_target";
         public static readonly string GlobalTargetName = "Global Target";
-        private readonly FeatureConfig featureConfig;
-        private readonly Variation variation;
 
         public EvaluationAnalytics(FeatureConfig featureConfig, Variation variation, Target target)
             : base(target)
         {
-            this.featureConfig = featureConfig;
-            this.variation = variation;
+            this.FeatureConfig = featureConfig;
+            this.Variation = variation;
         }
+        
+        public FeatureConfig FeatureConfig { get; }
+
+        public Variation Variation { get; }
 
 
         public override bool Equals(Analytics other)
         {
             return other is EvaluationAnalytics otherEvaluation
-                   && EqualityComparer<FeatureConfig>.Default.Equals(featureConfig, otherEvaluation.featureConfig)
-                   && EqualityComparer<Variation>.Default.Equals(variation, otherEvaluation.variation);
+                   && EqualityComparer<FeatureConfig>.Default.Equals(FeatureConfig, otherEvaluation.FeatureConfig)
+                   && EqualityComparer<Variation>.Default.Equals(Variation, otherEvaluation.Variation);
         }
 
         public override int GetHashCode()
         {
             var hashCode = -1526478203;
-            hashCode = hashCode * -1521134295 + EqualityComparer<FeatureConfig>.Default.GetHashCode(featureConfig);
-            hashCode = hashCode * -1521134295 + EqualityComparer<Variation>.Default.GetHashCode(variation);
+            hashCode = hashCode * -1521134295 + EqualityComparer<FeatureConfig>.Default.GetHashCode(FeatureConfig);
+            hashCode = hashCode * -1521134295 + EqualityComparer<Variation>.Default.GetHashCode(Variation);
             return hashCode;
         }
 
