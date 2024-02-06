@@ -39,7 +39,7 @@ namespace io.harness.cfsdk.client.dto
             FeatureConfig = featureConfig;
             Variation = variation;
         }
-        
+
         public FeatureConfig FeatureConfig { get; }
 
         public Variation Variation { get; }
@@ -66,14 +66,9 @@ namespace io.harness.cfsdk.client.dto
 // TargetAnalytics subclass
     public class TargetAnalytics : Analytics
     {
-        private readonly Target target;
-
-        // Properties...
-
         public TargetAnalytics(Target target)
             : base(target)
         {
-            // Initialization...
         }
 
         public override bool Equals(Analytics other)
