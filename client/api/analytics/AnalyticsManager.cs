@@ -84,9 +84,13 @@ namespace io.harness.cfsdk.client.api.analytics
         
         private void PushToTargetAnalyticsCache(Target target)
         {
-            Analytics evaluationAnalytics = new TargetAnalytics(target);
-            var evaluationCount = analyticsCache.getIfPresent(evaluationAnalytics);
-            analyticsCache.Put(evaluationAnalytics, evaluationCount + 1);
+            Analytics targetAnalytics = new TargetAnalytics(target);
+            
+            // We don't need to keep count of targets, so use a constant value, 1, for the count. 
+            // Since 1.4.2, the analytics cache was refactored to separate out Evaluation and Target metrics, but the 
+            // change did not go as far as to maintain two caches (due to effort involved), but differentiate them based on subclassing, so 
+            // the counter used for target metrics isn't needed, but causes no issue. 
+            analyticsCache.Put(targetAnalytics, 1);
         }
 
         internal void Timer_Elapsed(object sender, ElapsedEventArgs e)

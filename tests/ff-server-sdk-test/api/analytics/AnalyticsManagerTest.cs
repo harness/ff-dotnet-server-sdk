@@ -40,8 +40,14 @@ namespace ff_server_sdk_test.api.analytics
             sut.PushToCache(target, featureConfig1, variation);
 
             // Assert
+            // Ensure the cache total and breakdown of the type of analytics is correct
             Assert.That(analyticsCacheMock.GetAllElements().Count, Is.EqualTo(2));
-            ;
+            
+            var (evaluationCount, targetCount) = GetAnalyticsTypeCounts(analyticsCacheMock);
+            Assert.That(evaluationCount, Is.EqualTo(1), "Incorrect number of EvaluationAnalytics");
+            Assert.That(targetCount, Is.EqualTo(1), "Incorrect number of TargetAnalytics");
+            
+            // Ensure the count is correct.
             Assert.That(analyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(1));
             Assert.That(analyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(1));
         }
@@ -148,7 +154,8 @@ namespace ff_server_sdk_test.api.analytics
             sut.PushToCache(target, featureConfig2, variation);
 
             // Assert
-            // Assert.That(analyticsCacheMock.GetAllElements().Count, Is.EqualTo(2));
+            // Two evaluations + one target
+            Assert.That(analyticsCacheMock.GetAllElements().Count, Is.EqualTo(3));
             Assert.That(analyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(2));
             Assert.That(analyticsCacheMock.getIfPresent(evaluationAnalytics2), Is.EqualTo(3));
         }
@@ -412,5 +419,22 @@ namespace ff_server_sdk_test.api.analytics
                 }
             };
         }
+        
+        private (int evaluationCount, int targetCount) GetAnalyticsTypeCounts(AnalyticsCache cache)
+        {
+            int evaluationCount = 0;
+            int targetCount = 0;
+
+            foreach (var entry in cache.GetAllElements())
+            {
+                if (entry.Key is EvaluationAnalytics)
+                    evaluationCount++;
+                else if (entry.Key is TargetAnalytics)
+                    targetCount++;
+            }
+
+            return (evaluationCount, targetCount);
+        }
+
     }
 }
