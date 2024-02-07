@@ -33,7 +33,7 @@ namespace ff_server_sdk_test.api.analytics
             var targetAnalytics = new TargetAnalytics(target);
 
             var sut = new MetricsProcessor(new Config(), analyticsCacheMock, analyticsPublisherServiceMock,
-                new NullLoggerFactory());
+                new NullLoggerFactory(), false);
 
 
             sut.PushToCache(target, featureConfig1, variation);
@@ -67,7 +67,7 @@ namespace ff_server_sdk_test.api.analytics
             var targetAnalytics = new TargetAnalytics(target);
 
             var sut = new MetricsProcessor(new Config(), analyticsCacheMock, analyticsPublisherServiceMock,
-                new NullLoggerFactory());
+                new NullLoggerFactory(), false);
 
             sut.PushToCache(target, featureConfig, variation);
             sut.PushToCache(target, featureConfig, variation);
@@ -107,7 +107,7 @@ namespace ff_server_sdk_test.api.analytics
             var targetAnalytics = new TargetAnalytics(target);
 
             var sut = new MetricsProcessor(new Config(), analyticsCacheMock, analyticsPublisherServiceMock,
-                new NullLoggerFactory());
+                new NullLoggerFactory(), false);
 
             // Act
             sut.PushToCache(target, featureConfig1, variation);
@@ -135,6 +135,8 @@ namespace ff_server_sdk_test.api.analytics
                 new AnalyticsPublisherService(connectorMock.Object, analyticsCacheMock, new NullLoggerFactory());
 
             var target = new Target();
+            // var target = new Target(EvaluationAnalytics.GlobalTargetIdentifier, EvaluationAnalytics.GlobalTargetName,
+            //     null);
             var variation = new Variation();
 
             // simulate an evaluation for multiple different features
@@ -145,7 +147,7 @@ namespace ff_server_sdk_test.api.analytics
             var evaluationAnalytics2 = new EvaluationAnalytics(featureConfig2, variation, target);
 
             var sut = new MetricsProcessor(new Config(), analyticsCacheMock, analyticsPublisherServiceMock,
-                new NullLoggerFactory());
+                new NullLoggerFactory(), false);
 
             // Act
             sut.PushToCache(target, featureConfig1, variation);
@@ -175,8 +177,10 @@ namespace ff_server_sdk_test.api.analytics
             var loggerFactory = new NullLoggerFactory();
             var analyticsPublisherService =
                 new AnalyticsPublisherService(connectorMock.Object, analyticsCache, loggerFactory);
+            
+            // Pass true for global target
             var metricsProcessor =
-                new MetricsProcessor(new Config(), analyticsCache, analyticsPublisherService, loggerFactory);
+                new MetricsProcessor(new Config(), analyticsCache, analyticsPublisherService, loggerFactory, true);
 
 
             var target = Target.builder()
@@ -217,9 +221,10 @@ namespace ff_server_sdk_test.api.analytics
             metricsProcessor.PushToCache(differentAttributesToTarget1, featureConfig, variation);
             metricsProcessor.PushToCache(differentIdentifierToTarget1, featureConfig, variation);
             metricsProcessor.PushToCache(differentIdentifierAndAttributesToTarget1, featureConfig, variation);
-
-
-            var evaluationAnalytics = new EvaluationAnalytics(featureConfig, variation, target);
+            
+            Target globalTarget = new Target(EvaluationAnalytics.GlobalTargetIdentifier,
+                EvaluationAnalytics.GlobalTargetName, null);
+            var evaluationAnalytics = new EvaluationAnalytics(featureConfig, variation, globalTarget);
 
             // Ensure the cache total and breakdown of the type of analytics is correct
             Assert.That(analyticsCache.GetAllElements().Count, Is.EqualTo(6));
@@ -247,7 +252,7 @@ namespace ff_server_sdk_test.api.analytics
             var variation = new Variation();
 
             var sut = new MetricsProcessor(configMock, analyticsCacheMock, analyticsPublisherServiceMock,
-                new NullLoggerFactory());
+                new NullLoggerFactory(), false);
 
             // Act - set cachesize > buffer
             sut.PushToCache(target, CreateFeatureConfig("feature1"), variation);
@@ -268,7 +273,7 @@ namespace ff_server_sdk_test.api.analytics
             var analyticsPublisherService =
                 new AnalyticsPublisherService(connectorMock.Object, analyticsCache, loggerFactory);
             var metricsProcessor =
-                new MetricsProcessor(new Config(), analyticsCache, analyticsPublisherService, loggerFactory);
+                new MetricsProcessor(new Config(), analyticsCache, analyticsPublisherService, loggerFactory, false);
 
             var target1 = Target.builder()
                 .Name("unique_name_1")
@@ -305,7 +310,7 @@ namespace ff_server_sdk_test.api.analytics
             var analyticsPublisherService =
                 new AnalyticsPublisherService(connectorMock.Object, analyticsCache, loggerFactory);
             var metricsProcessor =
-                new MetricsProcessor(new Config(), analyticsCache, analyticsPublisherService, loggerFactory);
+                new MetricsProcessor(new Config(), analyticsCache, analyticsPublisherService, loggerFactory, false);
 
             const int numberOfThreads = 10;
             var tasks = new List<Task>();
@@ -361,7 +366,7 @@ namespace ff_server_sdk_test.api.analytics
             // Trigger the push to GlobalTargetSet
             analyticsPublisherService.SendDataAndResetCache();
             var count = AnalyticsPublisherService.SeenTargets.Count;
-            Assert.IsTrue(AnalyticsPublisherService.SeenTargets.Count == 42);
+            Assert.IsTrue(AnalyticsPublisherService.SeenTargets.Count == 41);
         }
 
 

@@ -80,7 +80,8 @@ namespace io.harness.cfsdk.client.api
             this.polling = new PollingProcessor(connector, this.repository, config, this, loggerFactory);
             this.update = new UpdateProcessor(connector, this.repository, config, this, loggerFactory);
             this.evaluator = new Evaluator(this.repository, this, loggerFactory);
-            this.metric = new MetricsProcessor(config, analyticsCache, new AnalyticsPublisherService(connector, analyticsCache, loggerFactory), loggerFactory);
+            // Since 1.4.2, we enable the global target for evaluation metrics. 
+            this.metric = new MetricsProcessor(config, analyticsCache, new AnalyticsPublisherService(connector, analyticsCache, loggerFactory), loggerFactory, true);
             Start();
         }
         internal void Start()

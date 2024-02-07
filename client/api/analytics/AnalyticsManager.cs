@@ -14,14 +14,17 @@ namespace io.harness.cfsdk.client.api.analytics
         private readonly Config config;
         private readonly ILogger<MetricsProcessor> logger;
         private Timer timer;
+        
+        private bool isGlobalTargetEnabled;
 
         public MetricsProcessor(Config config, AnalyticsCache analyticsCache,
-            AnalyticsPublisherService analyticsPublisherService, ILoggerFactory loggerFactory)
+            AnalyticsPublisherService analyticsPublisherService, ILoggerFactory loggerFactory, bool globalTargetEnabled)
         {
             this.analyticsCache = analyticsCache;
             this.config = config;
             this.analyticsPublisherService = analyticsPublisherService;
             logger = loggerFactory.CreateLogger<MetricsProcessor>();
+            isGlobalTargetEnabled = globalTargetEnabled;
         }
 
         public void Start()
@@ -64,7 +67,16 @@ namespace io.harness.cfsdk.client.api.analytics
             }
             else
             {
-                PushToEvaluationAnalyticsCache(featureConfig, variation);
+                if (isGlobalTargetEnabled)
+                {
+                    var globalTarget = new Target(EvaluationAnalytics.GlobalTargetIdentifier,
+                        EvaluationAnalytics.GlobalTargetName, null);
+                    PushToEvaluationAnalyticsCache(featureConfig, variation, globalTarget);
+                }
+                else
+                {
+                    PushToEvaluationAnalyticsCache(featureConfig, variation, target);
+                }
 
                 // Create target metrics 
                 PushToTargetAnalyticsCache(target);
@@ -72,12 +84,9 @@ namespace io.harness.cfsdk.client.api.analytics
             }
         }
 
-        private void PushToEvaluationAnalyticsCache(FeatureConfig featureConfig, Variation variation)
+        private void PushToEvaluationAnalyticsCache(FeatureConfig featureConfig, Variation variation, Target target)
         {
-            // Since 1.4.2, we use the global target identifier for evaluation metrics. 
-            var globalTarget = new Target(EvaluationAnalytics.GlobalTargetIdentifier,
-                EvaluationAnalytics.GlobalTargetName, null);
-            Analytics evaluationAnalytics = new EvaluationAnalytics(featureConfig, variation, globalTarget);
+            Analytics evaluationAnalytics = new EvaluationAnalytics(featureConfig, variation, target);
             var evaluationCount = analyticsCache.getIfPresent(evaluationAnalytics);
             analyticsCache.Put(evaluationAnalytics, evaluationCount + 1);
         }

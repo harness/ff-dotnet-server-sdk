@@ -51,6 +51,8 @@ namespace io.harness.cfsdk.client.dto
         public override bool Equals(Analytics other)
         {
             return other is EvaluationAnalytics otherEvaluation
+                   // && EqualityComparer<Target>.Default.Equals(target, otherEvaluation.target)
+                   && EqualityComparer<Target>.Default.Equals(target, otherEvaluation.target)
                    && EqualityComparer<FeatureConfig>.Default.Equals(FeatureConfig, otherEvaluation.FeatureConfig)
                    && EqualityComparer<Variation>.Default.Equals(Variation, otherEvaluation.Variation);
         }
@@ -59,6 +61,7 @@ namespace io.harness.cfsdk.client.dto
         {
             var hashCode = -1526478203;
             hashCode = hashCode * -1521134295 + EqualityComparer<FeatureConfig>.Default.GetHashCode(FeatureConfig);
+            hashCode = hashCode * -1521134295 + EqualityComparer<Target>.Default.GetHashCode(target);
             hashCode = hashCode * -1521134295 + EqualityComparer<Variation>.Default.GetHashCode(Variation);
             return hashCode;
         }
