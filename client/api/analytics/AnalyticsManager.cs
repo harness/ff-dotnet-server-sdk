@@ -1,36 +1,41 @@
-﻿using io.harness.cfsdk.client.cache;
+﻿using System.Timers;
+using io.harness.cfsdk.client.cache;
 using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.HarnessOpenAPIService;
-using System.Timers;
 using Microsoft.Extensions.Logging;
+using Target = io.harness.cfsdk.client.dto.Target;
 
 namespace io.harness.cfsdk.client.api.analytics
 {
     internal class MetricsProcessor
     {
-        private readonly ILogger<MetricsProcessor> logger;
         private readonly AnalyticsCache analyticsCache;
-        private Timer timer;
         private readonly AnalyticsPublisherService analyticsPublisherService;
         private readonly Config config;
+        private readonly ILogger<MetricsProcessor> logger;
+        private Timer timer;
+        
+        private bool isGlobalTargetEnabled;
 
-        public MetricsProcessor(Config config, AnalyticsCache analyticsCache, AnalyticsPublisherService analyticsPublisherService, ILoggerFactory loggerFactory)
+        public MetricsProcessor(Config config, AnalyticsCache analyticsCache,
+            AnalyticsPublisherService analyticsPublisherService, ILoggerFactory loggerFactory, bool globalTargetEnabled)
         {
             this.analyticsCache = analyticsCache;
             this.config = config;
             this.analyticsPublisherService = analyticsPublisherService;
-            this.logger = loggerFactory.CreateLogger<MetricsProcessor>();
+            logger = loggerFactory.CreateLogger<MetricsProcessor>();
+            isGlobalTargetEnabled = globalTargetEnabled;
         }
 
         public void Start()
         {
             if (config.analyticsEnabled)
             {
-                this.timer = new Timer((long)config.Frequency * 1000);
-                this.timer.Elapsed += Timer_Elapsed;
-                this.timer.AutoReset = true;
-                this.timer.Enabled = true;
-                this.timer.Start();
+                timer = new Timer((long)config.Frequency * 1000);
+                timer.Elapsed += Timer_Elapsed;
+                timer.AutoReset = true;
+                timer.Enabled = true;
+                timer.Start();
                 logger.LogInformation("SDKCODE(metric:7000): Metrics thread started");
             }
         }
@@ -38,32 +43,63 @@ namespace io.harness.cfsdk.client.api.analytics
 
         public void Stop()
         {
-            if (config.analyticsEnabled && this.timer != null)
+            if (config.analyticsEnabled && timer != null)
             {
-                this.timer.Stop();
-                this.timer = null;
+                timer.Stop();
+                timer = null;
                 logger.LogInformation("SDKCODE(metric:7001): Metrics thread exited");
             }
         }
 
-        public void PushToCache(dto.Target target, FeatureConfig featureConfig, Variation variation)
+        public void PushToCache(Target target, FeatureConfig featureConfig, Variation variation)
         {
             var cacheSize = analyticsCache.GetAllElements().Count;
             var bufferSize = config.getBufferSize();
 
             if (cacheSize > bufferSize)
             {
-                logger.LogWarning("Metric frequency map exceeded buffer size ({cacheSize} > {bufferSize}), force flushing", cacheSize, bufferSize);
+                logger.LogWarning(
+                    "Metric frequency map exceeded buffer size ({cacheSize} > {bufferSize}), force flushing", cacheSize,
+                    bufferSize);
 
                 // If the map is starting to grow too much then push the metrics now and reset the counters
                 SendMetrics();
             }
             else
             {
-                Analytics analytics = new Analytics(featureConfig, target, variation, EventType.METRICS);
-                int count = analyticsCache.getIfPresent(analytics);
-                analyticsCache.Put(analytics, count + 1);
+                if (isGlobalTargetEnabled)
+                {
+                    var globalTarget = new Target(EvaluationAnalytics.GlobalTargetIdentifier,
+                        EvaluationAnalytics.GlobalTargetName, null);
+                    PushToEvaluationAnalyticsCache(featureConfig, variation, globalTarget);
+                }
+                else
+                {
+                    PushToEvaluationAnalyticsCache(featureConfig, variation, target);
+                }
+
+                // Create target metrics 
+                PushToTargetAnalyticsCache(target);
+
             }
+        }
+
+        private void PushToEvaluationAnalyticsCache(FeatureConfig featureConfig, Variation variation, Target target)
+        {
+            Analytics evaluationAnalytics = new EvaluationAnalytics(featureConfig, variation, target);
+            var evaluationCount = analyticsCache.getIfPresent(evaluationAnalytics);
+            analyticsCache.Put(evaluationAnalytics, evaluationCount + 1);
+        }
+        
+        private void PushToTargetAnalyticsCache(Target target)
+        {
+            Analytics targetAnalytics = new TargetAnalytics(target);
+            
+            // We don't need to keep count of targets, so use a constant value, 1, for the count. 
+            // Since 1.4.2, the analytics cache was refactored to separate out Evaluation and Target metrics, but the 
+            // change did not go as far as to maintain two caches (due to effort involved), but differentiate them based on subclassing, so 
+            // the counter used for target metrics isn't needed, but causes no issue. 
+            analyticsCache.Put(targetAnalytics, 1);
         }
 
         internal void Timer_Elapsed(object sender, ElapsedEventArgs e)
