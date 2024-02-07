@@ -155,8 +155,13 @@ namespace ff_server_sdk_test.api.analytics
             sut.PushToCache(target, featureConfig2, variation);
             sut.PushToCache(target, featureConfig2, variation);
 
-            // Assert
-            // Two evaluations + one target
+            // Ensure the cache total and breakdown of the type of analytics is correct
+            Assert.That(analyticsCacheMock.GetAllElements().Count, Is.EqualTo(3));
+            var (evaluationCount, targetCount) = GetAnalyticsTypeCounts(analyticsCacheMock);
+            Assert.That(evaluationCount, Is.EqualTo(2), "Incorrect number of EvaluationAnalytics");
+            Assert.That(targetCount, Is.EqualTo(1), "Incorrect number of TargetAnalytics");
+            
+            // Ensure the counter is correct
             Assert.That(analyticsCacheMock.GetAllElements().Count, Is.EqualTo(3));
             Assert.That(analyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(2));
             Assert.That(analyticsCacheMock.getIfPresent(evaluationAnalytics2), Is.EqualTo(3));
@@ -216,17 +221,11 @@ namespace ff_server_sdk_test.api.analytics
 
             var evaluationAnalytics = new EvaluationAnalytics(featureConfig, variation, target);
 
-            var evaluationAnalyticsCount = 0;
-            var targetAnalyticsCount = 0;
-            foreach (var entry in analyticsCache.GetAllElements())
-                if (entry.Key is EvaluationAnalytics)
-                    evaluationAnalyticsCount++;
-                else if (entry.Key is TargetAnalytics) targetAnalyticsCount++;
-            // One unique evaluation
-            Assert.That(evaluationAnalyticsCount, Is.EqualTo(1));
-
-            // Five unique targets
-            Assert.That(targetAnalyticsCount, Is.EqualTo(5));
+            // Ensure the cache total and breakdown of the type of analytics is correct
+            Assert.That(analyticsCache.GetAllElements().Count, Is.EqualTo(6));
+            var (evaluationCount, targetCount) = GetAnalyticsTypeCounts(analyticsCache);
+            Assert.That(evaluationCount, Is.EqualTo(1), "Incorrect number of EvaluationAnalytics");
+            Assert.That(targetCount, Is.EqualTo(5), "Incorrect number of TargetAnalytics");
 
             // Check the evaluation has a count of 5
             Assert.That(analyticsCache.getIfPresent(evaluationAnalytics), Is.EqualTo(5));
