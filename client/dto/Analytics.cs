@@ -28,7 +28,7 @@ namespace io.harness.cfsdk.client.dto
         public abstract override int GetHashCode();
     }
 
-// EvaluationAnalytics subclass
+    // EvaluationAnalytics subclass
     public class EvaluationAnalytics : Analytics
     {
         // The global target is used when we don't want to use the actual target in the evaluation metrics
@@ -64,7 +64,7 @@ namespace io.harness.cfsdk.client.dto
         }
     }
 
-// TargetAnalytics subclass
+    // TargetAnalytics subclass
     public class TargetAnalytics : Analytics
     {
         public TargetAnalytics(Target target)
