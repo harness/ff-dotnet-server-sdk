@@ -90,7 +90,7 @@ namespace io.harness.cfsdk.client.api.analytics
                     SetMetricsAttributes(metricsData, VariationValueAttribute, evaluationAnalytics.Variation.Value);
                     SetMetricsAttributes(metricsData, TargetAttribute, evaluationAnalytics.Target.Identifier);
                     SetCommonSdkAttributes(metricsData);
-
+                    StagingSeenTargets.TryAdd(evaluationAnalytics.Target, 0);
                     metrics.MetricsData.Add(metricsData);
                 }
                 else if (analytics is TargetAnalytics targetAnalytics)
