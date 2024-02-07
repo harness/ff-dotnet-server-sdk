@@ -78,37 +78,37 @@ namespace ff_server_sdk_test.api.analytics
             Assert.That(analyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(5));
         }
         
-        // [Test]
-        // public void Should_add_single_evaluation_for_multiple_features_to_analytics_cache()
-        // {
-        //     // Arrange
-        //     var analyticsCacheMock = new AnalyticsCache();
-        //     var connectorMock = new Mock<IConnector>();
-        //     var analyticsPublisherServiceMock = new AnalyticsPublisherService(connectorMock.Object, analyticsCacheMock, new NullLoggerFactory());
-        //
-        //     var target = new io.harness.cfsdk.client.dto.Target();
-        //     var variation = new Variation();
-        //
-        //     // simulate an evaluation for multiple different features
-        //     var featureConfig1 = CreateFeatureConfig("feature1");
-        //     var featureConfig2 = CreateFeatureConfig("feature2");
-        //
-        //     var analytics1 = new Analytics(featureConfig1, target, variation, EventType.METRICS);
-        //     var analytics2 = new Analytics(featureConfig2, target, variation, EventType.METRICS);
-        //
-        //     var sut = new MetricsProcessor(new Config(), analyticsCacheMock, analyticsPublisherServiceMock, new NullLoggerFactory());
-        //
-        //     // Act
-        //     sut.PushToCache(target, featureConfig1, variation);
-        //     sut.PushToCache(target, featureConfig2, variation);
-        //
-        //     // Assert
-        //     Assert.That(analyticsCacheMock.GetAllElements().Count, Is.EqualTo(2));
-        //     Assert.That(analyticsCacheMock.getIfPresent(analytics1), Is.EqualTo(1));
-        //     Assert.That(analyticsCacheMock.getIfPresent(analytics2), Is.EqualTo(1));
-        // }
-        //
-        //
+        [Test]
+        public void Should_add_single_evaluation_for_multiple_features_to_analytics_cache()
+        {
+            // Arrange
+            var analyticsCacheMock = new AnalyticsCache();
+            var connectorMock = new Mock<IConnector>();
+            var analyticsPublisherServiceMock = new AnalyticsPublisherService(connectorMock.Object, analyticsCacheMock, new NullLoggerFactory());
+        
+            var target = new io.harness.cfsdk.client.dto.Target();
+            var variation = new Variation();
+        
+            // simulate an evaluation for multiple different features
+            var featureConfig1 = CreateFeatureConfig("feature1");
+            var featureConfig2 = CreateFeatureConfig("feature2");
+            var evaluationAnalytics = new EvaluationAnalytics(featureConfig1, variation, target);
+            var evaluationAnalytics2 = new EvaluationAnalytics(featureConfig2, variation, target);
+            var targetAnalytics = new TargetAnalytics(target);
+        
+            var sut = new MetricsProcessor(new Config(), analyticsCacheMock, analyticsPublisherServiceMock, new NullLoggerFactory());
+        
+            // Act
+            sut.PushToCache(target, featureConfig1, variation);
+            sut.PushToCache(target, featureConfig2, variation);
+        
+            // Assert
+            Assert.That(analyticsCacheMock.GetAllElements().Count, Is.EqualTo(2));
+            Assert.That(analyticsCacheMock.getIfPresent(analytics1), Is.EqualTo(1));
+            Assert.That(analyticsCacheMock.getIfPresent(analytics2), Is.EqualTo(1));
+        }
+        
+        
         // [Test]
         // public void Should_add_multiple_evaluations_for_multiple_features_to_analytics_cache()
         // {
