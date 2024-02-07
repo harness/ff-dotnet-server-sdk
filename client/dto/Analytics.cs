@@ -4,7 +4,10 @@ using io.harness.cfsdk.HarnessOpenAPIService;
 
 namespace io.harness.cfsdk.client.dto
 {
-// Base Analytics class
+    // We send two types of analytics to the metrics service
+    // 1. Evaluation metrics.
+    // 2. Target metrics.
+    // Both types inherit from this base class.
     public abstract class Analytics : IEquatable<Analytics>
     {
         protected readonly Target target;
@@ -29,7 +32,7 @@ namespace io.harness.cfsdk.client.dto
     public class EvaluationAnalytics : Analytics
     {
         // The global target is used when we don't want to use the actual target in the evaluation metrics
-        // payload.  Since 1.4.2 the global target has been used.
+        // payload. 
         public static readonly string GlobalTargetIdentifier = "__global__cf_target";
         public static readonly string GlobalTargetName = "Global Target";
 

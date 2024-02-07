@@ -76,9 +76,9 @@ namespace io.harness.cfsdk.client.api.analytics
                 var analytics = entry.Key;
                 var count = entry.Value;
 
+                // Handle EvaluationAnalytics
                 if (analytics is EvaluationAnalytics evaluationAnalytics)
                 {
-                    // Handle Evaluation Analytics
                     var metricsData = new MetricsData();
                     metricsData.Timestamp = GetCurrentUnixTimestampMillis();
                     metricsData.Count = count;
@@ -93,6 +93,8 @@ namespace io.harness.cfsdk.client.api.analytics
                     StagingSeenTargets.TryAdd(evaluationAnalytics.Target, 0);
                     metrics.MetricsData.Add(metricsData);
                 }
+
+                // Handle TargetAnalytics
                 else if (analytics is TargetAnalytics targetAnalytics)
                 {
                     var target = targetAnalytics.Target;
@@ -102,18 +104,14 @@ namespace io.harness.cfsdk.client.api.analytics
                         {
                             Identifier = target.Identifier,
                             Name = target.Name,
-                            Attributes = new List<KeyValue>(),
+                            Attributes = new List<KeyValue>()
                         };
 
                         // Add target attributes, respecting private attributes
                         foreach (var attribute in target.Attributes)
-                        {
                             if (target.PrivateAttributes == null || !target.PrivateAttributes.Contains(attribute.Key))
-                            {
                                 targetData.Attributes.Add(new KeyValue
                                     { Key = attribute.Key, Value = attribute.Value });
-                            }
-                        }
 
                         // Add to StagingSeenTargets for future reference
                         StagingSeenTargets.TryAdd(target, 0);
