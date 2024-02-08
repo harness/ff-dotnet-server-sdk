@@ -69,15 +69,15 @@ namespace io.harness.cfsdk.client.api.analytics
                 }
         }
 
-        private Metrics PrepareMessageBody(IDictionary<EvaluationAnalytics, int> evaluationAnalyticsCache,
-            IDictionary<TargetAnalytics, int> targetAnalyticsCache)
+        private Metrics PrepareMessageBody(IDictionary<EvaluationAnalytics, int> evaluationsCache,
+            IDictionary<TargetAnalytics, int> targetsCache)
         {
             var metrics = new Metrics();
             metrics.TargetData = new List<TargetData>();
             metrics.MetricsData = new List<MetricsData>();
 
             // Handle EvaluationAnalytics
-            foreach (var evaluationAnalytic in evaluationAnalyticsCache)
+            foreach (var evaluationAnalytic in evaluationsCache)
             {
                 var evaluation = evaluationAnalytic.Key;
                 var count = evaluationAnalytic.Value;
@@ -98,7 +98,7 @@ namespace io.harness.cfsdk.client.api.analytics
             }
 
             // Handle TargetAnalytics
-            foreach (var targetAnalytic in evaluationAnalyticsCache)
+            foreach (var targetAnalytic in targetsCache)
             {
                 var target = targetAnalytic.Key.Target;
                 if (target != null && !SeenTargets.ContainsKey(target) && !target.IsPrivate)
