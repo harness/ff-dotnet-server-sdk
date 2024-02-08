@@ -74,9 +74,9 @@ namespace io.harness.cfsdk.client.api
         {
             var analyticsCache = new AnalyticsCache();
             var isPowerOfTwo = config.bufferSize > 0 && (config.bufferSize & (config.bufferSize - 1)) == 0;
-            if (isPowerOfTwo || config.bufferSize > 4096)
+            if (!isPowerOfTwo || config.bufferSize > 4096)
             {
-                logger.LogWarning("BufferSize must be a power of 2 and not exceed 4096, Defaulting to 2048");
+                logger.LogWarning("BufferSize Config option must be a power of 2 and not exceed 4096, Defaulting to 2048");
             }
             this.sdkReadyLatch.Reset(1);
             this.connector = connector;
