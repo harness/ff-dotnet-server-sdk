@@ -30,13 +30,15 @@ namespace io.harness.cfsdk.client.api
         private readonly ILoggerFactory loggerFactory;
         private readonly IRepository repository;
         private readonly IEvaluatorCallback callback;
+        private readonly bool IsAnalyticsEnabled;
 
-        public Evaluator(IRepository repository, IEvaluatorCallback callback, ILoggerFactory loggerFactory)
+        public Evaluator(IRepository repository, IEvaluatorCallback callback, ILoggerFactory loggerFactory, bool isAnalyticsEnabled)
         {
             this.repository = repository;
             this.callback = callback;
             this.logger = loggerFactory.CreateLogger<Evaluator>();
             this.loggerFactory = loggerFactory;
+            this.IsAnalyticsEnabled = isAnalyticsEnabled;
         }
         private Variation EvaluateVariation(string key, dto.Target target, FeatureConfigKind kind)
         {
@@ -55,7 +57,7 @@ namespace io.harness.cfsdk.client.api
             }
 
             Variation var = Evaluate(featureConfig, target);
-            if(var != null && callback != null)
+            if(IsAnalyticsEnabled && var != null && callback != null)
             {
                 this.callback.EvaluationProcessed(featureConfig, target, var);
             }
