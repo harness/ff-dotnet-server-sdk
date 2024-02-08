@@ -171,8 +171,10 @@ namespace io.harness.cfsdk.client.api
         }
 
         /*
-        BufferSize must be a power of 2 for LMAX to work. This function vaidates
+        BufferSize must be a power of 2 for LMAX to work This function vaidates
         that. Source: https://stackoverflow.com/a/600306/1493480
+        The max BufferSize that can be set is 4096. 
+        Defaults to 2048 if not a power of 2 or over 4096.
         */
         public ConfigBuilder SetBufferSize(int bufferSize)
         {
