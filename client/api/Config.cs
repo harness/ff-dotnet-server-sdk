@@ -38,18 +38,8 @@ namespace io.harness.cfsdk.client.api
 
         //BufferSize must be a power of 2 for LMAX to work. This function vaidates
         //that. Source: https://stackoverflow.com/a/600306/1493480
-        public int BufferSize
-        {
-            get
-            {
-                if (!(bufferSize != 0 && ((bufferSize & (bufferSize - 1)) == 0)))
-                {
-                    throw new CfClientException("BufferSize must be a power of 2");
-                }
-                return bufferSize;
-            }
-        }
-        private int bufferSize = 1024;
+        public int BufferSize => bufferSize;
+        internal int bufferSize = 1024;
 
 
         /** timeout in milliseconds to connect to CF Server */
@@ -100,20 +90,7 @@ namespace io.harness.cfsdk.client.api
         {
             return new ConfigBuilder();
         }
-
-        /*
-  BufferSize must be a power of 2 for LMAX to work. This function vaidates
-  that. Source: https://stackoverflow.com/a/600306/1493480
- */
-        public int getBufferSize()
-        {
-            if (!(bufferSize != 0 && ((bufferSize & (bufferSize - 1)) == 0)))
-            {
-                throw new CfClientException("BufferSize must be a power of 2");
-            }
-            return bufferSize;
-        }
-
+        
     }
 
     public class ConfigBuilder
@@ -190,6 +167,27 @@ namespace io.harness.cfsdk.client.api
         public ConfigBuilder debug(bool debug)
         {
             this.configtobuild.debug = debug;
+            return this;
+        }
+
+        /*
+        BufferSize must be a power of 2 for LMAX to work This function vaidates
+        that. Source: https://stackoverflow.com/a/600306/1493480
+        The max BufferSize that can be set is 4096. 
+        Defaults to 2048 if not a power of 2 or over 4096.
+        */
+        public ConfigBuilder SetBufferSize(int bufferSize)
+        {
+            // Check if bufferSize is a power of two
+            var isPowerOfTwo = bufferSize > 0 && (bufferSize & (bufferSize - 1)) == 0;
+
+            if (!isPowerOfTwo || bufferSize > 4096)
+            {
+                // Log a warning if bufferSize is not a power of two or if it's greater than 4096
+                bufferSize = 2048; // Set default value
+            }
+
+            configtobuild.bufferSize = bufferSize;
             return this;
         }
 
