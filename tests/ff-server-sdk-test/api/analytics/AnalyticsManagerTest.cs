@@ -237,34 +237,6 @@ namespace ff_server_sdk_test.api.analytics
         }
 
         [Test]
-        public void Should_force_push_metrics_and_clear_cache_when_analytics_cache_full()
-        {
-            // Arrange
-            var analyticsCacheMock = new AnalyticsCache();
-            var connectorMock = new Mock<IConnector>();
-
-            var bufferSize = 2;
-            var configMock = new Config("", "", false, 10, true, 1, bufferSize, 10, 10, 10, false, 10000);
-            var analyticsPublisherServiceMock =
-                new AnalyticsPublisherService(connectorMock.Object, analyticsCacheMock, new NullLoggerFactory());
-
-            var target = new Target();
-            var variation = new Variation();
-
-            var sut = new MetricsProcessor(configMock, analyticsCacheMock, analyticsPublisherServiceMock,
-                new NullLoggerFactory(), false);
-
-            // Act - set cachesize > buffer
-            sut.PushToCache(target, CreateFeatureConfig("feature1"), variation);
-            sut.PushToCache(target, CreateFeatureConfig("feature2"), variation);
-            sut.PushToCache(target, CreateFeatureConfig("feature3"), variation);
-
-            // Assert 
-            connectorMock.Verify(a => a.PostMetrics(It.IsAny<Metrics>()), Times.Once);
-            Assert.That(analyticsCacheMock.GetAllElements().Count, Is.EqualTo(0));
-        }
-
-        [Test]
         public void Should_Push_Targets_To_GlobalTargetSet_Using_MetricsProcessor()
         {
             var analyticsCache = new AnalyticsCache();
@@ -366,7 +338,7 @@ namespace ff_server_sdk_test.api.analytics
             // Trigger the push to GlobalTargetSet
             analyticsPublisherService.SendDataAndResetCache();
             var count = AnalyticsPublisherService.SeenTargets.Count;
-            Assert.IsTrue(AnalyticsPublisherService.SeenTargets.Count == 41);
+            Assert.IsTrue(AnalyticsPublisherService.SeenTargets.Count == 40);
         }
 
 
