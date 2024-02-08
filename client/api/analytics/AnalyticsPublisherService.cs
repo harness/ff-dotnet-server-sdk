@@ -23,14 +23,15 @@ namespace io.harness.cfsdk.client.api.analytics
         private static readonly string Server = "server";
         private static readonly string SdkLanguage = "SDK_LANGUAGE";
         private static readonly string SdkVersion = "SDK_VERSION";
-        private readonly EvaluationAnalyticsCache evaluationAnalyticsCache;
-        private readonly TargetAnalyticsCache targetAnalyticsCache;
         private readonly IConnector connector;
+        private readonly EvaluationAnalyticsCache evaluationAnalyticsCache;
         private readonly ILogger<AnalyticsPublisherService> logger;
 
         private readonly string sdkVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "";
+        private readonly TargetAnalyticsCache targetAnalyticsCache;
 
-        public AnalyticsPublisherService(IConnector connector, EvaluationAnalyticsCache evaluationAnalyticsCache, TargetAnalyticsCache targetAnalyticsCache,
+        public AnalyticsPublisherService(IConnector connector, EvaluationAnalyticsCache evaluationAnalyticsCache,
+            TargetAnalyticsCache targetAnalyticsCache,
             ILoggerFactory loggerFactory)
         {
             this.evaluationAnalyticsCache = evaluationAnalyticsCache;
@@ -68,7 +69,8 @@ namespace io.harness.cfsdk.client.api.analytics
                 }
         }
 
-        private Metrics PrepareMessageBody(IDictionary<EvaluationAnalytics, int> evaluationAnalyticsCache, IDictionary<TargetAnalytics, int> targetAnalyticsCache)
+        private Metrics PrepareMessageBody(IDictionary<EvaluationAnalytics, int> evaluationAnalyticsCache,
+            IDictionary<TargetAnalytics, int> targetAnalyticsCache)
         {
             var metrics = new Metrics();
             metrics.TargetData = new List<TargetData>();
@@ -97,30 +99,30 @@ namespace io.harness.cfsdk.client.api.analytics
 
             // Handle TargetAnalytics
             foreach (var targetAnalytic in evaluationAnalyticsCache)
+            {
+                var target = targetAnalytic.Key.Target;
+                if (target != null && !SeenTargets.ContainsKey(target) && !target.IsPrivate)
                 {
-                    var target = targetAnalytic.Key.Target;
-                    if (target != null && !SeenTargets.ContainsKey(target) && !target.IsPrivate)
+                    var targetData = new TargetData
                     {
-                        var targetData = new TargetData
-                        {
-                            Identifier = target.Identifier,
-                            Name = target.Name,
-                            Attributes = new List<KeyValue>()
-                        };
+                        Identifier = target.Identifier,
+                        Name = target.Name,
+                        Attributes = new List<KeyValue>()
+                    };
 
-                        // Add target attributes, respecting private attributes
-                        foreach (var attribute in target.Attributes)
-                            if (target.PrivateAttributes == null || !target.PrivateAttributes.Contains(attribute.Key))
-                                targetData.Attributes.Add(new KeyValue
-                                    { Key = attribute.Key, Value = attribute.Value });
+                    // Add target attributes, respecting private attributes
+                    foreach (var attribute in target.Attributes)
+                        if (target.PrivateAttributes == null || !target.PrivateAttributes.Contains(attribute.Key))
+                            targetData.Attributes.Add(new KeyValue
+                                { Key = attribute.Key, Value = attribute.Value });
 
-                        // Add to StagingSeenTargets for future reference
-                        StagingSeenTargets.TryAdd(target, 0);
+                    // Add to StagingSeenTargets for future reference
+                    StagingSeenTargets.TryAdd(target, 0);
 
-                        metrics.TargetData.Add(targetData);
-                    }
+                    metrics.TargetData.Add(targetData);
                 }
-            
+            }
+
 
             return metrics;
         }
