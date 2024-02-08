@@ -9,19 +9,20 @@ namespace io.harness.cfsdk.client.api.analytics
 {
     internal class MetricsProcessor
     {
-        private readonly AnalyticsCache analyticsCache;
+        private readonly EvaluationAnalyticsCache evaluationAnalyticsCache;
+        private readonly TargetAnalyticsCache targetAnalyticsCache;
         private readonly AnalyticsPublisherService analyticsPublisherService;
         private readonly Config config;
         private readonly ILogger<MetricsProcessor> logger;
         private Timer timer;
-        
         private bool isGlobalTargetEnabled;
         private bool warningLoggedForInterval = false;
 
-        public MetricsProcessor(Config config, AnalyticsCache analyticsCache,
+        public MetricsProcessor(Config config, EvaluationAnalyticsCache evaluationAnalyticsCache, TargetAnalyticsCache targetAnalyticsCache,
             AnalyticsPublisherService analyticsPublisherService, ILoggerFactory loggerFactory, bool globalTargetEnabled)
         {
-            this.analyticsCache = analyticsCache;
+            this.evaluationAnalyticsCache = evaluationAnalyticsCache;
+            this.targetAnalyticsCache = targetAnalyticsCache;
             this.config = config;
             this.analyticsPublisherService = analyticsPublisherService;
             logger = loggerFactory.CreateLogger<MetricsProcessor>();
@@ -54,30 +55,29 @@ namespace io.harness.cfsdk.client.api.analytics
 
         public void PushToCache(Target target, FeatureConfig featureConfig, Variation variation)
         {
-            var cacheSize = analyticsCache.GetAllElements().Count;
-            var bufferSize = config.bufferSize;
-
             if (isGlobalTargetEnabled)
             {
                 var globalTarget = new Target(EvaluationAnalytics.GlobalTargetIdentifier,
                     EvaluationAnalytics.GlobalTargetName, null);
-                PushToEvaluationAnalyticsCache(featureConfig, variation, globalTarget, cacheSize, bufferSize);
+                PushToEvaluationAnalyticsCache(featureConfig, variation, globalTarget);
             }
             else
             {
-                PushToEvaluationAnalyticsCache(featureConfig, variation, target, cacheSize, bufferSize);
+                PushToEvaluationAnalyticsCache(featureConfig, variation, target);
             }
 
             // Create target metrics 
-            PushToTargetAnalyticsCache(target, cacheSize, bufferSize);
+            PushToTargetAnalyticsCache(target);
         }
 
-        private void PushToEvaluationAnalyticsCache(FeatureConfig featureConfig, Variation variation, Target target,
-            int cacheSize, int bufferSize)
+        private void PushToEvaluationAnalyticsCache(FeatureConfig featureConfig, Variation variation, Target target)
         {
-            Analytics evaluationAnalytics = new EvaluationAnalytics(featureConfig, variation, target);
+            var cacheSize = evaluationAnalyticsCache.GetAllElements().Count;
+            var bufferSize = config.bufferSize;
 
-            var evaluationCount = analyticsCache.getIfPresent(evaluationAnalytics);
+            EvaluationAnalytics evaluationAnalytics = new EvaluationAnalytics(featureConfig, variation, target);
+
+            var evaluationCount = evaluationAnalyticsCache.getIfPresent(evaluationAnalytics);
 
             // Cache is full and this is new entry, so we should discard this eval
             if (cacheSize > bufferSize && evaluationCount == 0)
@@ -87,12 +87,14 @@ namespace io.harness.cfsdk.client.api.analytics
             }
             
             // If cache isn't full, or if there is an existing matching key, add this one
-            analyticsCache.Put(evaluationAnalytics, evaluationCount + 1);
+            evaluationAnalyticsCache.Put(evaluationAnalytics, evaluationCount + 1);
         }
 
 
-        private void PushToTargetAnalyticsCache(Target target, int cacheSize, int bufferSize)
+        private void PushToTargetAnalyticsCache(Target target)
         {
+            var cacheSize = targetAnalyticsCache.GetAllElements().Count;
+            var bufferSize = config.bufferSize;
             //  Cache is full, discard target
             if (cacheSize > bufferSize)
             {
@@ -100,13 +102,13 @@ namespace io.harness.cfsdk.client.api.analytics
                 return;
             }
 
-            Analytics targetAnalytics = new TargetAnalytics(target);
+            TargetAnalytics targetAnalytics = new TargetAnalytics(target);
 
             // We don't need to keep count of targets, so use a constant value, 1, for the count. 
             // Since 1.4.2, the analytics cache was refactored to separate out Evaluation and Target metrics, but the 
             // change did not go as far as to maintain two caches (due to effort involved), but differentiate them based on subclassing, so 
             // the counter used for target metrics isn't needed, but causes no issue. 
-            analyticsCache.Put(targetAnalytics, 1);
+            targetAnalyticsCache.Put(targetAnalytics, 1);
         }
 
         private void LogMetricsIgnoredWarning(int cacheSize, int bufferSize)

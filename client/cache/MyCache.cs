@@ -55,7 +55,11 @@ namespace io.harness.cfsdk.client.cache
             }
         }
     }
-    internal class AnalyticsCache : MemoryCache<Analytics, int>
+    internal class EvaluationAnalyticsCache : MemoryCache<EvaluationAnalytics, int>
+    {
+    }
+    
+    internal class TargetAnalyticsCache : MemoryCache<TargetAnalytics, int>
     {
     }
 
