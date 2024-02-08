@@ -6,7 +6,6 @@ using io.harness.cfsdk.client.cache;
 using io.harness.cfsdk.client.connector;
 using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.HarnessOpenAPIService;
-using io.harness.cfsdk.HarnessOpenMetricsAPIService;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NUnit.Framework;
@@ -24,7 +23,8 @@ namespace ff_server_sdk_test.api.analytics
             var targetAnalyticsCacheMock = new TargetAnalyticsCache();
             var connectorMock = new Mock<IConnector>();
             var analyticsPublisherServiceMock =
-                new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, new NullLoggerFactory());
+                new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock,
+                    targetAnalyticsCacheMock, new NullLoggerFactory());
 
             var variation = new Variation();
             var target = new Target();
@@ -33,7 +33,8 @@ namespace ff_server_sdk_test.api.analytics
             var evaluationAnalytics = new EvaluationAnalytics(featureConfig1, variation, target);
             var targetAnalytics = new TargetAnalytics(target);
 
-            var sut = new MetricsProcessor(new Config(), evaluationAnalyticsCacheMock,targetAnalyticsCacheMock, analyticsPublisherServiceMock,
+            var sut = new MetricsProcessor(new Config(), evaluationAnalyticsCacheMock, targetAnalyticsCacheMock,
+                analyticsPublisherServiceMock,
                 new NullLoggerFactory(), false);
 
 
@@ -42,8 +43,8 @@ namespace ff_server_sdk_test.api.analytics
             // Ensure the cache totals are correct
             Assert.That(evaluationAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(1));
             Assert.That(targetAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(1));
-            
-            
+
+
             // Ensure the cache total and breakdown of the type of analytics is correct
             Assert.That(evaluationAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(1));
 
@@ -52,170 +53,178 @@ namespace ff_server_sdk_test.api.analytics
             Assert.That(targetAnalyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(1));
         }
 
-        
+
         [Test]
         public void Should_add_multiple_evaluations_for_single_feature_to_analytics_cache()
         {
             var evaluationAnalyticsCacheMock = new EvaluationAnalyticsCache();
-            var targetAnalyticsCacheMock = new TargetAnalyticsCache();            
+            var targetAnalyticsCacheMock = new TargetAnalyticsCache();
             var connectorMock = new Mock<IConnector>();
             var analyticsPublisherServiceMock =
-                new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, new NullLoggerFactory());
-        
+                new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock,
+                    targetAnalyticsCacheMock, new NullLoggerFactory());
+
             var target = new Target();
             var variation = new Variation();
-        
+
             // simulate multiple evaluations for a single feature
             var featureConfig = CreateFeatureConfig("feature1");
             var evaluationAnalytics = new EvaluationAnalytics(featureConfig, variation, target);
             var targetAnalytics = new TargetAnalytics(target);
-        
-            var sut = new MetricsProcessor(new Config(), evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, analyticsPublisherServiceMock,
+
+            var sut = new MetricsProcessor(new Config(), evaluationAnalyticsCacheMock, targetAnalyticsCacheMock,
+                analyticsPublisherServiceMock,
                 new NullLoggerFactory(), false);
-        
+
             sut.PushToCache(target, featureConfig, variation);
             sut.PushToCache(target, featureConfig, variation);
             sut.PushToCache(target, featureConfig, variation);
             sut.PushToCache(target, featureConfig, variation);
             sut.PushToCache(target, featureConfig, variation);
-        
-        
+
+
             // Ensure the cache totals are correct
             Assert.That(evaluationAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(1));
             Assert.That(targetAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(1));
 
-        
+
             // Correct count
             Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(5));
             Assert.That(targetAnalyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(1));
         }
-        
+
         [Test]
         public void Should_add_single_evaluation_for_multiple_features_to_analytics_cache()
         {
             // Arrange
             var evaluationAnalyticsCacheMock = new EvaluationAnalyticsCache();
-            var targetAnalyticsCacheMock = new TargetAnalyticsCache();                        
+            var targetAnalyticsCacheMock = new TargetAnalyticsCache();
             var connectorMock = new Mock<IConnector>();
             var analyticsPublisherServiceMock =
-                new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, new NullLoggerFactory());
-        
+                new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock,
+                    targetAnalyticsCacheMock, new NullLoggerFactory());
+
             var target = new Target();
             var variation = new Variation();
-        
+
             // simulate an evaluation for multiple different features
             var featureConfig1 = CreateFeatureConfig("feature1");
             var featureConfig2 = CreateFeatureConfig("feature2");
             var evaluationAnalytics = new EvaluationAnalytics(featureConfig1, variation, target);
             var evaluationAnalytics2 = new EvaluationAnalytics(featureConfig2, variation, target);
             var targetAnalytics = new TargetAnalytics(target);
-        
-            var sut = new MetricsProcessor(new Config(), evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, analyticsPublisherServiceMock,
+
+            var sut = new MetricsProcessor(new Config(), evaluationAnalyticsCacheMock, targetAnalyticsCacheMock,
+                analyticsPublisherServiceMock,
                 new NullLoggerFactory(), false);
-        
+
             // Act
             sut.PushToCache(target, featureConfig1, variation);
             sut.PushToCache(target, featureConfig2, variation);
-        
+
             // Ensure the cache totals are correct
             Assert.That(evaluationAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(2));
             Assert.That(targetAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(1));
-            
+
             // Ensure the counter is correct
             Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(1));
             Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics2), Is.EqualTo(1));
             Assert.That(targetAnalyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(1));
         }
-        
-        
+
+
         [Test]
         public void Should_add_multiple_evaluations_for_multiple_features_to_analytics_cache()
         {
             // Arrange
             var evaluationAnalyticsCacheMock = new EvaluationAnalyticsCache();
-            var targetAnalyticsCacheMock = new TargetAnalyticsCache();                             
+            var targetAnalyticsCacheMock = new TargetAnalyticsCache();
             var connectorMock = new Mock<IConnector>();
             var analyticsPublisherServiceMock =
-                new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock, targetAnalyticsCacheMock,new NullLoggerFactory());
-        
+                new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock,
+                    targetAnalyticsCacheMock, new NullLoggerFactory());
+
             var target = new Target();
             // var target = new Target(EvaluationAnalytics.GlobalTargetIdentifier, EvaluationAnalytics.GlobalTargetName,
             //     null);
             var variation = new Variation();
-        
+
             // simulate an evaluation for multiple different features
             var featureConfig1 = CreateFeatureConfig("feature1");
             var featureConfig2 = CreateFeatureConfig("feature2");
-        
+
             var evaluationAnalytics = new EvaluationAnalytics(featureConfig1, variation, target);
             var evaluationAnalytics2 = new EvaluationAnalytics(featureConfig2, variation, target);
-        
-            var sut = new MetricsProcessor(new Config(), evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, analyticsPublisherServiceMock,
+
+            var sut = new MetricsProcessor(new Config(), evaluationAnalyticsCacheMock, targetAnalyticsCacheMock,
+                analyticsPublisherServiceMock,
                 new NullLoggerFactory(), false);
-        
+
             // Act
             sut.PushToCache(target, featureConfig1, variation);
             sut.PushToCache(target, featureConfig1, variation);
-        
+
             sut.PushToCache(target, featureConfig2, variation);
             sut.PushToCache(target, featureConfig2, variation);
             sut.PushToCache(target, featureConfig2, variation);
-        
+
             Assert.That(evaluationAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(2));
             Assert.That(targetAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(1));
 
-            
+
             // Ensure the counter is correct
             Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(2));
             Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics2), Is.EqualTo(3));
         }
-        
+
         [Test]
         public void Should_store_one_evaluation_when_global_target_is_used_for_multiple_evaluations()
         {
             var evaluationAnalyticsCacheMock = new EvaluationAnalyticsCache();
-            var targetAnalyticsCacheMock = new TargetAnalyticsCache();    
+            var targetAnalyticsCacheMock = new TargetAnalyticsCache();
             var connectorMock = new Mock<IConnector>();
             var loggerFactory = new NullLoggerFactory();
             var analyticsPublisherService =
-                new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, loggerFactory);
-            
+                new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock,
+                    targetAnalyticsCacheMock, loggerFactory);
+
             // Pass true for global target
             var metricsProcessor =
-                new MetricsProcessor(new Config(), evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, analyticsPublisherService, loggerFactory, true);
-        
-        
+                new MetricsProcessor(new Config(), evaluationAnalyticsCacheMock, targetAnalyticsCacheMock,
+                    analyticsPublisherService, loggerFactory, true);
+
+
             var target = Target.builder()
                 .Name("unique_name_1")
                 .Identifier("unique_identifier_1")
                 .Attributes(new Dictionary<string, string> { { "email", "demo1@harness.io" } })
                 .build();
-        
+
             var sameAsTarget1 = Target.builder()
                 .Name("unique_name_2")
                 .Identifier("unique_identifier_2")
                 .Attributes(new Dictionary<string, string> { { "email", "demo2@harness.io" } })
                 .build();
-        
+
             var differentAttributesToTarget1 = Target.builder()
                 .Name("unique_names_3")
                 .Identifier("unique_identifier_3")
                 .Attributes(new Dictionary<string, string> { { "email", "demo124563@harness.io" } })
                 .build();
-        
+
             var differentIdentifierToTarget1 = Target.builder()
                 .Name("unique_names_4")
                 .Identifier("different_identifier_4")
                 .Attributes(new Dictionary<string, string> { { "email", "demo4@harness.io" } })
                 .build();
-        
+
             var differentIdentifierAndAttributesToTarget1 = Target.builder()
                 .Name("unique_names_5")
                 .Identifier("another_different_identifier_5")
                 .Attributes(new Dictionary<string, string> { { "email", "12456demo5@harness.io" } })
                 .build();
-        
-        
+
+
             var featureConfig = CreateFeatureConfig("feature");
             var variation = new Variation();
             metricsProcessor.PushToCache(target, featureConfig, variation);
@@ -223,72 +232,77 @@ namespace ff_server_sdk_test.api.analytics
             metricsProcessor.PushToCache(differentAttributesToTarget1, featureConfig, variation);
             metricsProcessor.PushToCache(differentIdentifierToTarget1, featureConfig, variation);
             metricsProcessor.PushToCache(differentIdentifierAndAttributesToTarget1, featureConfig, variation);
-            
-            Target globalTarget = new Target(EvaluationAnalytics.GlobalTargetIdentifier,
+
+            var globalTarget = new Target(EvaluationAnalytics.GlobalTargetIdentifier,
                 EvaluationAnalytics.GlobalTargetName, null);
             var evaluationAnalytics = new EvaluationAnalytics(featureConfig, variation, globalTarget);
-        
+
             Assert.That(evaluationAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(1));
             Assert.That(targetAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(5));
-        
+
             // Check the evaluation has a count of 5
             Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(5));
         }
-        
-        
+
+
         [Test]
         public void Should_Push_Targets_To_GlobalTargetSet_Using_MetricsProcessor()
         {
             var evaluationAnalyticsCacheMock = new EvaluationAnalyticsCache();
-            var targetAnalyticsCacheMock = new TargetAnalyticsCache();      
+            var targetAnalyticsCacheMock = new TargetAnalyticsCache();
             var connectorMock = new Mock<IConnector>();
             var loggerFactory = new NullLoggerFactory();
             var analyticsPublisherService =
-                new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, loggerFactory);
+                new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock,
+                    targetAnalyticsCacheMock, loggerFactory);
             var metricsProcessor =
-                new MetricsProcessor(new Config(), evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, analyticsPublisherService, loggerFactory, false);
-        
+                new MetricsProcessor(new Config(), evaluationAnalyticsCacheMock, targetAnalyticsCacheMock,
+                    analyticsPublisherService, loggerFactory, false);
+
             var target1 = Target.builder()
                 .Name("unique_name_1")
                 .Identifier("unique_identifier_1")
                 .Attributes(new Dictionary<string, string> { { "email", "demo@harness.io" } })
                 .build();
-        
+
             var sameAsTarget1 = Target.builder()
                 .Name("unique_name_1")
                 .Identifier("unique_identifier_1")
                 .Attributes(new Dictionary<string, string> { { "email", "demo@harness.io" } })
                 .build();
-        
-        
+
+
             var featureConfig1 = CreateFeatureConfig("feature1");
             var variation1 = new Variation();
-        
+
             metricsProcessor.PushToCache(target1, featureConfig1, variation1);
             metricsProcessor.PushToCache(sameAsTarget1, featureConfig1, variation1);
-        
+
             // Trigger the push to GlobalTargetSet
             analyticsPublisherService.SendDataAndResetCache();
-        
+
             Assert.IsTrue(AnalyticsPublisherService.SeenTargets.ContainsKey(target1),
                 "Target should be pushed to GlobalTargetSet");
         }
-        
+
         [Test]
         public void Should_Handle_Concurrent_Pushes_To_GlobalTargetSet_Correctly()
         {
             var evaluationAnalyticsCacheMock = new EvaluationAnalyticsCache();
-            var targetAnalyticsCacheMock = new TargetAnalyticsCache();                  var connectorMock = new Mock<IConnector>();
+            var targetAnalyticsCacheMock = new TargetAnalyticsCache();
+            var connectorMock = new Mock<IConnector>();
             var loggerFactory = new NullLoggerFactory();
             var analyticsPublisherService =
-                new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, loggerFactory);
+                new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock,
+                    targetAnalyticsCacheMock, loggerFactory);
             var metricsProcessor =
-                new MetricsProcessor(new Config(), evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, analyticsPublisherService, loggerFactory, false);
-        
+                new MetricsProcessor(new Config(), evaluationAnalyticsCacheMock, targetAnalyticsCacheMock,
+                    analyticsPublisherService, loggerFactory, false);
+
             const int numberOfThreads = 10;
             var tasks = new List<Task>();
-        
-        
+
+
             for (var i = 0; i < numberOfThreads; i++)
             {
                 var target = Target.builder()
@@ -296,31 +310,31 @@ namespace ff_server_sdk_test.api.analytics
                     .Identifier($"unique_identifier_{i}")
                     .Attributes(new Dictionary<string, string> { { "email", $"demo{i}@harness.io" } })
                     .build();
-        
+
                 var sameAsTarget1 = Target.builder()
                     .Name($"unique_name_{i}")
                     .Identifier($"unique_identifier_{i}")
                     .Attributes(new Dictionary<string, string> { { "email", $"demo{i}@harness.io" } })
                     .build();
-        
+
                 var differentAttributesToTarget1 = Target.builder()
                     .Name($"unique_names_{i}")
                     .Identifier($"unique_identifier_{i}")
                     .Attributes(new Dictionary<string, string> { { "email", $"demo12456{i}@harness.io" } })
                     .build();
-        
+
                 var differentIdentifierToTarget1 = Target.builder()
                     .Name($"unique_names_{i}")
                     .Identifier($"different_identifier_{i}")
                     .Attributes(new Dictionary<string, string> { { "email", $"demo{i}@harness.io" } })
                     .build();
-        
+
                 var differentIdentifierAndAttributesToTarget1 = Target.builder()
                     .Name($"unique_names_{i}")
                     .Identifier($"another_different_identifier_{i}")
                     .Attributes(new Dictionary<string, string> { { "email", $"12456demo{i}@harness.io" } })
                     .build();
-        
+
                 var task = Task.Run(() =>
                 {
                     var featureConfig = CreateFeatureConfig($"feature{i}");
@@ -333,9 +347,9 @@ namespace ff_server_sdk_test.api.analytics
                 });
                 tasks.Add(task);
             }
-        
+
             Task.WhenAll(tasks).Wait();
-        
+
             // Trigger the push to GlobalTargetSet
             analyticsPublisherService.SendDataAndResetCache();
             var count = AnalyticsPublisherService.SeenTargets.Count;
