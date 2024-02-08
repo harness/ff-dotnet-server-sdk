@@ -20,11 +20,11 @@ namespace ff_server_sdk_test.api.analytics
         [Test]
         public void Should_add_single_evaluation_and_target_for_single_feature_to_analytics_cache()
         {
-            var evaluationAnalyticsCache = new EvaluationAnalyticsCache();
+            var evaluationAnalyticsCacheMock = new EvaluationAnalyticsCache();
             var targetAnalyticsCacheMock = new TargetAnalyticsCache();
             var connectorMock = new Mock<IConnector>();
             var analyticsPublisherServiceMock =
-                new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCache, targetAnalyticsCacheMock, new NullLoggerFactory());
+                new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, new NullLoggerFactory());
 
             var variation = new Variation();
             var target = new Target();
@@ -33,96 +33,100 @@ namespace ff_server_sdk_test.api.analytics
             var evaluationAnalytics = new EvaluationAnalytics(featureConfig1, variation, target);
             var targetAnalytics = new TargetAnalytics(target);
 
-            var sut = new MetricsProcessor(new Config(), evaluationAnalyticsCache,targetAnalyticsCacheMock, analyticsPublisherServiceMock,
+            var sut = new MetricsProcessor(new Config(), evaluationAnalyticsCacheMock,targetAnalyticsCacheMock, analyticsPublisherServiceMock,
                 new NullLoggerFactory(), false);
 
 
             sut.PushToCache(target, featureConfig1, variation);
 
+            // Ensure the cache totals are correct
+            Assert.That(evaluationAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(1));
+            Assert.That(targetAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(1));
+            
+            
             // Ensure the cache total and breakdown of the type of analytics is correct
-            Assert.That(evaluationAnalyticsCache.GetAllElements().Count, Is.EqualTo(1));
+            Assert.That(evaluationAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(1));
 
             // Ensure the counter is correct.
-            Assert.That(evaluationAnalyticsCache.getIfPresent(evaluationAnalytics), Is.EqualTo(1));
-            // Assert.That(evaluationAnalyticsCache.getIfPresent(targetAnalytics), Is.EqualTo(1));
+            Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(1));
+            Assert.That(targetAnalyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(1));
         }
 
-        //
-        // [Test]
-        // public void Should_add_multiple_evaluations_for_single_feature_to_analytics_cache()
-        // {
-        //     var analyticsCacheMock = new EvaluationAnalyticsCache();
-        //     var connectorMock = new Mock<IConnector>();
-        //     var analyticsPublisherServiceMock =
-        //         new AnalyticsPublisherService(connectorMock.Object, analyticsCacheMock, new NullLoggerFactory());
-        //
-        //     var target = new Target();
-        //     var variation = new Variation();
-        //
-        //     // simulate multiple evaluations for a single feature
-        //     var featureConfig = CreateFeatureConfig("feature1");
-        //     var evaluationAnalytics = new EvaluationAnalytics(featureConfig, variation, target);
-        //     var targetAnalytics = new TargetAnalytics(target);
-        //
-        //     var sut = new MetricsProcessor(new Config(), analyticsCacheMock, analyticsPublisherServiceMock,
-        //         new NullLoggerFactory(), false);
-        //
-        //     sut.PushToCache(target, featureConfig, variation);
-        //     sut.PushToCache(target, featureConfig, variation);
-        //     sut.PushToCache(target, featureConfig, variation);
-        //     sut.PushToCache(target, featureConfig, variation);
-        //     sut.PushToCache(target, featureConfig, variation);
-        //
-        //
-        //     // Ensure the cache total and breakdown of the type of analytics is correct
-        //     Assert.That(analyticsCacheMock.GetAllElements().Count, Is.EqualTo(2));
-        //     var (evaluationCount, targetCount) = GetAnalyticsTypeCounts(analyticsCacheMock);
-        //     Assert.That(evaluationCount, Is.EqualTo(1), "Incorrect number of EvaluationAnalytics");
-        //     Assert.That(targetCount, Is.EqualTo(1), "Incorrect number of TargetAnalytics");
-        //
-        //     // Correct count
-        //     Assert.That(analyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(5));
-        //     Assert.That(analyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(1));
-        // }
-        //
-        // [Test]
-        // public void Should_add_single_evaluation_for_multiple_features_to_analytics_cache()
-        // {
-        //     // Arrange
-        //     var analyticsCacheMock = new EvaluationAnalyticsCache();
-        //     var connectorMock = new Mock<IConnector>();
-        //     var analyticsPublisherServiceMock =
-        //         new AnalyticsPublisherService(connectorMock.Object, analyticsCacheMock, new NullLoggerFactory());
-        //
-        //     var target = new Target();
-        //     var variation = new Variation();
-        //
-        //     // simulate an evaluation for multiple different features
-        //     var featureConfig1 = CreateFeatureConfig("feature1");
-        //     var featureConfig2 = CreateFeatureConfig("feature2");
-        //     var evaluationAnalytics = new EvaluationAnalytics(featureConfig1, variation, target);
-        //     var evaluationAnalytics2 = new EvaluationAnalytics(featureConfig2, variation, target);
-        //     var targetAnalytics = new TargetAnalytics(target);
-        //
-        //     var sut = new MetricsProcessor(new Config(), analyticsCacheMock, analyticsPublisherServiceMock,
-        //         new NullLoggerFactory(), false);
-        //
-        //     // Act
-        //     sut.PushToCache(target, featureConfig1, variation);
-        //     sut.PushToCache(target, featureConfig2, variation);
-        //
-        //     // Ensure the cache total and breakdown of the type of analytics is correct
-        //     Assert.That(analyticsCacheMock.GetAllElements().Count, Is.EqualTo(3));
-        //     var (evaluationCount, targetCount) = GetAnalyticsTypeCounts(analyticsCacheMock);
-        //     Assert.That(evaluationCount, Is.EqualTo(2), "Incorrect number of EvaluationAnalytics");
-        //     Assert.That(targetCount, Is.EqualTo(1), "Incorrect number of TargetAnalytics");
-        //     
-        //     // Ensure the counter is correct
-        //     Assert.That(analyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(1));
-        //     Assert.That(analyticsCacheMock.getIfPresent(evaluationAnalytics2), Is.EqualTo(1));
-        // }
-        //
-        //
+        
+        [Test]
+        public void Should_add_multiple_evaluations_for_single_feature_to_analytics_cache()
+        {
+            var evaluationAnalyticsCacheMock = new EvaluationAnalyticsCache();
+            var targetAnalyticsCacheMock = new TargetAnalyticsCache();            
+            var connectorMock = new Mock<IConnector>();
+            var analyticsPublisherServiceMock =
+                new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, new NullLoggerFactory());
+        
+            var target = new Target();
+            var variation = new Variation();
+        
+            // simulate multiple evaluations for a single feature
+            var featureConfig = CreateFeatureConfig("feature1");
+            var evaluationAnalytics = new EvaluationAnalytics(featureConfig, variation, target);
+            var targetAnalytics = new TargetAnalytics(target);
+        
+            var sut = new MetricsProcessor(new Config(), evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, analyticsPublisherServiceMock,
+                new NullLoggerFactory(), false);
+        
+            sut.PushToCache(target, featureConfig, variation);
+            sut.PushToCache(target, featureConfig, variation);
+            sut.PushToCache(target, featureConfig, variation);
+            sut.PushToCache(target, featureConfig, variation);
+            sut.PushToCache(target, featureConfig, variation);
+        
+        
+            // Ensure the cache totals are correct
+            Assert.That(evaluationAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(1));
+            Assert.That(targetAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(1));
+
+        
+            // Correct count
+            Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(5));
+            Assert.That(targetAnalyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(1));
+        }
+        
+        [Test]
+        public void Should_add_single_evaluation_for_multiple_features_to_analytics_cache()
+        {
+            // Arrange
+            var evaluationAnalyticsCacheMock = new EvaluationAnalyticsCache();
+            var targetAnalyticsCacheMock = new TargetAnalyticsCache();                        var connectorMock = new Mock<IConnector>();
+            var analyticsPublisherServiceMock =
+                new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, new NullLoggerFactory());
+        
+            var target = new Target();
+            var variation = new Variation();
+        
+            // simulate an evaluation for multiple different features
+            var featureConfig1 = CreateFeatureConfig("feature1");
+            var featureConfig2 = CreateFeatureConfig("feature2");
+            var evaluationAnalytics = new EvaluationAnalytics(featureConfig1, variation, target);
+            var evaluationAnalytics2 = new EvaluationAnalytics(featureConfig2, variation, target);
+            var targetAnalytics = new TargetAnalytics(target);
+        
+            var sut = new MetricsProcessor(new Config(), evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, analyticsPublisherServiceMock,
+                new NullLoggerFactory(), false);
+        
+            // Act
+            sut.PushToCache(target, featureConfig1, variation);
+            sut.PushToCache(target, featureConfig2, variation);
+        
+            // Ensure the cache totals are correct
+            Assert.That(evaluationAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(2));
+            Assert.That(targetAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(1));
+            
+            // Ensure the counter is correct
+            Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(1));
+            Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics2), Is.EqualTo(1));
+            Assert.That(targetAnalyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(1));
+        }
+        
+        
         // [Test]
         // public void Should_add_multiple_evaluations_for_multiple_features_to_analytics_cache()
         // {
