@@ -54,16 +54,14 @@ namespace io.harness.cfsdk.client.api.analytics
         public void PushToCache(Target target, FeatureConfig featureConfig, Variation variation)
         {
             var cacheSize = analyticsCache.GetAllElements().Count;
-            var bufferSize = config.getBufferSize();
+            var bufferSize = config.bufferSize;
 
             if (cacheSize > bufferSize)
             {
                 logger.LogWarning(
-                    "Metric frequency map exceeded buffer size ({cacheSize} > {bufferSize}), force flushing", cacheSize,
+                    "Metric frequency map exceeded buffer size ({cacheSize} > {bufferSize}), not sending any further" +
+                    "metrics for interval. Increase metrics buffer using client config option if required. ", cacheSize,
                     bufferSize);
-
-                // If the map is starting to grow too much then push the metrics now and reset the counters
-                SendMetrics();
             }
             else
             {
