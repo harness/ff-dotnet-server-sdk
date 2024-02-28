@@ -82,7 +82,7 @@ namespace io.harness.cfsdk.client.api.analytics
             // Cache is full and this is new entry, so we should discard this eval
             if (cacheSize > bufferSize && evaluationCount == 0)
             {
-                LogMetricsIgnoredWarning(cacheSize, bufferSize);
+                LogMetricsIgnoredWarning("Evaluation metrics", cacheSize, bufferSize);
                 return;
             }
             
@@ -98,7 +98,7 @@ namespace io.harness.cfsdk.client.api.analytics
             //  Cache is full, discard target
             if (cacheSize > bufferSize)
             {
-                LogMetricsIgnoredWarning(cacheSize, bufferSize);
+                LogMetricsIgnoredWarning("Target metrics", cacheSize, bufferSize);
                 return;
             }
 
@@ -111,7 +111,7 @@ namespace io.harness.cfsdk.client.api.analytics
             targetAnalyticsCache.Put(targetAnalytics, 1);
         }
 
-        private void LogMetricsIgnoredWarning(int cacheSize, int bufferSize)
+        private void LogMetricsIgnoredWarning(string cacheType, int cacheSize, int bufferSize)
         {
             // Only log this once per interval
             if (warningLoggedForInterval)
@@ -120,7 +120,7 @@ namespace io.harness.cfsdk.client.api.analytics
             }
             
             logger.LogWarning(
-                "Metric frequency map exceeded buffer size ({cacheSize} > {bufferSize}), not sending any further" +
+                "{cacheType} frequency map exceeded buffer size ({cacheSize} > {bufferSize}), not sending any further" +
                 "metrics for interval. Increase metrics buffer using client config option if required. ",
                 cacheSize,
                 bufferSize);
