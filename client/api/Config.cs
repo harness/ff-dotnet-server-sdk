@@ -39,7 +39,7 @@ namespace io.harness.cfsdk.client.api
         //BufferSize must be a power of 2 for LMAX to work. This function vaidates
         //that. Source: https://stackoverflow.com/a/600306/1493480
         public int BufferSize => bufferSize;
-        internal int bufferSize = 1024;
+        internal int bufferSize = 2048;
 
 
         /** timeout in milliseconds to connect to CF Server */
