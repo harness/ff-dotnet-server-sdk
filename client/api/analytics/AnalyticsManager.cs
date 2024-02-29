@@ -96,6 +96,13 @@ namespace io.harness.cfsdk.client.api.analytics
 
         private void PushToTargetAnalyticsCache(Target target)
         {
+            // Check if target has already been seen
+            if (analyticsPublisherService.IsTargetSeen(target))
+            {
+                // Target has already been processed in a previous interval, so ignore it.
+                return;
+            }
+            
             var cacheSize = targetAnalyticsCache.Count();
             
             //  Cache is full, discard target

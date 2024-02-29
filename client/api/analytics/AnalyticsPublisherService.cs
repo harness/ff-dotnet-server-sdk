@@ -127,6 +127,11 @@ namespace io.harness.cfsdk.client.api.analytics
 
             return metrics;
         }
+        
+        public bool IsTargetSeen(Target target)
+        {
+            return SeenTargets.ContainsKey(target);
+        }
 
         private void SetCommonSdkAttributes(MetricsData metricsData)
         {
