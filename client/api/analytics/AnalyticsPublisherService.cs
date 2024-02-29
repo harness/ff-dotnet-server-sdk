@@ -60,6 +60,7 @@ namespace io.harness.cfsdk.client.api.analytics
                     StagingSeenTargets.Clear();
                     logger.LogDebug("Successfully sent analytics data to the server");
                     evaluationAnalyticsCache.resetCache();
+                    targetAnalyticsCache.resetCache();
                 }
                 catch (CfClientException ex)
                 {
