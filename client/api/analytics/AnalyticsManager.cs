@@ -14,6 +14,8 @@ namespace io.harness.cfsdk.client.api.analytics
         private readonly AnalyticsPublisherService analyticsPublisherService;
         private readonly Config config;
         private readonly ILogger<MetricsProcessor> logger;
+        private int evaluationMetricsMaxSize;
+        private int targetMetricsMaxSize;
         private Timer timer;
         private bool isGlobalTargetEnabled;
         private bool warningLoggedForInterval = false;
@@ -25,6 +27,8 @@ namespace io.harness.cfsdk.client.api.analytics
             this.targetAnalyticsCache = targetAnalyticsCache;
             this.config = config;
             this.analyticsPublisherService = analyticsPublisherService;
+            evaluationMetricsMaxSize = config.evaluationMetricsMaxSize;
+            targetMetricsMaxSize = config.targetMetricsMaxSize;
             logger = loggerFactory.CreateLogger<MetricsProcessor>();
             isGlobalTargetEnabled = globalTargetEnabled;
         }
@@ -74,17 +78,14 @@ namespace io.harness.cfsdk.client.api.analytics
         {
             var cacheSize = evaluationAnalyticsCache.Count();
             
-            // TODO - set this as an instance variable, no need to grab it each time.
-            var bufferSize = config.bufferSize;
-
             EvaluationAnalytics evaluationAnalytics = new EvaluationAnalytics(featureConfig, variation, target);
 
             var evaluationCount = evaluationAnalyticsCache.getIfPresent(evaluationAnalytics);
 
             // Cache is full and this is new entry, so we should discard this eval
-            if (cacheSize > bufferSize && evaluationCount == 0)
+            if (cacheSize > evaluationMetricsMaxSize && evaluationCount == 0)
             {
-                LogMetricsIgnoredWarning("Evaluation metrics", cacheSize, bufferSize);
+                LogMetricsIgnoredWarning("Evaluation metrics", cacheSize, evaluationMetricsMaxSize);
                 return;
             }
             
@@ -97,12 +98,10 @@ namespace io.harness.cfsdk.client.api.analytics
         {
             var cacheSize = targetAnalyticsCache.Count();
             
-            // TODO - set this as an instance variable, no need to grab it each time.
-            var bufferSize = config.bufferSize;
             //  Cache is full, discard target
-            if (cacheSize > bufferSize)
+            if (cacheSize > targetMetricsMaxSize)
             {
-                LogMetricsIgnoredWarning("Target metrics", cacheSize, bufferSize);
+                LogMetricsIgnoredWarning("Target metrics", cacheSize, targetMetricsMaxSize);
                 return;
             }
 
