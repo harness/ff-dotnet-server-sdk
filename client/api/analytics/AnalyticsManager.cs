@@ -72,7 +72,9 @@ namespace io.harness.cfsdk.client.api.analytics
 
         private void PushToEvaluationAnalyticsCache(FeatureConfig featureConfig, Variation variation, Target target)
         {
-            var cacheSize = evaluationAnalyticsCache.GetAllElements().Count;
+            var cacheSize = evaluationAnalyticsCache.Count();
+            
+            // TODO - set this as an instance variable, no need to grab it each time.
             var bufferSize = config.bufferSize;
 
             EvaluationAnalytics evaluationAnalytics = new EvaluationAnalytics(featureConfig, variation, target);
@@ -93,7 +95,9 @@ namespace io.harness.cfsdk.client.api.analytics
 
         private void PushToTargetAnalyticsCache(Target target)
         {
-            var cacheSize = targetAnalyticsCache.GetAllElements().Count;
+            var cacheSize = targetAnalyticsCache.Count();
+            
+            // TODO - set this as an instance variable, no need to grab it each time.
             var bufferSize = config.bufferSize;
             //  Cache is full, discard target
             if (cacheSize > bufferSize)
@@ -121,9 +125,10 @@ namespace io.harness.cfsdk.client.api.analytics
             
             logger.LogWarning(
                 "{cacheType} frequency map exceeded buffer size ({cacheSize} > {bufferSize}), not sending any further" +
-                "metrics for interval. Increase metrics buffer using client config option if required. ",
+                " {cacheType} metrics for interval. Increase buffer size using client config option if required.", cacheType,
                 cacheSize,
-                bufferSize);
+                bufferSize,
+                cacheType);
             
             warningLoggedForInterval = true;
         }
