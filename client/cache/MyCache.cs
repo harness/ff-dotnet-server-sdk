@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
+using System.Threading;
 using io.harness.cfsdk.client.dto;
 
 namespace io.harness.cfsdk.client.cache
@@ -13,7 +14,7 @@ namespace io.harness.cfsdk.client.cache
 
     internal class MemoryCache<TK,TV> : IMyCache<TK, TV>
     {
-        private ConcurrentDictionary<TK, TV> CacheMap { get; set; }
+        protected ConcurrentDictionary<TK, TV> CacheMap { get; set; }
 
         public MemoryCache()
         {
@@ -55,11 +56,48 @@ namespace io.harness.cfsdk.client.cache
             }
         }
     }
-    internal class EvaluationAnalyticsCache : MemoryCache<EvaluationAnalytics, int>
+    
+    internal class MemoryCacheWithCounter<TK, TV> : MemoryCache<TK, TV>
+    {
+        private int itemCount = 0;
+        
+        public new void Put(TK key, TV value)
+        {
+            if (CacheMap.TryAdd(key, value))
+            {
+                Interlocked.Increment(ref itemCount);
+            }
+            else
+            {
+                _ = CacheMap.AddOrUpdate(key, value, (_, _) => value);
+            }
+        }
+
+        public new void Delete(TK key)
+        {
+            if (CacheMap.TryRemove(key, out _))
+            {
+                Interlocked.Decrement(ref itemCount);
+            }
+        }
+
+        public int Count()
+        {
+            return itemCount;
+        }
+
+        public new void resetCache()
+        {
+            CacheMap = new ConcurrentDictionary<TK, TV>();
+            itemCount = 0; 
+        }
+    }
+
+    internal class EvaluationAnalyticsCache : MemoryCacheWithCounter<EvaluationAnalytics, int>
     {
     }
     
-    internal class TargetAnalyticsCache : MemoryCache<TargetAnalytics, int>
+    internal class TargetAnalyticsCache : MemoryCacheWithCounter<TargetAnalytics, int>
     {
     }
 
