@@ -72,7 +72,8 @@ namespace io.harness.cfsdk.client.api
 
         public void Initialize(IConnector connector, Config config)
         {
-            var analyticsCache = new AnalyticsCache();
+            var evaluationAnalyticsCache = new EvaluationAnalyticsCache();
+            var targetAnalyticsCache = new TargetAnalyticsCache();
             this.sdkReadyLatch.Reset(1);
             this.connector = connector;
             this.authService = new AuthService(connector, config, this, loggerFactory);
@@ -81,7 +82,7 @@ namespace io.harness.cfsdk.client.api
             this.update = new UpdateProcessor(connector, this.repository, config, this, loggerFactory);
             this.evaluator = new Evaluator(this.repository, this, loggerFactory, config.analyticsEnabled);
             // Since 1.4.2, we enable the global target for evaluation metrics. 
-            this.metric = new MetricsProcessor(config, analyticsCache, new AnalyticsPublisherService(connector, analyticsCache, loggerFactory), loggerFactory, true);
+            this.metric = new MetricsProcessor(config, evaluationAnalyticsCache, targetAnalyticsCache, new AnalyticsPublisherService(connector, evaluationAnalyticsCache, targetAnalyticsCache, loggerFactory), loggerFactory, true);
             Start();
         }
         internal void Start()

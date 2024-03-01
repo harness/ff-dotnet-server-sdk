@@ -9,64 +9,23 @@ namespace io.harness.cfsdk.client.api
     public class Config
     {
         public static int MIN_FREQUENCY = 60;
-
-        public string ConfigUrl { get => configUrl; }
-        internal string configUrl = "https://config.ff.harness.io/api/1.0";
-        public string EventUrl { get => eventUrl; }
-        internal string eventUrl = "https://events.ff.harness.io/api/1.0";
-        public bool StreamEnabled { get => streamEnabled; }
-        internal bool streamEnabled = true;
-
-        public int PollIntervalInMiliSeconds { get => pollIntervalInSeconds * 1000; }
-        internal int pollIntervalInSeconds = 60;
-        
-        public int MaxAuthRetries { get => maxAuthRetries; }
-        internal int maxAuthRetries = 10;
-
-        // configurations for Analytics
-        public bool AnalyticsEnabled { get => analyticsEnabled; }
         internal bool analyticsEnabled = true;
-
-        public int Frequency { get => Math.Max(frequency, Config.MIN_FREQUENCY); }
-        private int frequency = 60;
-
-        public ICache Cache { get => cache; }
         internal ICache cache = new FeatureSegmentCache();
-
-        public IStore Store { get => store;  }
-        internal IStore store = null;
-
-        //BufferSize must be a power of 2 for LMAX to work. This function vaidates
-        //that. Source: https://stackoverflow.com/a/600306/1493480
-        public int BufferSize => bufferSize;
-        internal int bufferSize = 1024;
-
-
-        /** timeout in milliseconds to connect to CF Server */
-        public int ConnectionTimeout { get =>connectionTimeout;}
+        internal string configUrl = "https://config.ff.harness.io/api/1.0";
         internal int connectionTimeout = 10000;
-
-        /** timeout in milliseconds for reading data from CF Server */
-        public int ReadTimeout { get => readTimeout;  }
-        internal int readTimeout { get; set; } = 30000;
-
-        /** timeout in milliseconds for writing data to CF Server */
-        public int WriteTimeout { get => writeTimeout;  }
-        internal int writeTimeout { get; set; } = 10000;
-
-        public bool Debug { get => debug;  }
-        internal bool debug { get; set; } = false;
-
-        /** If metrics service POST call is taking > this time, we need to know about it */
-
-        public long MetricsServiceAcceptableDuration { get => metricsServiceAcceptableDuration;  }
+        internal string eventUrl = "https://events.ff.harness.io/api/1.0";
+        private readonly int frequency = 60;
+        internal int maxAuthRetries = 10;
         internal long metricsServiceAcceptableDuration = 10000;
+        internal int pollIntervalInSeconds = 60;
+        internal IStore store;
+        internal bool streamEnabled = true;
+        internal int evaluationMetricsMaxSize = 10000;
+        internal int targetMetricsMaxSize = 100000;
 
-        public ILoggerFactory LoggerFactory { get; set; }
-
-        public List<X509Certificate2> TlsTrustedCAs { get; set; } = new();
-
-        public Config(string configUrl, string eventUrl, bool streamEnabled, int pollIntervalInSeconds, bool analyticsEnabled, int frequency, int bufferSize,  int connectionTimeout, int readTimeout, int writeTimeout, bool debug, long metricsServiceAcceptableDuration)
+        public Config(string configUrl, string eventUrl, bool streamEnabled, int pollIntervalInSeconds,
+            bool analyticsEnabled, int frequency, int targetMetricsMaxSize, int connectionTimeout, int readTimeout,
+            int writeTimeout, bool debug, long metricsServiceAcceptableDuration)
         {
             this.configUrl = configUrl;
             this.eventUrl = eventUrl;
@@ -74,7 +33,7 @@ namespace io.harness.cfsdk.client.api
             this.pollIntervalInSeconds = pollIntervalInSeconds;
             this.analyticsEnabled = analyticsEnabled;
             this.frequency = frequency;
-            this.bufferSize = bufferSize;
+            this.targetMetricsMaxSize = targetMetricsMaxSize;
             this.connectionTimeout = connectionTimeout;
             this.readTimeout = readTimeout;
             this.writeTimeout = writeTimeout;
@@ -86,16 +45,68 @@ namespace io.harness.cfsdk.client.api
         {
         }
 
+        public string ConfigUrl => configUrl;
+        public string EventUrl => eventUrl;
+        public bool StreamEnabled => streamEnabled;
+
+        public int PollIntervalInMiliSeconds => pollIntervalInSeconds * 1000;
+
+        public int MaxAuthRetries => maxAuthRetries;
+
+        // configurations for Analytics
+        public bool AnalyticsEnabled => analyticsEnabled;
+
+        public int Frequency => Math.Max(frequency, MIN_FREQUENCY);
+
+        public ICache Cache => cache;
+
+        public IStore Store => store;
+
+        public int TargetMetricsMaxSize => targetMetricsMaxSize;
+        public int EvaluationMetricsMaxSize => evaluationMetricsMaxSize;
+
+
+        /**
+         * timeout in milliseconds to connect to CF Server
+         */
+        public int ConnectionTimeout => connectionTimeout;
+
+        /**
+         * timeout in milliseconds for reading data from CF Server
+         */
+        public int ReadTimeout => readTimeout;
+
+        internal int readTimeout { get; set; } = 30000;
+
+        /**
+         * timeout in milliseconds for writing data to CF Server
+         */
+        public int WriteTimeout => writeTimeout;
+
+        internal int writeTimeout { get; set; } = 10000;
+
+        public bool Debug => debug;
+        internal bool debug { get; set; }
+
+        /**
+         * If metrics service POST call is taking > this time, we need to know about it
+         */
+
+        public long MetricsServiceAcceptableDuration => metricsServiceAcceptableDuration;
+
+        public ILoggerFactory LoggerFactory { get; set; }
+
+        public List<X509Certificate2> TlsTrustedCAs { get; set; } = new();
+
         public static ConfigBuilder Builder()
         {
             return new ConfigBuilder();
         }
-        
     }
 
     public class ConfigBuilder
     {
-        Config configtobuild;
+        private readonly Config configtobuild;
 
         public ConfigBuilder()
         {
@@ -109,111 +120,118 @@ namespace io.harness.cfsdk.client.api
 
         public ConfigBuilder SetPollingInterval(int pollIntervalInSeconds)
         {
-            this.configtobuild.pollIntervalInSeconds = pollIntervalInSeconds;
+            configtobuild.pollIntervalInSeconds = pollIntervalInSeconds;
             return this;
         }
+
         public ConfigBuilder SetCache(ICache cache)
         {
-            this.configtobuild.cache = cache;
+            configtobuild.cache = cache;
             return this;
         }
+
         public ConfigBuilder SetStore(IStore store)
         {
-            this.configtobuild.store = store;
+            configtobuild.store = store;
             return this;
         }
+
         public ConfigBuilder SetStreamEnabled(bool enabled = true)
         {
             configtobuild.streamEnabled = enabled;
             return this;
         }
+
         public ConfigBuilder MetricsServiceAcceptableDuration(long duration = 10000)
         {
             configtobuild.metricsServiceAcceptableDuration = duration;
             return this;
         }
+
         public ConfigBuilder SetAnalyticsEnabled(bool analyticsenabled = true)
         {
-            this.configtobuild.analyticsEnabled = analyticsenabled;
+            configtobuild.analyticsEnabled = analyticsenabled;
             return this;
         }
+
         public ConfigBuilder ConfigUrl(string configUrl)
         {
-            this.configtobuild.configUrl = configUrl;
+            configtobuild.configUrl = configUrl;
             return this;
         }
+
         public ConfigBuilder EventUrl(string eventUrl)
         {
-            this.configtobuild.eventUrl = eventUrl;
+            configtobuild.eventUrl = eventUrl;
             return this;
         }
+
         public ConfigBuilder connectionTimeout(int connectionTimeout)
         {
-            this.configtobuild.connectionTimeout = connectionTimeout;
+            configtobuild.connectionTimeout = connectionTimeout;
             return this;
         }
+
         public ConfigBuilder readTimeout(int readTimeout)
         {
-            this.configtobuild.readTimeout = readTimeout;
+            configtobuild.readTimeout = readTimeout;
             return this;
         }
 
         public ConfigBuilder writeTimeout(int writeTimeout)
         {
-            this.configtobuild.writeTimeout = writeTimeout;
+            configtobuild.writeTimeout = writeTimeout;
             return this;
         }
 
         public ConfigBuilder debug(bool debug)
         {
-            this.configtobuild.debug = debug;
+            configtobuild.debug = debug;
             return this;
         }
 
-        /*
-        BufferSize must be a power of 2 for LMAX to work This function vaidates
-        that. Source: https://stackoverflow.com/a/600306/1493480
-        The max BufferSize that can be set is 4096. 
-        Defaults to 2048 if not a power of 2 or over 4096.
-        */
+        /// <summary>
+        /// <para>
+        /// Set the maximum number of unique targets (a target is considered unique based on its identifier and attributes) used in evaluations that the SDK will store in memory before sending on to the Feature
+        /// Flags analytics service, at the end of an analytics interval. These targets will then be available to use within the
+        /// Feature Flags UI. Defaults to 100,000. Does not affect flag evaluation metrics.
+        /// Note: the maximum number is 100,000 unique targets. 
+        /// If a number greater than this is set, it will default to 100,000.
+        /// </para>
+        /// </summary>
+        /// <param name="bufferSize">The maximum number of targets that are stored and sent in a given interval. Default is 20,000.</param>
         public ConfigBuilder SetBufferSize(int bufferSize)
         {
-            // Check if bufferSize is a power of two
-            var isPowerOfTwo = bufferSize > 0 && (bufferSize & (bufferSize - 1)) == 0;
-
-            if (!isPowerOfTwo || bufferSize > 4096)
+            if (bufferSize > 100000)
             {
-                // Log a warning if bufferSize is not a power of two or if it's greater than 4096
-                bufferSize = 2048; // Set default value
+                configtobuild.targetMetricsMaxSize = 100000;
+                return this;
             }
-
-            configtobuild.bufferSize = bufferSize;
+            configtobuild.targetMetricsMaxSize = bufferSize;
             return this;
         }
 
         /**
          * <summary>
-         * Set an ILoggerFactory for the SDK. note: cannot be used in conjunction with getInstance()
-         * <summary>
+         *     Set an ILoggerFactory for the SDK. note: cannot be used in conjunction with getInstance()
+         *     </summary>
          */
         public ConfigBuilder LoggerFactory(ILoggerFactory loggerFactory)
         {
-            this.configtobuild.LoggerFactory = loggerFactory;
+            configtobuild.LoggerFactory = loggerFactory;
             return this;
         }
 
         /**
          * <summary>
-         * List of trusted CAs - for when the given config/event URLs are signed with a private CA. You
-         * should include intermediate CAs too to allow the HTTP client to build a full trust chain.
+         *     List of trusted CAs - for when the given config/event URLs are signed with a private CA. You
+         *     should include intermediate CAs too to allow the HTTP client to build a full trust chain.
          * </summary>
          */
-        public ConfigBuilder TlsTrustedCAs( List<X509Certificate2> certs )
+        public ConfigBuilder TlsTrustedCAs(List<X509Certificate2> certs)
         {
-            this.configtobuild.TlsTrustedCAs = certs;
+            configtobuild.TlsTrustedCAs = certs;
             return this;
         }
-
-
     }
 }

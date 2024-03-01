@@ -23,28 +23,32 @@ namespace io.harness.cfsdk.client.api.analytics
         private static readonly string Server = "server";
         private static readonly string SdkLanguage = "SDK_LANGUAGE";
         private static readonly string SdkVersion = "SDK_VERSION";
-        private readonly AnalyticsCache analyticsCache;
         private readonly IConnector connector;
+        private readonly EvaluationAnalyticsCache evaluationAnalyticsCache;
         private readonly ILogger<AnalyticsPublisherService> logger;
 
         private readonly string sdkVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "";
+        private readonly TargetAnalyticsCache targetAnalyticsCache;
 
-        public AnalyticsPublisherService(IConnector connector, AnalyticsCache analyticsCache,
+        public AnalyticsPublisherService(IConnector connector, EvaluationAnalyticsCache evaluationAnalyticsCache,
+            TargetAnalyticsCache targetAnalyticsCache,
             ILoggerFactory loggerFactory)
         {
-            this.analyticsCache = analyticsCache;
+            this.evaluationAnalyticsCache = evaluationAnalyticsCache;
+            this.targetAnalyticsCache = targetAnalyticsCache;
             this.connector = connector;
             logger = loggerFactory.CreateLogger<AnalyticsPublisherService>();
         }
 
         public void SendDataAndResetCache()
         {
-            var all = analyticsCache.GetAllElements();
+            var evaluationAnalytics = evaluationAnalyticsCache.GetAllElements();
+            var targetAnalytics = targetAnalyticsCache.GetAllElements();
 
-            if (all.Count != 0)
+            if (evaluationAnalytics.Count != 0)
                 try
                 {
-                    var metrics = PrepareMessageBody(all);
+                    var metrics = PrepareMessageBody(evaluationAnalytics, targetAnalytics);
                     if ((metrics.MetricsData != null && metrics.MetricsData.Count > 0)
                         || (metrics.TargetData != null && metrics.TargetData.Count > 0))
                     {
@@ -55,7 +59,8 @@ namespace io.harness.cfsdk.client.api.analytics
                     foreach (var uniqueTarget in StagingSeenTargets.Keys) SeenTargets.TryAdd(uniqueTarget, 0);
                     StagingSeenTargets.Clear();
                     logger.LogDebug("Successfully sent analytics data to the server");
-                    analyticsCache.resetCache();
+                    evaluationAnalyticsCache.resetCache();
+                    targetAnalyticsCache.resetCache();
                 }
                 catch (CfClientException ex)
                 {
@@ -65,63 +70,67 @@ namespace io.harness.cfsdk.client.api.analytics
                 }
         }
 
-        private Metrics PrepareMessageBody(IDictionary<Analytics, int> all)
+        private Metrics PrepareMessageBody(IDictionary<EvaluationAnalytics, int> evaluationsCache,
+            IDictionary<TargetAnalytics, int> targetsCache)
         {
             var metrics = new Metrics();
             metrics.TargetData = new List<TargetData>();
             metrics.MetricsData = new List<MetricsData>();
 
-            foreach (var entry in all)
+            // Handle EvaluationAnalytics
+            foreach (var evaluationAnalytic in evaluationsCache)
             {
-                var analytics = entry.Key;
-                var count = entry.Value;
+                var evaluation = evaluationAnalytic.Key;
+                var count = evaluationAnalytic.Value;
 
-                // Handle EvaluationAnalytics
-                if (analytics is EvaluationAnalytics evaluationAnalytics)
+                var metricsData = new MetricsData();
+                metricsData.Timestamp = GetCurrentUnixTimestampMillis();
+                metricsData.Count = count;
+                metricsData.MetricsType = MetricsDataMetricsType.FFMETRICS;
+
+                SetMetricsAttributes(metricsData, FeatureNameAttribute, evaluation.FeatureConfig.Feature);
+                SetMetricsAttributes(metricsData, VariationIdentifierAttribute,
+                    evaluation.Variation.Identifier);
+                SetMetricsAttributes(metricsData, VariationValueAttribute, evaluation.Variation.Value);
+                SetMetricsAttributes(metricsData, TargetAttribute, evaluation.Target.Identifier);
+                SetCommonSdkAttributes(metricsData);
+                StagingSeenTargets.TryAdd(evaluation.Target, 0);
+                metrics.MetricsData.Add(metricsData);
+            }
+
+            // Handle TargetAnalytics
+            foreach (var targetAnalytic in targetsCache)
+            {
+                var target = targetAnalytic.Key.Target;
+                if (target != null && !SeenTargets.ContainsKey(target) && !target.IsPrivate)
                 {
-                    var metricsData = new MetricsData();
-                    metricsData.Timestamp = GetCurrentUnixTimestampMillis();
-                    metricsData.Count = count;
-                    metricsData.MetricsType = MetricsDataMetricsType.FFMETRICS;
-
-                    SetMetricsAttributes(metricsData, FeatureNameAttribute, evaluationAnalytics.FeatureConfig.Feature);
-                    SetMetricsAttributes(metricsData, VariationIdentifierAttribute,
-                        evaluationAnalytics.Variation.Identifier);
-                    SetMetricsAttributes(metricsData, VariationValueAttribute, evaluationAnalytics.Variation.Value);
-                    SetMetricsAttributes(metricsData, TargetAttribute, evaluationAnalytics.Target.Identifier);
-                    SetCommonSdkAttributes(metricsData);
-                    StagingSeenTargets.TryAdd(evaluationAnalytics.Target, 0);
-                    metrics.MetricsData.Add(metricsData);
-                }
-
-                // Handle TargetAnalytics
-                else if (analytics is TargetAnalytics targetAnalytics)
-                {
-                    var target = targetAnalytics.Target;
-                    if (target != null && !SeenTargets.ContainsKey(target) && !target.IsPrivate)
+                    var targetData = new TargetData
                     {
-                        var targetData = new TargetData
-                        {
-                            Identifier = target.Identifier,
-                            Name = target.Name,
-                            Attributes = new List<KeyValue>()
-                        };
+                        Identifier = target.Identifier,
+                        Name = target.Name,
+                        Attributes = new List<KeyValue>()
+                    };
 
-                        // Add target attributes, respecting private attributes
-                        foreach (var attribute in target.Attributes)
-                            if (target.PrivateAttributes == null || !target.PrivateAttributes.Contains(attribute.Key))
-                                targetData.Attributes.Add(new KeyValue
-                                    { Key = attribute.Key, Value = attribute.Value });
+                    // Add target attributes, respecting private attributes
+                    foreach (var attribute in target.Attributes)
+                        if (target.PrivateAttributes == null || !target.PrivateAttributes.Contains(attribute.Key))
+                            targetData.Attributes.Add(new KeyValue
+                                { Key = attribute.Key, Value = attribute.Value });
 
-                        // Add to StagingSeenTargets for future reference
-                        StagingSeenTargets.TryAdd(target, 0);
+                    // Add to StagingSeenTargets for future reference
+                    StagingSeenTargets.TryAdd(target, 0);
 
-                        metrics.TargetData.Add(targetData);
-                    }
+                    metrics.TargetData.Add(targetData);
                 }
             }
 
+
             return metrics;
+        }
+        
+        public bool IsTargetSeen(Target target)
+        {
+            return SeenTargets.ContainsKey(target);
         }
 
         private void SetCommonSdkAttributes(MetricsData metricsData)
