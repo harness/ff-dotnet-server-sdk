@@ -119,12 +119,9 @@ namespace io.harness.cfsdk.client.api.analytics
             return SeenTargets.ContainsKey(target);
         }
         
-        public bool MarkTargetAsSeen(Target target)
+        public void MarkTargetAsSeen(Target target)
         {
-            // Attempt to mark the target as seen by adding it to the SeenTargets dictionary.
-            // The byte value associated with each target is not used, so it can be set to any arbitrary value.
-            // We use 0 here for simplicity. The key operation is whether the target can be added (i.e., has not been seen before).
-            return SeenTargets.TryAdd(target, 0);
+            SeenTargets.TryAdd(target, 0);
         }
 
 
