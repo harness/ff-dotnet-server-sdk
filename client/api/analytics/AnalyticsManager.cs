@@ -118,6 +118,8 @@ namespace io.harness.cfsdk.client.api.analytics
             // change did not go as far as to maintain two caches (due to effort involved), but differentiate them based on subclassing, so 
             // the counter used for target metrics isn't needed, but causes no issue. 
             targetAnalyticsCache.Put(targetAnalytics, 1);
+
+            analyticsPublisherService.MarkTargetAsSeen(target);
         }
 
         private void LogMetricsIgnoredWarning(string cacheType, int cacheSize, int bufferSize)
