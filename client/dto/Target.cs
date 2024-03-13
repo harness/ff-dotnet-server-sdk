@@ -20,8 +20,33 @@ namespace io.harness.cfsdk.client.dto
         {
             attributes = new Dictionary<string, string>();
         }
+        
+        public Target(string identifier, string name, Dictionary<string, string> attributes)
+        {
+            if (attributes == null)
+            {
+                Attributes = new Dictionary<string, string>();
+            }
+            else
+            {
+                Attributes = attributes;
+            }
 
-        [Obsolete("isPrivate and privateAttributes will be removed in a future release use other constructor instead")]
+            Identifier = identifier;
+            Name = name;
+            IsPrivate = false;
+        }
+        
+        public Target(string identifier, string name, Dictionary<string, string> attributes, bool isPrivate)
+        {
+            this.attributes = attributes ?? new Dictionary<string, string>();
+            this.identifier = identifier;
+            this.name = name;
+            this.isPrivate = isPrivate;
+        }
+
+
+        [Obsolete("privateAttributes will be removed in a future release. Use Target(string identifier, string name, Dictionary<string, string> attributes, bool isPrivate) to mark the entire target as private.")]
         public Target(string identifier, string name, Dictionary<string, string> attributes, bool isPrivate, HashSet<string> privateAttributes)
         {
             if (attributes == null)
@@ -39,27 +64,9 @@ namespace io.harness.cfsdk.client.dto
             PrivateAttributes = privateAttributes;
         }
 
-        public Target(string identifier, string name, Dictionary<string, string> attributes)
-        {
-            if (attributes == null)
-            {
-                Attributes = new Dictionary<string, string>();
-            }
-            else
-            {
-                Attributes = attributes;
-            }
-
-            Identifier = identifier;
-            Name = name;
-            IsPrivate = false;
-        }
-
         public string Name { get => name; set => name = value; }
         public string Identifier { get => identifier; set => identifier = value; }
         public Dictionary<string, string> Attributes { get => attributes; set => attributes = value; }
-
-        [Obsolete("Private attributes will be removed in a future release")]
         public bool IsPrivate { get => isPrivate; set => isPrivate = value; }
 
         [Obsolete("Private attributes will be removed in a future release")]
@@ -149,7 +156,6 @@ namespace io.harness.cfsdk.client.dto
             return this;
         }
 
-        [Obsolete("Private attributes will be removed in a future release")]
         public TargetBuilder IsPrivate(bool isPrivate)
         {
             this.isPrivate = isPrivate;

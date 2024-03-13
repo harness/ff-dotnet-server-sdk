@@ -96,6 +96,13 @@ namespace io.harness.cfsdk.client.api.analytics
 
         private void PushToTargetAnalyticsCache(Target target)
         {
+
+            if (target.IsPrivate)
+            {
+                // Target is marked as private, so don't send it in analytics
+                return;
+            }
+            
             if (analyticsPublisherService.IsTargetSeen(target))
             {
                 // Target has already been processed in a previous interval, so ignore it.
@@ -118,6 +125,8 @@ namespace io.harness.cfsdk.client.api.analytics
             // change did not go as far as to maintain two caches (due to effort involved), but differentiate them based on subclassing, so 
             // the counter used for target metrics isn't needed, but causes no issue. 
             targetAnalyticsCache.Put(targetAnalytics, 1);
+
+            analyticsPublisherService.MarkTargetAsSeen(target);
         }
 
         private void LogMetricsIgnoredWarning(string cacheType, int cacheSize, int bufferSize)

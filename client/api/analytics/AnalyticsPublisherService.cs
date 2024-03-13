@@ -17,9 +17,7 @@ namespace io.harness.cfsdk.client.api.analytics
         private static readonly string VariationIdentifierAttribute = "variationIdentifier";
         private static readonly string TargetAttribute = "target";
         internal static readonly ConcurrentDictionary<Target, byte> SeenTargets = new();
-        private static readonly ConcurrentDictionary<Target, byte> StagingSeenTargets = new();
         private static readonly string SdkType = "SDK_TYPE";
-        private static readonly string AnonymousTarget = "anonymous";
         private static readonly string Server = "server";
         private static readonly string SdkLanguage = "SDK_LANGUAGE";
         private static readonly string SdkVersion = "SDK_VERSION";
@@ -55,9 +53,7 @@ namespace io.harness.cfsdk.client.api.analytics
                         logger.LogDebug("Sending analytics data :{@a}", metrics);
                         connector.PostMetrics(metrics);
                     }
-
-                    foreach (var uniqueTarget in StagingSeenTargets.Keys) SeenTargets.TryAdd(uniqueTarget, 0);
-                    StagingSeenTargets.Clear();
+                    
                     logger.LogDebug("Successfully sent analytics data to the server");
                     evaluationAnalyticsCache.resetCache();
                     targetAnalyticsCache.resetCache();
@@ -94,7 +90,6 @@ namespace io.harness.cfsdk.client.api.analytics
                 SetMetricsAttributes(metricsData, VariationValueAttribute, evaluation.Variation.Value);
                 SetMetricsAttributes(metricsData, TargetAttribute, evaluation.Target.Identifier);
                 SetCommonSdkAttributes(metricsData);
-                StagingSeenTargets.TryAdd(evaluation.Target, 0);
                 metrics.MetricsData.Add(metricsData);
             }
 
@@ -102,7 +97,7 @@ namespace io.harness.cfsdk.client.api.analytics
             foreach (var targetAnalytic in targetsCache)
             {
                 var target = targetAnalytic.Key.Target;
-                if (target != null && !SeenTargets.ContainsKey(target) && !target.IsPrivate)
+                if (target != null)
                 {
                     var targetData = new TargetData
                     {
@@ -110,15 +105,6 @@ namespace io.harness.cfsdk.client.api.analytics
                         Name = target.Name,
                         Attributes = new List<KeyValue>()
                     };
-
-                    // Add target attributes, respecting private attributes
-                    foreach (var attribute in target.Attributes)
-                        if (target.PrivateAttributes == null || !target.PrivateAttributes.Contains(attribute.Key))
-                            targetData.Attributes.Add(new KeyValue
-                                { Key = attribute.Key, Value = attribute.Value });
-
-                    // Add to StagingSeenTargets for future reference
-                    StagingSeenTargets.TryAdd(target, 0);
 
                     metrics.TargetData.Add(targetData);
                 }
@@ -132,6 +118,12 @@ namespace io.harness.cfsdk.client.api.analytics
         {
             return SeenTargets.ContainsKey(target);
         }
+        
+        public void MarkTargetAsSeen(Target target)
+        {
+            SeenTargets.TryAdd(target, 0);
+        }
+
 
         private void SetCommonSdkAttributes(MetricsData metricsData)
         {
