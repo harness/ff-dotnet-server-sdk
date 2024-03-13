@@ -24,6 +24,20 @@ CfClient.Instance.Initialize(apiKey, Config.Builder()
 | enableStream    | SetStreamEnabled(true)                            | Enable streaming mode.                                                                                                                           | true                                 |
 | enableAnalytics | SetAnalyticsEnabled(true)                         | Enable analytics.  Metrics data is posted every 60s                                                                                              | true                                 |
 
+# Anonymous Target
+
+If you do not want a `Target` to be sent to Harness servers, you can use the `isPrivate` field.
+
+```csharp
+Target target1 = Target.builder()
+                .Identifier("myIdentifier")
+                .Name("myName")
+                .IsPrivate(true)
+                .Attributes(new Dictionary<string, string>(){{"email", "demo@harness.io"}})
+                .build();
+```            
+
+
 ## Logging Configuration
 You can configure the logger using Serilog.
 Add Serilog to your project with the following commands
