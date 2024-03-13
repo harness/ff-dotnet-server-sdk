@@ -97,7 +97,7 @@ namespace io.harness.cfsdk.client.api.analytics
             foreach (var targetAnalytic in targetsCache)
             {
                 var target = targetAnalytic.Key.Target;
-                if (target != null && !target.IsPrivate)
+                if (target != null)
                 {
                     var targetData = new TargetData
                     {

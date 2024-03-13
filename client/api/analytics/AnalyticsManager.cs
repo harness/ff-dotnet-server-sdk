@@ -96,6 +96,13 @@ namespace io.harness.cfsdk.client.api.analytics
 
         private void PushToTargetAnalyticsCache(Target target)
         {
+
+            if (target.IsPrivate)
+            {
+                // Target is marked as private, so don't send it in analytics
+                return;
+            }
+            
             if (analyticsPublisherService.IsTargetSeen(target))
             {
                 // Target has already been processed in a previous interval, so ignore it.
