@@ -105,6 +105,11 @@ namespace io.harness.cfsdk.client.api.analytics
                         Name = target.Name,
                         Attributes = new List<KeyValue>()
                     };
+                    
+                    // Populate target attributes
+                    foreach (var attribute in target.Attributes)
+                            targetData.Attributes.Add(new KeyValue
+                                { Key = attribute.Key, Value = attribute.Value });
 
                     metrics.TargetData.Add(targetData);
                 }
