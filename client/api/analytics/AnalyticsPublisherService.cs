@@ -16,11 +16,11 @@ namespace io.harness.cfsdk.client.api.analytics
         private static readonly string VariationValueAttribute = "featureValue";
         private static readonly string VariationIdentifierAttribute = "variationIdentifier";
         private static readonly string TargetAttribute = "target";
-        internal static readonly ConcurrentDictionary<Target, byte> SeenTargets = new();
         private static readonly string SdkType = "SDK_TYPE";
         private static readonly string Server = "server";
         private static readonly string SdkLanguage = "SDK_LANGUAGE";
         private static readonly string SdkVersion = "SDK_VERSION";
+        internal readonly ConcurrentDictionary<Target, byte> SeenTargets = new();
         private readonly IConnector connector;
         private readonly EvaluationAnalyticsCache evaluationAnalyticsCache;
         private readonly ILogger<AnalyticsPublisherService> logger;
