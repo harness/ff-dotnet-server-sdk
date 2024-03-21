@@ -53,7 +53,15 @@ namespace io.harness.cfsdk.client.api
             try
             {
                 await connector.Authenticate();
-                callback.OnAuthenticationSuccess();
+                try
+                {
+                    callback.OnAuthenticationSuccess();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "OnAuthenticationSuccess callback threw an exception, this will be ignored: {Message}", ex.Message);
+                }
+
                 Stop();
                 logger.LogDebug("Stopping authentication service");
             }

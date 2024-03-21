@@ -36,6 +36,61 @@ namespace ff_server_sdk_test.api
         }
 
         [Test]
+        public void IfFirstTargetSegmentsFailsAuthShouldNotFail() // FFM-11002
+        {
+            server
+                .Given(Request.Create().WithPath("/api/1.0/client/auth").UsingPost())
+                .RespondWith(MakeAuthResponse());
+
+            server
+                .Given(Request.Create()
+                    .WithPath("/api/1.0/client/env/00000000-0000-0000-0000-000000000000/feature-configs").UsingGet())
+                .RespondWith(Response.Create()
+                    .WithStatusCode(200)
+                    .WithBody(MakeFeatureConfigBodyWithVariationToTargetMapSetToNull()));
+
+            server
+                .Given(Request.Create()
+                    .WithPath("/api/1.0/client/env/00000000-0000-0000-0000-000000000000/target-segments").UsingGet())
+                .RespondWith(Response.Create()
+                    .WithStatusCode(200)
+                    .WithFault(FaultType.MALFORMED_RESPONSE_CHUNK)
+                    .WithBody(MakeTargetSegmentsBody()));
+
+            var target =
+                Target.builder()
+                    .Name("CfClientTest")
+                    .Identifier("CfClientTest")
+                    .build();
+
+            Console.WriteLine("Running at " + server.Url);
+
+            var client = new CfClient("dummy api key", Config.Builder()
+                .debug(true)
+                .SetStreamEnabled(false)
+                .SetAnalyticsEnabled(false)
+                .ConfigUrl(server.Url + "/api/1.0")
+                .Build());
+
+            CountdownEvent initLatch = new CountdownEvent(1);
+
+            client.InitializationCompleted += (sender, e) =>
+            {
+                Console.WriteLine("Initialization Completed");
+                initLatch.Signal();
+            };
+
+            var success = client.WaitForInitialization(10_000);
+            Assert.IsTrue(success, "timeout while waiting for WaitForInitialization()");
+
+            var ok = initLatch.Wait(TimeSpan.FromMinutes(2));
+            Assert.That(ok, Is.True, "failed to init in time");
+
+            var result = client.stringVariation("FeatureWithVariationToTargetMapSetAsNull", target, "failed");
+            Assert.That(result, Is.EqualTo("on"), "did not get correct flag state");
+        }
+
+        [Test]
         public void ShouldNotThrowErrorIfTargetToVariationMapNotPopulated()
         {
             server

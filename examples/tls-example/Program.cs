@@ -1,6 +1,7 @@
 
 using System.Security.Cryptography.X509Certificates;
 using io.harness.cfsdk.client.api;
+using io.harness.cfsdk.client.dto;
 using Serilog;
 using Serilog.Extensions.Logging;
 
@@ -38,9 +39,14 @@ namespace io.harness.tls_example
 
             client.WaitForInitialization();
 
+            Target target = Target.builder()
+                .Name("DotNET SDK TLS")
+                .Identifier("dotnetsdktls")
+                .build();
+
             while (true)
             {
-                var resultBool = client.boolVariation(flagName, null, false);
+                var resultBool = client.boolVariation(flagName, target, false);
                 Console.WriteLine($"Flag '{flagName}' = " + resultBool);
                 Thread.Sleep(2 * 1000);
             }
