@@ -44,7 +44,6 @@ namespace io.harness.cfsdk.client.api
         private readonly IRepository repository;
         private readonly IPollCallback callback;
         private readonly Config config;
-        private readonly SemaphoreSlim readyEvent;
         private Timer pollTimer;
         private bool isInitialized = false;
 
@@ -141,13 +140,12 @@ namespace io.harness.cfsdk.client.api
 
                 if (isInitialized) return;
                 isInitialized = true;
-                callback.OnPollerReady();
-                readyEvent.Release();
+                callback?.OnPollerReady();
             }
             catch(Exception ex)
             {
                 logger.LogWarning(ex,"Polling failed with error: {reason}. Will retry in {pollIntervalInSeconds}", ex.Message, config.pollIntervalInSeconds);
-                callback.OnPollError(ex.Message);
+                callback?.OnPollError(ex.Message);
             }
         }
     }
