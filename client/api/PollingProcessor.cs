@@ -68,7 +68,15 @@ namespace io.harness.cfsdk.client.api
             }
 
             logger.LogDebug("Populate cache for first time after authentication");
-            Task.WhenAll(new List<Task> { ProcessFlags(), ProcessSegments() }).Wait();
+
+            try
+            {
+                Task.WhenAll(new List<Task> { ProcessFlags(), ProcessSegments() }).Wait();
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "First poll failed: {Reason}", ex.Message);
+            }
 
             logger.LogDebug("SDKCODE(poll:4000): Polling started, intervalMs: {intervalMs}", intervalMs);
             // start timer which will initiate periodic reading of flags and segments
@@ -97,7 +105,7 @@ namespace io.harness.cfsdk.client.api
                 }
 
             }
-            catch (CfClientException ex)
+            catch (Exception ex)
             {
                 logger.LogError(ex,"Exception was raised when fetching flags data with the message: {reason}", ex.Message);
                 throw;
@@ -115,8 +123,10 @@ namespace io.harness.cfsdk.client.api
                 {
                     repository.SetSegment(item.Identifier, item);
                 }
+
+                logger.LogDebug("Loaded {SegmentRuleCount}", segments.Count());
             }
-            catch (CfClientException ex)
+            catch (Exception ex)
             {
                 logger.LogError(ex, "Exception was raised when fetching segments data with the message: {reason}", ex.Message);
                 throw;
