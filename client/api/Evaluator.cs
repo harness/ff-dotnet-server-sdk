@@ -47,10 +47,7 @@ namespace io.harness.cfsdk.client.api
         {
             var variation = EvaluateVariation(key, target, FeatureConfigKind.Boolean);
             bool res;
-            if (variation != null && bool.TryParse(variation.Value, out res))
-            {
-                return res;
-            }
+            if (variation != null && bool.TryParse(variation.Value, out res)) return res;
 
             LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
             return defaultValue;
@@ -59,10 +56,7 @@ namespace io.harness.cfsdk.client.api
         public JObject JsonVariation(string key, Target target, JObject defaultValue)
         {
             var variation = EvaluateVariation(key, target, FeatureConfigKind.Json);
-            if (variation != null)
-            {
-                return JObject.Parse(variation.Value);
-            }
+            if (variation != null) return JObject.Parse(variation.Value);
 
             LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
             return defaultValue;
@@ -72,10 +66,7 @@ namespace io.harness.cfsdk.client.api
         {
             var variation = EvaluateVariation(key, target, FeatureConfigKind.Int);
             double res;
-            if (variation != null && double.TryParse(variation.Value, out res))
-            {
-                return res;
-            }
+            if (variation != null && double.TryParse(variation.Value, out res)) return res;
 
             LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
             return defaultValue;
@@ -84,10 +75,7 @@ namespace io.harness.cfsdk.client.api
         public string StringVariation(string key, Target target, string defaultValue)
         {
             var variation = EvaluateVariation(key, target, FeatureConfigKind.String);
-            if (variation != null)
-            {
-                return variation.Value;
-            }
+            if (variation != null) return variation.Value;
 
             LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
             return defaultValue;
@@ -152,8 +140,8 @@ namespace io.harness.cfsdk.client.api
         {
             // TODO - this method needs cleaned up to avoid variable mutation. Too many mutations of the single variable. For now, it works, 
             // but clean up in next release to make it more readable/maintainable.
-            logger.LogDebug("Evaluating: Target({Target}) Flag({Flag})",
-                target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
+            logger.LogDebug("Evaluating: Flag({Flag}) Target({Target})",
+                ToStringHelper.FeatureConfigToString(featureConfig), target.ToString());
             var variation = featureConfig.OffVariation;
             if (featureConfig.State == FeatureState.On)
             {
@@ -166,10 +154,7 @@ namespace io.harness.cfsdk.client.api
                             target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
                 }
 
-                if (variation == null)
-                {
-                    variation = EvaluateRules(featureConfig, target);
-                }
+                if (variation == null) variation = EvaluateRules(featureConfig, target);
                 if (variation == null)
                 {
                     variation = EvaluateDistribution(featureConfig, target);
@@ -177,6 +162,7 @@ namespace io.harness.cfsdk.client.api
                         logger.LogDebug("Percentage rollout matched: Target({Target}) Flag({Flag})",
                             target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
                 }
+
                 if (variation == null)
                 {
                     variation = featureConfig.DefaultServe.Variation;
@@ -185,11 +171,14 @@ namespace io.harness.cfsdk.client.api
                             target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
                 }
             }
+            else
+            {
+                logger.LogDebug("Flag is off:  Flag({Flag})",
+                    ToStringHelper.FeatureConfigToString(featureConfig));
+            }
 
             if (variation != null && featureConfig.Variations != null)
-            {
                 return featureConfig.Variations.FirstOrDefault(var => var.Identifier.Equals(variation));
-            }
 
             return null;
         }
