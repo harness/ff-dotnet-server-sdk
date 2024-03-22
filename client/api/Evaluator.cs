@@ -150,6 +150,10 @@ namespace io.harness.cfsdk.client.api
 
         private Variation Evaluate(FeatureConfig featureConfig, Target target)
         {
+            // TODO - this method needs cleaned up to avoid variable mutation. Too many mutations of the single variable. For now, it works, 
+            // but clean up in next release to make it more readable/maintainable.
+            logger.LogDebug("Evaluating: Target({Target}) Flag({Flag})",
+                target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
             var variation = featureConfig.OffVariation;
             if (featureConfig.State == FeatureState.On)
             {
@@ -162,13 +166,31 @@ namespace io.harness.cfsdk.client.api
                             target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
                 }
 
-                if (variation == null) variation = EvaluateRules(featureConfig, target);
-                if (variation == null) variation = EvaluateDistribution(featureConfig, target);
-                if (variation == null) variation = featureConfig.DefaultServe.Variation;
+                if (variation == null)
+                {
+                    variation = EvaluateRules(featureConfig, target);
+                }
+                if (variation == null)
+                {
+                    variation = EvaluateDistribution(featureConfig, target);
+                    if (variation != null)
+                        logger.LogDebug("Percentage rollout matched: Target({Target}) Flag({Flag})",
+                            target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
+                }
+                if (variation == null)
+                {
+                    variation = featureConfig.DefaultServe.Variation;
+                    if (variation != null)
+                        logger.LogDebug("Default on rule matched: Target({Target}) Flag({Flag})",
+                            target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
+                }
             }
 
             if (variation != null && featureConfig.Variations != null)
+            {
                 return featureConfig.Variations.FirstOrDefault(var => var.Identifier.Equals(variation));
+            }
+
             return null;
         }
 
