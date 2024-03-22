@@ -273,8 +273,8 @@ namespace io.harness.cfsdk.client.api
                     {
                         if (logger.IsEnabled(LogLevel.Debug))
                         {
-                            logger.LogDebug("Target {targetName} excluded from segment {segmentName} via exclude list",
-                                target.Name, segment.Name);
+                            logger.LogDebug("Group excluded rule matched: Target ({targetName}) excluded from group ({segmentName})",
+                                target.ToString(), SegmentToString(segment));
                         }
                         return false;
                     }
@@ -284,8 +284,8 @@ namespace io.harness.cfsdk.client.api
                     {
                         if (logger.IsEnabled(LogLevel.Debug))
                         {
-                            logger.LogDebug("Target {targetName} included in segment {segmentName} via include list",
-                                target.Name, segment.Name);
+                            logger.LogDebug("Group included rule matched: Target {targetName} included in group {segmentName}",
+                                target.ToString(), SegmentToString(segment));
                         }
 
                         return true;
@@ -297,6 +297,11 @@ namespace io.harness.cfsdk.client.api
                         Clause firstSuccess = segment.Rules.FirstOrDefault(r => EvaluateClause(r, target));
                         if (firstSuccess != null)
                         {
+                            if (logger.IsEnabled(LogLevel.Debug))
+                            {
+                                logger.LogDebug("Group condition rule matched: Target {targetName} included in group {segmentName}",
+                                    target.ToString(), SegmentToString(segment));
+                            }
                             return true;
                         }
                     }
@@ -369,6 +374,26 @@ namespace io.harness.cfsdk.client.api
                     return null;
             }
 
+        }
+        
+
+        public  string SegmentToString(Segment segment)
+        {
+            var tagsStr = segment.Tags != null ? string.Join(", ", segment.Tags.Select(t => t.ToString())) : "None";
+            var includedTargetsStr = segment.Included != null ? string.Join(", ", segment.Included.Select(t => t.Identifier)) : "None";
+            var excludedTargetsStr = segment.Excluded != null ? string.Join(", ", segment.Excluded.Select(t => t.Identifier)) : "None";
+            var rulesStr = segment.Rules != null ? string.Join(", ", segment.Rules.Select(ClauseToString)) : "None";
+
+            return $"Identifier: {segment.Identifier}, Name: {segment.Name}, Environment: {segment.Environment}, " +
+                   $"Tags: [{tagsStr}], Included Targets: [{includedTargetsStr}], Excluded Targets: [{excludedTargetsStr}], " +
+                   $"Rules: [{rulesStr}], Created At: {segment.CreatedAt}, Modified At: {segment.ModifiedAt}, Version: {segment.Version}";
+        }
+
+        
+        private string ClauseToString(Clause clause)
+        {
+            var valuesStr = clause.Values != null ? string.Join(", ", clause.Values) : "None";
+            return $"Id: {clause.Id}, Attribute: {clause.Attribute}, Operation: {clause.Op}, Values: [{valuesStr}], Negate: {clause.Negate}";
         }
     }
 }

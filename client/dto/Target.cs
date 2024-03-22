@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace io.harness.cfsdk.client.dto
 {
@@ -74,8 +75,11 @@ namespace io.harness.cfsdk.client.dto
 
         public override string ToString()
         {
-            return "TargetId: " + identifier;
+            var attributesStr = string.Join(", ", Attributes.Select(kv => $"{kv.Key}: {(IsPrivate && PrivateAttributes.Contains(kv.Key) ? "Private" : kv.Value)}"));
+            var privateAttributesStr = IsPrivate ? $"Private Attributes: {string.Join(", ", PrivateAttributes)}" : string.Empty;
+            return $"Identifier: {Identifier}, Name: {Name}, Attributes: {attributesStr}, IsPrivate: {IsPrivate}, {privateAttributesStr}".TrimEnd(',', ' ');
         }
+
 
         public bool isValid()
         {
