@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
@@ -7,275 +6,244 @@ using io.harness.cfsdk.client.api.rules;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using Target = io.harness.cfsdk.client.dto.Target;
 
 [assembly: InternalsVisibleToAttribute("ff-server-sdk-test")]
 
 namespace io.harness.cfsdk.client.api
 {
-    interface IEvaluatorCallback
+    internal interface IEvaluatorCallback
     {
-        void EvaluationProcessed(FeatureConfig featureConfig, dto.Target target, Variation variation);
+        void EvaluationProcessed(FeatureConfig featureConfig, Target target, Variation variation);
     }
-    interface IEvaluator
+
+    internal interface IEvaluator
     {
-        bool BoolVariation(string key, dto.Target target, bool defaultValue);
-        string StringVariation(string key, dto.Target target, string defaultValue);
-        double NumberVariation(string key, dto.Target target, double defaultValue);
-        JObject JsonVariation(string key, dto.Target target, JObject defaultValue);
+        bool BoolVariation(string key, Target target, bool defaultValue);
+        string StringVariation(string key, Target target, string defaultValue);
+        double NumberVariation(string key, Target target, double defaultValue);
+        JObject JsonVariation(string key, Target target, JObject defaultValue);
     }
 
     internal class Evaluator : IEvaluator
     {
+        private readonly IEvaluatorCallback callback;
+        private readonly bool IsAnalyticsEnabled;
         private readonly ILogger<Evaluator> logger;
         private readonly ILoggerFactory loggerFactory;
         private readonly IRepository repository;
-        private readonly IEvaluatorCallback callback;
-        private readonly bool IsAnalyticsEnabled;
 
-        public Evaluator(IRepository repository, IEvaluatorCallback callback, ILoggerFactory loggerFactory, bool isAnalyticsEnabled)
+        public Evaluator(IRepository repository, IEvaluatorCallback callback, ILoggerFactory loggerFactory,
+            bool isAnalyticsEnabled)
         {
             this.repository = repository;
             this.callback = callback;
-            this.logger = loggerFactory.CreateLogger<Evaluator>();
+            logger = loggerFactory.CreateLogger<Evaluator>();
             this.loggerFactory = loggerFactory;
-            this.IsAnalyticsEnabled = isAnalyticsEnabled;
+            IsAnalyticsEnabled = isAnalyticsEnabled;
         }
-        private Variation EvaluateVariation(string key, dto.Target target, FeatureConfigKind kind)
+
+        public bool BoolVariation(string key, Target target, bool defaultValue)
         {
-            FeatureConfig featureConfig = this.repository.GetFlag(key);
+            var variation = EvaluateVariation(key, target, FeatureConfigKind.Boolean);
+            bool res;
+            if (variation != null && bool.TryParse(variation.Value, out res)) return res;
+
+            LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
+            return defaultValue;
+        }
+
+        public JObject JsonVariation(string key, Target target, JObject defaultValue)
+        {
+            var variation = EvaluateVariation(key, target, FeatureConfigKind.Json);
+            if (variation != null) return JObject.Parse(variation.Value);
+
+            LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
+            return defaultValue;
+        }
+
+        public double NumberVariation(string key, Target target, double defaultValue)
+        {
+            var variation = EvaluateVariation(key, target, FeatureConfigKind.Int);
+            double res;
+            if (variation != null && double.TryParse(variation.Value, out res)) return res;
+
+            LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
+            return defaultValue;
+        }
+
+        public string StringVariation(string key, Target target, string defaultValue)
+        {
+            var variation = EvaluateVariation(key, target, FeatureConfigKind.String);
+            if (variation != null) return variation.Value;
+
+            LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
+            return defaultValue;
+        }
+
+        private Variation EvaluateVariation(string key, Target target, FeatureConfigKind kind)
+        {
+            var featureConfig = repository.GetFlag(key);
             if (featureConfig == null || featureConfig.Kind != kind)
                 return null;
 
-            ICollection<Prerequisite> prerequisites = featureConfig.Prerequisites;
+            var prerequisites = featureConfig.Prerequisites;
             if (prerequisites != null && prerequisites.Count > 0)
             {
-                bool prereq = CheckPreRequisite(featureConfig, target);
-                if( !prereq)
-                {
-                    return featureConfig.Variations.FirstOrDefault(v => v.Identifier.Equals(featureConfig.OffVariation));
-                }
+                var prereq = CheckPreRequisite(featureConfig, target);
+                if (!prereq)
+                    return featureConfig.Variations.FirstOrDefault(v =>
+                        v.Identifier.Equals(featureConfig.OffVariation));
             }
 
-            Variation var = Evaluate(featureConfig, target);
-            if(IsAnalyticsEnabled && var != null && callback != null)
-            {
-                this.callback.EvaluationProcessed(featureConfig, target, var);
-            }
+            var var = Evaluate(featureConfig, target);
+            if (IsAnalyticsEnabled && var != null && callback != null)
+                callback.EvaluationProcessed(featureConfig, target, var);
             return var;
         }
 
-        public bool BoolVariation(string key, dto.Target target, bool defaultValue)
-        {
-            Variation variation = EvaluateVariation(key, target, FeatureConfigKind.Boolean);
-            bool res;
-            if (variation != null && Boolean.TryParse(variation.Value, out res))
-            {
-                return res;
-            }
-            else
-            {
-                LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
-                return defaultValue;
-            }
-        }
-
-        public JObject JsonVariation(string key, dto.Target target, JObject defaultValue)
-        {
-            Variation variation = EvaluateVariation(key, target, FeatureConfigKind.Json);
-            if (variation != null)
-            {
-                return JObject.Parse(variation.Value);
-            }
-            else
-            {
-                LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
-                return defaultValue;
-            }
-        }
-
-        public double NumberVariation(string key, dto.Target target, double defaultValue)
-        {
-            Variation variation = EvaluateVariation(key, target, FeatureConfigKind.Int);
-            double res;
-            if (variation != null && Double.TryParse(variation.Value, out res))
-            {
-                return res;
-            }
-            else
-            {
-                LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
-                return defaultValue;
-            }
-        }
-
-        public string StringVariation(string key, dto.Target target, string defaultValue)
-        {
-            Variation variation = EvaluateVariation(key, target, FeatureConfigKind.String);
-            if (variation != null)
-            {
-                return variation.Value;
-            }
-            else
-            {
-                LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
-                return defaultValue;
-            }
-        }
-
-        private void LogEvaluationFailureError(FeatureConfigKind kind, string featureKey, dto.Target target, string defaultValue)
+        private void LogEvaluationFailureError(FeatureConfigKind kind, string featureKey, Target target,
+            string defaultValue)
         {
             if (logger.IsEnabled(LogLevel.Warning))
-            {
                 logger.LogWarning(
                     "SDKCODE(eval:6001): Failed to evaluate {kind} variation for {targetId}, flag {featureId} and the default variation {defaultValue} is being returned",
                     kind, target?.Identifier ?? "null target", featureKey, defaultValue);
-            }
         }
 
-        private bool CheckPreRequisite(FeatureConfig parentFeatureConfig, dto.Target target)
+        private bool CheckPreRequisite(FeatureConfig parentFeatureConfig, Target target)
         {
             if (parentFeatureConfig.Prerequisites != null && parentFeatureConfig.Prerequisites.Count > 0)
             {
-                List<Prerequisite> prerequisites = parentFeatureConfig.Prerequisites.ToList();
+                var prerequisites = parentFeatureConfig.Prerequisites.ToList();
 
-                foreach (Prerequisite pqs in prerequisites)
+                foreach (var pqs in prerequisites)
                 {
-                    FeatureConfig preReqFeatureConfig = this.repository.GetFlag(pqs.Feature);
-                    if (preReqFeatureConfig == null)
-                    {
-                        return true;
-                    }
+                    var preReqFeatureConfig = repository.GetFlag(pqs.Feature);
+                    if (preReqFeatureConfig == null) return true;
 
                     // Pre requisite variation value evaluated below
-                    Variation preReqEvaluatedVariation = Evaluate(preReqFeatureConfig, target);
-                    if(preReqEvaluatedVariation == null)
-                    {
-                        return true;
-                    }
+                    var preReqEvaluatedVariation = Evaluate(preReqFeatureConfig, target);
+                    if (preReqEvaluatedVariation == null) return true;
 
-                    List<string> validPreReqVariations = pqs.Variations.ToList();
-                    if (!validPreReqVariations.Contains(preReqEvaluatedVariation.Identifier))
-                    {
-                        return false;
-                    }
+                    var validPreReqVariations = pqs.Variations.ToList();
+                    if (!validPreReqVariations.Contains(preReqEvaluatedVariation.Identifier)) return false;
 
-                    if (!CheckPreRequisite(preReqFeatureConfig, target))
-                    {
-                        return false;
-                    }
+                    if (!CheckPreRequisite(preReqFeatureConfig, target)) return false;
                 }
             }
+
             return true;
         }
-        private Variation Evaluate(FeatureConfig featureConfig, dto.Target target)
+
+        private Variation Evaluate(FeatureConfig featureConfig, Target target)
         {
-            string variation = featureConfig.OffVariation;
+            // TODO - this method needs cleaned up to avoid variable mutation. Too many mutations of the single variable. For now, it works, 
+            // but clean up in next release to make it more readable/maintainable.
+            logger.LogDebug("Evaluating: Flag({Flag}) Target({Target})",
+                ToStringHelper.FeatureConfigToString(featureConfig), target.ToString());
+            var variation = featureConfig.OffVariation;
             if (featureConfig.State == FeatureState.On)
             {
                 variation = null;
                 if (featureConfig.VariationToTargetMap != null)
                 {
                     variation = EvaluateVariationMap(target, featureConfig.VariationToTargetMap);
+                    if (variation != null)
+                        logger.LogDebug("Specific targeting matched: Target({Target}) Flag({Flag})",
+                            target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
                 }
-                if (variation == null)
-                {
-                    variation = EvaluateRules(featureConfig, target);
-                }
+
+                if (variation == null) variation = EvaluateRules(featureConfig, target);
                 if (variation == null)
                 {
                     variation = EvaluateDistribution(featureConfig, target);
+                    if (variation != null)
+                        logger.LogDebug("Percentage rollout matched: Target({Target}) Flag({Flag})",
+                            target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
                 }
+
                 if (variation == null)
                 {
                     variation = featureConfig.DefaultServe.Variation;
+                    if (variation != null)
+                        logger.LogDebug("Default on rule matched: Target({Target}) Flag({Flag})",
+                            target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
                 }
             }
-
-            if(variation != null && featureConfig.Variations != null)
+            else
             {
+                logger.LogDebug("Flag is off:  Flag({Flag})",
+                    ToStringHelper.FeatureConfigToString(featureConfig));
+            }
+
+            if (variation != null && featureConfig.Variations != null)
                 return featureConfig.Variations.FirstOrDefault(var => var.Identifier.Equals(variation));
-            }
-            return null;
 
-        }
-
-        private string EvaluateVariationMap(dto.Target target, ICollection<VariationMap> variationMaps)
-        {
-            if (variationMaps == null || target == null)
-            {
-                return null;
-            }
-            foreach (VariationMap variationMap in variationMaps)
-            {
-                if (variationMap.Targets != null && variationMap.Targets.ToList().Any(t => t != null && t.Identifier.Equals(target.Identifier)) )
-                {
-                    return variationMap.Variation;
-                }
-                if( variationMap.TargetSegments != null && IsTargetIncludedOrExcludedInSegment(variationMap.TargetSegments.ToList(), target))
-                {
-                    return variationMap.Variation;
-                }
-            }
             return null;
         }
 
-        private string EvaluateRules(FeatureConfig featureConfig, dto.Target target)
+        private string EvaluateVariationMap(Target target, ICollection<VariationMap> variationMaps)
         {
-            if (featureConfig.Rules == null || target == null)
+            if (variationMaps == null || target == null) return null;
+            foreach (var variationMap in variationMaps)
             {
-                return null;
+                if (variationMap.Targets != null && variationMap.Targets.ToList()
+                        .Any(t => t != null && t.Identifier.Equals(target.Identifier))) return variationMap.Variation;
+                if (variationMap.TargetSegments != null &&
+                    IsTargetIncludedOrExcludedInSegment(variationMap.TargetSegments.ToList(), target))
+                    return variationMap.Variation;
             }
 
-            foreach (ServingRule servingRule in featureConfig.Rules.ToList().OrderBy(sr => sr.Priority))
-            {
-                if (servingRule.Clauses != null && servingRule.Clauses.ToList().Any(c => EvaluateClause(c, target) == false))
-                {
-                    continue;
-                }
+            return null;
+        }
 
-                if( servingRule.Serve != null)
+        private string EvaluateRules(FeatureConfig featureConfig, Target target)
+        {
+            if (featureConfig.Rules == null || target == null) return null;
+
+            foreach (var servingRule in featureConfig.Rules.ToList().OrderBy(sr => sr.Priority))
+            {
+                if (servingRule.Clauses != null &&
+                    servingRule.Clauses.ToList().Any(c => EvaluateClause(c, target) == false)) continue;
+
+                if (servingRule.Serve != null)
                 {
-                    if(servingRule.Serve.Distribution != null)
+                    if (servingRule.Serve.Distribution != null)
                     {
-                        DistributionProcessor distributionProcessor = new DistributionProcessor(servingRule.Serve, loggerFactory);
+                        var distributionProcessor = new DistributionProcessor(servingRule.Serve, loggerFactory);
                         return distributionProcessor.loadKeyName(target);
                     }
-                    if( servingRule.Serve.Variation != null)
-                    {
-                        return servingRule.Serve.Variation;
-                    }
+
+                    if (servingRule.Serve.Variation != null) return servingRule.Serve.Variation;
                 }
             }
+
             return null;
         }
 
-       
 
-        private string EvaluateDistribution(FeatureConfig featureConfig, dto.Target target)
+        private string EvaluateDistribution(FeatureConfig featureConfig, Target target)
         {
-            if (featureConfig.Rules == null || target == null)
-            {
-                return null;
-            }
+            if (featureConfig.Rules == null || target == null) return null;
 
-            DistributionProcessor distributionProcessor = new DistributionProcessor(featureConfig.DefaultServe, loggerFactory);
+            var distributionProcessor = new DistributionProcessor(featureConfig.DefaultServe, loggerFactory);
             return distributionProcessor.loadKeyName(target);
         }
-        private bool IsTargetIncludedOrExcludedInSegment(List<string> segmentList, dto.Target target)
+
+        private bool IsTargetIncludedOrExcludedInSegment(List<string> segmentList, Target target)
         {
-            foreach (string segmentIdentifier in segmentList)
+            foreach (var segmentIdentifier in segmentList)
             {
-                Segment segment = this.repository.GetSegment(segmentIdentifier);
+                var segment = repository.GetSegment(segmentIdentifier);
                 if (segment != null)
                 {
                     // check exclude list
                     if (segment.Excluded != null && segment.Excluded.Any(t => t.Identifier.Equals(target.Identifier)))
                     {
                         if (logger.IsEnabled(LogLevel.Debug))
-                        {
-                            logger.LogDebug("Target {targetName} excluded from segment {segmentName} via exclude list",
-                                target.Name, segment.Name);
-                        }
+                            logger.LogDebug("Group excluded rule matched: Target({targetName}) Group({segmentName})",
+                                target.ToString(), ToStringHelper.SegmentToString(segment));
                         return false;
                     }
 
@@ -283,10 +251,8 @@ namespace io.harness.cfsdk.client.api
                     if (segment.Included != null && segment.Included.Any(t => t.Identifier.Equals(target.Identifier)))
                     {
                         if (logger.IsEnabled(LogLevel.Debug))
-                        {
-                            logger.LogDebug("Target {targetName} included in segment {segmentName} via include list",
-                                target.Name, segment.Name);
-                        }
+                            logger.LogDebug("Group included rule matched: Target({targetName}) Group({segmentName})",
+                                target.ToString(), ToStringHelper.SegmentToString(segment));
 
                         return true;
                     }
@@ -294,42 +260,36 @@ namespace io.harness.cfsdk.client.api
                     // if we have rules, at least one should pass
                     if (segment.Rules != null)
                     {
-                        Clause firstSuccess = segment.Rules.FirstOrDefault(r => EvaluateClause(r, target));
+                        var firstSuccess = segment.Rules.FirstOrDefault(r => EvaluateClause(r, target));
                         if (firstSuccess != null)
                         {
+                            if (logger.IsEnabled(LogLevel.Debug))
+                                logger.LogDebug(
+                                    "Group condition rule matched: Target({targetName}) Group({segmentName})",
+                                    target.ToString(), ToStringHelper.SegmentToString(segment));
                             return true;
                         }
                     }
                 }
             }
+
             return false;
         }
-        private bool EvaluateClause(Clause clause, dto.Target target)
+
+        private bool EvaluateClause(Clause clause, Target target)
         {
             // operator is mandatory
-            if (clause == null || String.IsNullOrEmpty(clause.Op))
-            {
-                return false;
-            }
+            if (clause == null || string.IsNullOrEmpty(clause.Op)) return false;
 
-            if (clause.Values == null || clause.Values.Count == 0)
-            {
-                return false;
-            }
+            if (clause.Values == null || clause.Values.Count == 0) return false;
 
-            if (clause.Op == "segmentMatch")
-            {
-                return IsTargetIncludedOrExcludedInSegment(clause.Values.ToList(), target);
-            }
+            if (clause.Op == "segmentMatch") return IsTargetIncludedOrExcludedInSegment(clause.Values.ToList(), target);
 
             object attrValue = GetAttrValue(target, clause.Attribute);
-            if(attrValue == null)
-            {
-                return false;
-            }
+            if (attrValue == null) return false;
 
-            string attrStr = attrValue.ToString();
-            string value = clause.Values.First();
+            var attrStr = attrValue.ToString();
+            var value = clause.Values.First();
 
             switch (clause.Op)
             {
@@ -338,7 +298,7 @@ namespace io.harness.cfsdk.client.api
                 case "ends_with":
                     return attrStr.EndsWith(value);
                 case "match":
-                    Regex rgx = new Regex(value);
+                    var rgx = new Regex(value);
                     return rgx.IsMatch(attrStr);
                 case "contains":
                     return attrStr.Contains(value);
@@ -353,7 +313,7 @@ namespace io.harness.cfsdk.client.api
             }
         }
 
-        public static string GetAttrValue(dto.Target target, string attribute)
+        public static string GetAttrValue(Target target, string attribute)
         {
             switch (attribute)
             {
@@ -362,13 +322,10 @@ namespace io.harness.cfsdk.client.api
                 case "name":
                     return target.Name;
                 default:
-                    if (target.Attributes != null & target.Attributes.ContainsKey(attribute))
-                    {
+                    if ((target.Attributes != null) & target.Attributes.ContainsKey(attribute))
                         return target.Attributes[attribute];
-                    }
                     return null;
             }
-
         }
     }
 }
