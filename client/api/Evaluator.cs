@@ -176,6 +176,11 @@ namespace io.harness.cfsdk.client.api
                 if (featureConfig.VariationToTargetMap != null)
                 {
                     variation = EvaluateVariationMap(target, featureConfig.VariationToTargetMap);
+                    if (variation != null)
+                    {
+                        logger.LogDebug("Specific targeting matched: Target({Target}) Flag({Flag})",
+                            target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
+                    }
                 }
                 if (variation == null)
                 {
@@ -274,7 +279,7 @@ namespace io.harness.cfsdk.client.api
                         if (logger.IsEnabled(LogLevel.Debug))
                         {
                             logger.LogDebug("Group excluded rule matched: Target({targetName}) Group({segmentName})",
-                                target.ToString(), SegmentToString(segment));
+                                target.ToString(), ToStringHelper.SegmentToString(segment));
                         }
                         return false;
                     }
@@ -285,7 +290,7 @@ namespace io.harness.cfsdk.client.api
                         if (logger.IsEnabled(LogLevel.Debug))
                         {
                             logger.LogDebug("Group included rule matched: Target({targetName}) Group({segmentName})",
-                                target.ToString(), SegmentToString(segment));
+                                target.ToString(), ToStringHelper.SegmentToString(segment));
                         }
 
                         return true;
@@ -300,7 +305,7 @@ namespace io.harness.cfsdk.client.api
                             if (logger.IsEnabled(LogLevel.Debug))
                             {
                                 logger.LogDebug("Group condition rule matched: Target({targetName}) Group({segmentName})",
-                                    target.ToString(), SegmentToString(segment));
+                                    target.ToString(), ToStringHelper.SegmentToString(segment));
                             }
                             return true;
                         }
@@ -375,25 +380,63 @@ namespace io.harness.cfsdk.client.api
             }
 
         }
-        
-
-        public  string SegmentToString(Segment segment)
-        {
-            var tagsStr = segment.Tags != null ? string.Join(", ", segment.Tags.Select(t => t.ToString())) : "None";
-            var includedTargetsStr = segment.Included != null ? string.Join(", ", segment.Included.Select(t => t.Identifier)) : "None";
-            var excludedTargetsStr = segment.Excluded != null ? string.Join(", ", segment.Excluded.Select(t => t.Identifier)) : "None";
-            var rulesStr = segment.Rules != null ? string.Join(", ", segment.Rules.Select(ClauseToString)) : "None";
-
-            return $"Identifier: {segment.Identifier}, Name: {segment.Name}, Environment: {segment.Environment}, " +
-                   $"Tags: [{tagsStr}], Included Targets: [{includedTargetsStr}], Excluded Targets: [{excludedTargetsStr}], " +
-                   $"Rules: [{rulesStr}], Created At: {segment.CreatedAt}, Modified At: {segment.ModifiedAt}, Version: {segment.Version}";
-        }
-
-        
-        private string ClauseToString(Clause clause)
-        {
-            var valuesStr = clause.Values != null ? string.Join(", ", clause.Values) : "None";
-            return $"Id: {clause.Id}, Attribute: {clause.Attribute}, Operation: {clause.Op}, Values: [{valuesStr}], Negate: {clause.Negate}";
-        }
+    //     
+    //
+    //     public string SegmentToString(Segment segment)
+    //     {
+    //         var tagsStr = segment.Tags != null ? string.Join(", ", segment.Tags.Select(t => t.ToString())) : "None";
+    //         var includedTargetsStr = segment.Included != null ? string.Join(", ", segment.Included.Select(t => t.Identifier)) : "None";
+    //         var excludedTargetsStr = segment.Excluded != null ? string.Join(", ", segment.Excluded.Select(t => t.Identifier)) : "None";
+    //         var rulesStr = segment.Rules != null ? string.Join(", ", segment.Rules.Select(ClauseToString)) : "None";
+    //
+    //         return $"Identifier: {segment.Identifier}, Name: {segment.Name}, Environment: {segment.Environment}, " +
+    //                $"Tags: [{tagsStr}], Included Targets: [{includedTargetsStr}], Excluded Targets: [{excludedTargetsStr}], " +
+    //                $"Rules: [{rulesStr}], Created At: {segment.CreatedAt}, Modified At: {segment.ModifiedAt}, Version: {segment.Version}";
+    //     }
+    //
+    //     
+    //     private string ClauseToString(Clause clause)
+    //     {
+    //         var valuesStr = clause.Values != null ? string.Join(", ", clause.Values) : "None";
+    //         return $"Id: {clause.Id}, Attribute: {clause.Attribute}, Operation: {clause.Op}, Values: [{valuesStr}], Negate: {clause.Negate}";
+    //     }
+    //     
+    //     private string FeatureConfigToString(FeatureConfig featureConfig)
+    //     {
+    //         var variationsStr = featureConfig.Variations != null 
+    //             ? string.Join(", ", featureConfig.Variations.Select(v => $"{{Id: {v.Identifier}, Value: {v.Value}}}")) 
+    //             : "None";
+    //         
+    //         var rulesStr = featureConfig.Rules != null 
+    //             ? string.Join(", ", featureConfig.Rules.Select(ServingRuleToString)) // You might need to implement ToString for ServingRule or create a helper for it
+    //             : "None";
+    //         
+    //         var prerequisitesStr = featureConfig.Prerequisites != null 
+    //             ? string.Join(", ", featureConfig.Prerequisites.Select(p => p.Feature)) // Assuming Feature is a meaningful identifier for prerequisites
+    //             : "None";
+    //
+    //         var variationMapsStr = featureConfig.VariationToTargetMap != null 
+    //             ? string.Join(", ", featureConfig.VariationToTargetMap.Select(vm => vm.Variation)) // Simplified, consider expanding based on VariationMap's structure
+    //             : "None";
+    //     
+    //         return $"Project: {featureConfig.Project}, Environment: {featureConfig.Environment}, Feature: {featureConfig.Feature}, " +
+    //                $"State: {featureConfig.State}, Kind: {featureConfig.Kind}, Variations: [{variationsStr}], " +
+    //                $"Rules: [{rulesStr}], Default Serve: {featureConfig.DefaultServe.Variation}, Off Variation: {featureConfig.OffVariation}, " +
+    //                $"Prerequisites: [{prerequisitesStr}], VariationToTargetMap: [{variationMapsStr}], Version: {featureConfig.Version}";
+    //     }
+    //     
+    //     private string ServingRuleToString(ServingRule servingRule)
+    //     {
+    //         // Assuming ClauseToString(Clause clause) is a method that converts a Clause object into a string.
+    //         var clausesStr = servingRule.Clauses != null 
+    //             ? string.Join(", ", servingRule.Clauses.Select(ClauseToString)) 
+    //             : "None";
+    //
+    //         // Assuming Serve has meaningful properties to be printed out. Adjust according to actual structure.
+    //         // This example simplifies Serve representation; you might need to expand it based on Serve's structure.
+    //         var serveStr = servingRule.Serve != null ? $"Variation: {servingRule.Serve.Variation}" : "None";
+    //     
+    //         return $"RuleId: {servingRule.RuleId}, Priority: {servingRule.Priority}, Clauses: [{clausesStr}], Serve: [{serveStr}]";
+    //     }
     }
 }
