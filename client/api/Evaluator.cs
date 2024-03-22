@@ -273,7 +273,7 @@ namespace io.harness.cfsdk.client.api
                     {
                         if (logger.IsEnabled(LogLevel.Debug))
                         {
-                            logger.LogDebug("Group excluded rule matched: Target ({targetName}) excluded from group ({segmentName})",
+                            logger.LogDebug("Group excluded rule matched: Target({targetName}) Group({segmentName})",
                                 target.ToString(), SegmentToString(segment));
                         }
                         return false;
@@ -284,7 +284,7 @@ namespace io.harness.cfsdk.client.api
                     {
                         if (logger.IsEnabled(LogLevel.Debug))
                         {
-                            logger.LogDebug("Group included rule matched: Target {targetName} included in group {segmentName}",
+                            logger.LogDebug("Group included rule matched: Target({targetName}) Group({segmentName})",
                                 target.ToString(), SegmentToString(segment));
                         }
 
@@ -299,7 +299,7 @@ namespace io.harness.cfsdk.client.api
                         {
                             if (logger.IsEnabled(LogLevel.Debug))
                             {
-                                logger.LogDebug("Group condition rule matched: Target {targetName} included in group {segmentName}",
+                                logger.LogDebug("Group condition rule matched: Target({targetName}) Group({segmentName})",
                                     target.ToString(), SegmentToString(segment));
                             }
                             return true;
