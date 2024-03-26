@@ -29,6 +29,8 @@ namespace io.harness.cfsdk.client.api
         /// Start periodic pooling
         /// </summary>
         void Start();
+
+        void TriggerProcessSegments();
     }
 
     /// <summary>
@@ -131,6 +133,21 @@ namespace io.harness.cfsdk.client.api
                 throw;
             }
         }
+        
+        public void TriggerProcessSegments()
+        {
+            Task.Run(async () => await ProcessSegments())
+                .ContinueWith(task =>
+                {
+                    if (task.Exception != null)
+                    {
+                        // Handle exceptions from ProcessSegments
+                        logger.LogError(task.Exception, "Error occurred in TriggerProcessSegments");
+                    }
+                });
+        }
+
+        
         private async void OnTimedEventAsync(object source)
         {
             try
