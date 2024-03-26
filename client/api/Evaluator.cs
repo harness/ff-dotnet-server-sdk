@@ -136,53 +136,6 @@ namespace io.harness.cfsdk.client.api
             return true;
         }
 
-        // private Variation Evaluate(FeatureConfig featureConfig, Target target)
-        // {
-        //     // TODO - this method needs cleaned up to avoid variable mutation. Too many mutations of the single variable. For now, it works, 
-        //     // but clean up in next release to make it more readable/maintainable.
-        //     logger.LogDebug("Evaluating: Flag({Flag}) Target({Target})",
-        //         ToStringHelper.FeatureConfigToString(featureConfig), target.ToString());
-        //     var variation = featureConfig.OffVariation;
-        //     if (featureConfig.State == FeatureState.On)
-        //     {
-        //         variation = null;
-        //         if (featureConfig.VariationToTargetMap != null)
-        //         {
-        //             variation = EvaluateVariationMap(target, featureConfig.VariationToTargetMap);
-        //             if (variation != null)
-        //                 logger.LogDebug("Specific targeting matched: Target({Target}) Flag({Flag})",
-        //                     target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
-        //         }
-        //
-        //         if (variation == null) variation = EvaluateRules(featureConfig, target);
-        //         if (variation == null)
-        //         {
-        //             variation = EvaluateDistribution(featureConfig, target);
-        //             if (variation != null)
-        //                 logger.LogDebug("Percentage rollout matched: Target({Target}) Flag({Flag})",
-        //                     target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
-        //         }
-        //
-        //         if (variation == null)
-        //         {
-        //             variation = featureConfig.DefaultServe.Variation;
-        //             if (variation != null)
-        //                 logger.LogDebug("Default on rule matched: Target({Target}) Flag({Flag})",
-        //                     target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
-        //         }
-        //     }
-        //     else
-        //     {
-        //         logger.LogDebug("Flag is off:  Flag({Flag})",
-        //             ToStringHelper.FeatureConfigToString(featureConfig));
-        //     }
-        //
-        //     if (variation != null && featureConfig.Variations != null)
-        //         return featureConfig.Variations.FirstOrDefault(var => var.Identifier.Equals(variation));
-        //
-        //     return null;
-        // }
-
         private Variation Evaluate(FeatureConfig featureConfig, Target target)
         {
             if (logger.IsEnabled(LogLevel.Debug))
