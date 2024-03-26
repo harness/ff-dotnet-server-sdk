@@ -46,40 +46,79 @@ namespace io.harness.cfsdk.client.api
 
         public bool BoolVariation(string key, Target target, bool defaultValue)
         {
-            var variation = EvaluateVariation(key, target, FeatureConfigKind.Boolean);
-            bool res;
-            if (variation != null && bool.TryParse(variation.Value, out res)) return res;
+            try
+            {
+                var variation = EvaluateVariation(key, target, FeatureConfigKind.Boolean);
+                bool res;
+                if (variation != null && bool.TryParse(variation.Value, out res)) return res;
 
-            LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
-            return defaultValue;
+                LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
+                return defaultValue;
+            }
+            catch (InvalidCacheStateException ex)
+            {
+                logger.LogError(ex, "Invalid cache state detected when evaluating boolean variation for flag {Key}", key);
+                LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
+                return defaultValue;
+            }
         }
 
         public JObject JsonVariation(string key, Target target, JObject defaultValue)
         {
-            var variation = EvaluateVariation(key, target, FeatureConfigKind.Json);
-            if (variation != null) return JObject.Parse(variation.Value);
+            try
+            {
+                var variation = EvaluateVariation(key, target, FeatureConfigKind.Json);
+                if (variation != null) return JObject.Parse(variation.Value);
 
-            LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
-            return defaultValue;
+                LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
+                return defaultValue;
+            }
+            catch (InvalidCacheStateException ex)
+            {
+                logger.LogError(ex, "Invalid cache state detected when evaluating json variation for flag {Key}",
+                    key);
+                LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
+                return defaultValue;
+            }
         }
 
         public double NumberVariation(string key, Target target, double defaultValue)
         {
-            var variation = EvaluateVariation(key, target, FeatureConfigKind.Int);
-            double res;
-            if (variation != null && double.TryParse(variation.Value, out res)) return res;
+            try
+            {
+                var variation = EvaluateVariation(key, target, FeatureConfigKind.Int);
+                double res;
+                if (variation != null && double.TryParse(variation.Value, out res)) return res;
 
-            LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
-            return defaultValue;
+                LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
+                return defaultValue;
+            }
+            catch (InvalidCacheStateException ex)
+            {
+                logger.LogError(ex, "Invalid cache state detected when evaluating number variation for flag {Key}",
+                    key);
+                LogEvaluationFailureError(FeatureConfigKind.Int, key, target, defaultValue.ToString());
+                return defaultValue;
+            }
         }
 
         public string StringVariation(string key, Target target, string defaultValue)
         {
-            var variation = EvaluateVariation(key, target, FeatureConfigKind.String);
-            if (variation != null) return variation.Value;
+            try
+            {
+                var variation = EvaluateVariation(key, target, FeatureConfigKind.String);
+                if (variation != null) return variation.Value;
 
-            LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
-            return defaultValue;
+                LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
+                return defaultValue;
+            }
+            catch (InvalidCacheStateException ex)
+            {
+                logger.LogError(ex, "Invalid cache state detected when evaluating string variation for flag {Key}",
+                    key);
+                LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
+                return defaultValue;
+            }
         }
 
         private Variation EvaluateVariation(string key, Target target, FeatureConfigKind kind)
@@ -204,17 +243,10 @@ namespace io.harness.cfsdk.client.api
                 if (variationMap.Targets != null && variationMap.Targets.ToList()
                         .Any(t => t != null && t.Identifier.Equals(target.Identifier))) return variationMap.Variation;
                 // Legacy: the variation to target map no longer contains TargetSegments. These are stored in group rules.
-                try
-                {
-                    if (variationMap.TargetSegments != null &&
-                        IsTargetIncludedOrExcludedInSegment(variationMap.TargetSegments.ToList(), target))
-                        return variationMap.Variation;
-                }
-                catch (InvalidCacheStateException ex)
-                {
-                    logger.LogError(ex, "Invalid cache state detected while evaluating group rule");
-                }
 
+                if (variationMap.TargetSegments != null &&
+                    IsTargetIncludedOrExcludedInSegment(variationMap.TargetSegments.ToList(), target))
+                    return variationMap.Variation;
             }
 
             return null;
@@ -284,7 +316,7 @@ namespace io.harness.cfsdk.client.api
                 var segment = repository.GetSegment(segmentIdentifier);
                 if (segment == null)
                     throw new InvalidCacheStateException(
-                        $"Segment with identifier {segmentIdentifier} could not be found in the cache. This might indicate a cache inconsistency or missing data.");
+                        $"Segment with identifier {segmentIdentifier} could not be found in the cache despite belonging to the flag.");
 
                 logger.LogDebug("Evaluating group rule: Group({Segment} Target({Target}))",
                     ToStringHelper.SegmentToString(segment), target.ToString());
@@ -338,17 +370,9 @@ namespace io.harness.cfsdk.client.api
 
             if (clause.Values == null || clause.Values.Count == 0) return false;
 
-            try
-            {
-                if (clause.Op == "segmentMatch")
-                    return IsTargetIncludedOrExcludedInSegment(clause.Values.ToList(), target);
-            }
-            catch (InvalidCacheStateException ex)
-            {
-                logger.LogError(ex, "Invalid cache state detected while evaluating group rule {Clause}",
-                    ToStringHelper.ClauseToString(clause));
-                return false;
-            }
+
+            if (clause.Op == "segmentMatch")
+                return IsTargetIncludedOrExcludedInSegment(clause.Values.ToList(), target);
 
             object attrValue = GetAttrValue(target, clause.Attribute);
             if (attrValue == null) return false;
