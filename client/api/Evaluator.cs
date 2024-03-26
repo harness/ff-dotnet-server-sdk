@@ -259,7 +259,7 @@ namespace io.harness.cfsdk.client.api
 
             // Log if no applicable rule was found
             if (logger.IsEnabled(LogLevel.Debug))
-                logger.LogDebug("No applicable rule found for Target({Target}) in FeatureConfig {FeatureConfig}",
+                logger.LogDebug("No applicable rule found for Target({Target})  Flag({FeatureConfig})",
                     target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
 
             return null;
@@ -285,7 +285,7 @@ namespace io.harness.cfsdk.client.api
                 }
                 
                 logger.LogDebug("Evaluating group rule: Group({Segment} Target({Target}) )",
-                    target.ToString(), ToStringHelper.SegmentToString(segment));
+                    ToStringHelper.SegmentToString(segment), target.ToString() );
 
                 // check exclude list
                 if (segment.Excluded != null && segment.Excluded.Any(t => t.Identifier.Equals(target.Identifier)))
