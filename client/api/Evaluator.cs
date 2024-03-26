@@ -225,7 +225,7 @@ namespace io.harness.cfsdk.client.api
             {
                 logger.LogWarning("Default serve variation not found: Flag({Flag})",
                     ToStringHelper.FeatureConfigToString(featureConfig));
-                return null; 
+                return null;
             }
 
             logger.LogDebug("Default on rule matched: Target({Target}) Flag({Flag})",
@@ -268,12 +268,9 @@ namespace io.harness.cfsdk.client.api
                         servingRule.RuleId, ToStringHelper.FeatureConfigToString(featureConfig));
                     return null;
                 }
-                
+
                 // Proceed if any clause evaluation fails
-                if (servingRule.Clauses.Any(c => !EvaluateClause(c, target)))
-                {
-                    continue; 
-                }
+                if (servingRule.Clauses.Any(c => !EvaluateClause(c, target))) continue;
 
                 // Invalid state: Log if Serve is null
                 if (servingRule.Serve == null)
@@ -313,35 +310,6 @@ namespace io.harness.cfsdk.client.api
 
             return null;
         }
-
-
-        // private string EvaluateRules(FeatureConfig featureConfig, Target target)
-        // {
-        //     if (featureConfig.Rules == null || target == null) return null;
-        //
-        //     foreach (var servingRule in featureConfig.Rules.ToList().OrderBy(sr => sr.Priority))
-        //     {
-        //         if (servingRule.Clauses != null &&
-        //             servingRule.Clauses.ToList().Any(c => EvaluateClause(c, target) == false)) continue;
-        //
-        //         if (servingRule.Serve != null)
-        //         {
-        //             if (servingRule.Serve.Distribution != null)
-        //             {
-        //                 if (logger.IsEnabled(LogLevel.Debug))
-        //                     logger.LogDebug(
-        //                         "Percentage rollout applies, evaluating distribution: Target({Target}) Flag({Flag})",
-        //                         target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
-        //                 var distributionProcessor = new DistributionProcessor(servingRule.Serve, loggerFactory);
-        //                 return distributionProcessor.loadKeyName(target);
-        //             }
-        //
-        //             if (servingRule.Serve.Variation != null) return servingRule.Serve.Variation;
-        //         }
-        //     }
-        //
-        //     return null;
-        // }
 
 
         private string EvaluateDistribution(FeatureConfig featureConfig, Target target)
