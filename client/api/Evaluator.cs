@@ -191,7 +191,7 @@ namespace io.harness.cfsdk.client.api
             if (featureConfig.State == FeatureState.Off)
             {
                 logger.LogDebug("Flag is off: Flag({Flag})", ToStringHelper.FeatureConfigToString(featureConfig));
-                return GetVariation(featureConfig, featureConfig.OffVariation);
+                return GetVariation(featureConfig.Variations, featureConfig.OffVariation);
             }
 
             // Check for specific targeting match
@@ -200,12 +200,12 @@ namespace io.harness.cfsdk.client.api
             {
                 logger.LogDebug("Specific targeting matched: Target({Target}) Flag({Flag})",
                     target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
-                return GetVariation(featureConfig, specificTargetingVariation);
+                return GetVariation(featureConfig.Variations, specificTargetingVariation);
             }
 
             // Evaluate rules
             var rulesVariation = EvaluateRules(featureConfig, target);
-            if (rulesVariation != null) return GetVariation(featureConfig, rulesVariation);
+            if (rulesVariation != null) return GetVariation(featureConfig.Variations, rulesVariation);
 
             // TODO don't think this is needed, as we evaluate distribution in EvaluateRules
             // Evaluate distribution
@@ -214,7 +214,7 @@ namespace io.harness.cfsdk.client.api
             {
                 logger.LogDebug("Percentage rollout matched: Target({Target}) Flag({Flag})",
                     target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
-                return GetVariation(featureConfig, distributionVariation);
+                return GetVariation(featureConfig.Variations, distributionVariation);
             }
 
             // Use default serve variation
@@ -228,12 +228,12 @@ namespace io.harness.cfsdk.client.api
 
             logger.LogDebug("Default on rule matched: Target({Target}) Flag({Flag})",
                 target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
-            return GetVariation(featureConfig, defaultVariation);
+            return GetVariation(featureConfig.Variations, defaultVariation);
         }
 
-        private Variation GetVariation(FeatureConfig featureConfig, string variationIdentifier)
+        private Variation GetVariation(ICollection<Variation> variations, string variationIdentifier)
         {
-            return featureConfig.Variations?.FirstOrDefault(var => var.Identifier.Equals(variationIdentifier));
+            return variations.FirstOrDefault(var => var.Identifier.Equals(variationIdentifier));
         }
 
         private string EvaluateVariationMap(Target target, ICollection<VariationMap> variationMaps)
