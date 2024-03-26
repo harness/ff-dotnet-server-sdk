@@ -276,16 +276,7 @@ namespace io.harness.cfsdk.client.api
 
             return null;
         }
-
-
-        private string EvaluateDistribution(FeatureConfig featureConfig, Target target)
-        {
-            if (featureConfig.Rules == null || target == null) return null;
-
-            var distributionProcessor = new DistributionProcessor(featureConfig.DefaultServe, loggerFactory);
-            return distributionProcessor.loadKeyName(target);
-        }
-
+        
         private bool IsTargetIncludedOrExcludedInSegment(List<string> segmentList, Target target) 
         {
             foreach (var segmentIdentifier in segmentList)
@@ -331,8 +322,8 @@ namespace io.harness.cfsdk.client.api
                 {
                     if (logger.IsEnabled(LogLevel.Debug))
                         logger.LogDebug(
-                            "Group condition rule matched: Target({TargetName}) Group({SegmentName})",
-                            target.ToString(), ToStringHelper.SegmentToString(segment));
+                            "Group condition rule matched: Condition({Condition}) Target({TargetName}) Group({SegmentName})",
+                            ToStringHelper.ClauseToString(firstSuccess), target.ToString(), ToStringHelper.SegmentToString(segment));
                     return true;
                 }
             }
