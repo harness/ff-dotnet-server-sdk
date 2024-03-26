@@ -46,79 +46,40 @@ namespace io.harness.cfsdk.client.api
 
         public bool BoolVariation(string key, Target target, bool defaultValue)
         {
-            try
-            {
-                var variation = EvaluateVariation(key, target, FeatureConfigKind.Boolean);
-                bool res;
-                if (variation != null && bool.TryParse(variation.Value, out res)) return res;
+            var variation = EvaluateVariation(key, target, FeatureConfigKind.Boolean);
+            bool res;
+            if (variation != null && bool.TryParse(variation.Value, out res)) return res;
 
-                LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
-                return defaultValue;
-            }
-            catch (InvalidCacheStateException ex)
-            {
-                logger.LogError(ex, "Invalid cache state detected when evaluating boolean variation for flag {Key}", key);
-                LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
-                return defaultValue;
-            }
+            LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
+            return defaultValue;
         }
 
         public JObject JsonVariation(string key, Target target, JObject defaultValue)
         {
-            try
-            {
-                var variation = EvaluateVariation(key, target, FeatureConfigKind.Json);
-                if (variation != null) return JObject.Parse(variation.Value);
+            var variation = EvaluateVariation(key, target, FeatureConfigKind.Json);
+            if (variation != null) return JObject.Parse(variation.Value);
 
-                LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
-                return defaultValue;
-            }
-            catch (InvalidCacheStateException ex)
-            {
-                logger.LogError(ex, "Invalid cache state detected when evaluating json variation for flag {Key}",
-                    key);
-                LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
-                return defaultValue;
-            }
+            LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
+            return defaultValue;
         }
 
         public double NumberVariation(string key, Target target, double defaultValue)
         {
-            try
-            {
-                var variation = EvaluateVariation(key, target, FeatureConfigKind.Int);
-                double res;
-                if (variation != null && double.TryParse(variation.Value, out res)) return res;
+            var variation = EvaluateVariation(key, target, FeatureConfigKind.Int);
+            double res;
+            if (variation != null && double.TryParse(variation.Value, out res)) return res;
 
-                LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
-                return defaultValue;
-            }
-            catch (InvalidCacheStateException ex)
-            {
-                logger.LogError(ex, "Invalid cache state detected when evaluating number variation for flag {Key}",
-                    key);
-                LogEvaluationFailureError(FeatureConfigKind.Int, key, target, defaultValue.ToString());
-                return defaultValue;
-            }
+            LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
+            return defaultValue;
         }
 
         public string StringVariation(string key, Target target, string defaultValue)
         {
-            try
-            {
-                var variation = EvaluateVariation(key, target, FeatureConfigKind.String);
-                if (variation != null) return variation.Value;
+            var variation = EvaluateVariation(key, target, FeatureConfigKind.String);
+            if (variation != null) return variation.Value;
 
-                LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
-                return defaultValue;
-            }
-            catch (InvalidCacheStateException ex)
-            {
-                logger.LogError(ex, "Invalid cache state detected when evaluating string variation for flag {Key}",
-                    key);
-                LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
-                return defaultValue;
-            }
+            LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
+            return defaultValue;
         }
 
         private Variation EvaluateVariation(string key, Target target, FeatureConfigKind kind)
