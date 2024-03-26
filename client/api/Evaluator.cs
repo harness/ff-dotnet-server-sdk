@@ -107,7 +107,7 @@ namespace io.harness.cfsdk.client.api
         {
             if (logger.IsEnabled(LogLevel.Warning))
                 logger.LogWarning(
-                    "SDKCODE(eval:6001): Failed to evaluate {kind} variation for {targetId}, flag {featureId} and the default variation {defaultValue} is being returned",
+                    "SDKCODE(eval:6001): Failed to evaluate {Kind} variation for {TargetId}, flag {FeatureId} and the default variation {DefaultValue} is being returned",
                     kind, target?.Identifier ?? "null target", featureKey, defaultValue);
         }
 
@@ -363,7 +363,7 @@ namespace io.harness.cfsdk.client.api
                     if (segment.Excluded != null && segment.Excluded.Any(t => t.Identifier.Equals(target.Identifier)))
                     {
                         if (logger.IsEnabled(LogLevel.Debug))
-                            logger.LogDebug("Group excluded rule matched: Target({targetName}) Group({segmentName})",
+                            logger.LogDebug("Group excluded rule matched: Target({TargetName}) Group({SegmentName})",
                                 target.ToString(), ToStringHelper.SegmentToString(segment));
                         return false;
                     }
@@ -372,7 +372,7 @@ namespace io.harness.cfsdk.client.api
                     if (segment.Included != null && segment.Included.Any(t => t.Identifier.Equals(target.Identifier)))
                     {
                         if (logger.IsEnabled(LogLevel.Debug))
-                            logger.LogDebug("Group included rule matched: Target({targetName}) Group({segmentName})",
+                            logger.LogDebug("Group included rule matched: Target({TargetName}) Group({SegmentName})",
                                 target.ToString(), ToStringHelper.SegmentToString(segment));
 
                         return true;
@@ -386,7 +386,7 @@ namespace io.harness.cfsdk.client.api
                         {
                             if (logger.IsEnabled(LogLevel.Debug))
                                 logger.LogDebug(
-                                    "Group condition rule matched: Target({targetName}) Group({segmentName})",
+                                    "Group condition rule matched: Target({TargetName}) Group({SegmentName})",
                                     target.ToString(), ToStringHelper.SegmentToString(segment));
                             return true;
                         }
@@ -443,7 +443,7 @@ namespace io.harness.cfsdk.client.api
                 case "name":
                     return target.Name;
                 default:
-                    if ((target.Attributes != null) & target.Attributes.ContainsKey(attribute))
+                    if (target.Attributes != null && target.Attributes.ContainsKey(attribute))
                         return target.Attributes[attribute];
                     return null;
             }
