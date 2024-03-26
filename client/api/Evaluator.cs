@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
@@ -58,7 +59,7 @@ namespace io.harness.cfsdk.client.api
             var variation = EvaluateVariation(key, target, FeatureConfigKind.Json);
             if (variation != null) return JObject.Parse(variation.Value);
 
-            LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
+            LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
             return defaultValue;
         }
 
@@ -107,7 +108,7 @@ namespace io.harness.cfsdk.client.api
         {
             if (logger.IsEnabled(LogLevel.Warning))
                 logger.LogWarning(
-                    "SDKCODE(eval:6001): Failed to evaluate {kind} variation for {targetId}, flag {featureId} and the default variation {defaultValue} is being returned",
+                    "SDKCODE(eval:6001): Failed to evaluate {Kind} variation for {TargetId}, flag {FeatureId} and the default variation {DefaultValue} is being returned",
                     kind, target?.Identifier ?? "null target", featureKey, defaultValue);
         }
 
@@ -138,58 +139,72 @@ namespace io.harness.cfsdk.client.api
 
         private Variation Evaluate(FeatureConfig featureConfig, Target target)
         {
-            // TODO - this method needs cleaned up to avoid variable mutation. Too many mutations of the single variable. For now, it works, 
-            // but clean up in next release to make it more readable/maintainable.
-            logger.LogDebug("Evaluating: Flag({Flag}) Target({Target})",
-                ToStringHelper.FeatureConfigToString(featureConfig), target.ToString());
-            var variation = featureConfig.OffVariation;
-            if (featureConfig.State == FeatureState.On)
+            if (logger.IsEnabled(LogLevel.Debug))
+                logger.LogDebug("Evaluating: Flag({Flag}) Target({Target})",
+                    ToStringHelper.FeatureConfigToString(featureConfig), target.ToString());
+
+            if (featureConfig.State == FeatureState.Off)
             {
-                variation = null;
-                if (featureConfig.VariationToTargetMap != null)
-                {
-                    variation = EvaluateVariationMap(target, featureConfig.VariationToTargetMap);
-                    if (variation != null)
-                        logger.LogDebug("Specific targeting matched: Target({Target}) Flag({Flag})",
-                            target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
-                }
-
-                if (variation == null) variation = EvaluateRules(featureConfig, target);
-                if (variation == null)
-                {
-                    variation = EvaluateDistribution(featureConfig, target);
-                    if (variation != null)
-                        logger.LogDebug("Percentage rollout matched: Target({Target}) Flag({Flag})",
-                            target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
-                }
-
-                if (variation == null)
-                {
-                    variation = featureConfig.DefaultServe.Variation;
-                    if (variation != null)
-                        logger.LogDebug("Default on rule matched: Target({Target}) Flag({Flag})",
-                            target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
-                }
+                if (logger.IsEnabled(LogLevel.Debug))
+                    logger.LogDebug("Flag is off: Flag({Flag})", ToStringHelper.FeatureConfigToString(featureConfig));
+                return GetVariation(featureConfig.Variations, featureConfig.OffVariation);
             }
-            else
-            {
-                logger.LogDebug("Flag is off:  Flag({Flag})",
+
+            // Check for specific targeting match
+            if (logger.IsEnabled(LogLevel.Debug))
+                logger.LogDebug(
+                    "Evaluating specific targeting: Flag({Flag})",
                     ToStringHelper.FeatureConfigToString(featureConfig));
+            var specificTargetingVariation =
+                EvaluateVariationMap(target, featureConfig.VariationToTargetMap, featureConfig.Feature);
+            if (specificTargetingVariation != null)
+            {
+                logger.LogDebug("Specific targeting matched: Flag({Flag}) Target({Target})",
+                    ToStringHelper.FeatureConfigToString(featureConfig), target.ToString());
+                return GetVariation(featureConfig.Variations, specificTargetingVariation);
             }
 
-            if (variation != null && featureConfig.Variations != null)
-                return featureConfig.Variations.FirstOrDefault(var => var.Identifier.Equals(variation));
+            // Evaluate rules
+            var rulesVariation = EvaluateRules(featureConfig, target);
+            if (rulesVariation != null) return GetVariation(featureConfig.Variations, rulesVariation);
 
-            return null;
+            // Use default serve variation
+            var defaultVariation = featureConfig.DefaultServe.Variation;
+            if (defaultVariation == null)
+            {
+                logger.LogWarning("Default serve variation not found: Flag({Flag})",
+                    ToStringHelper.FeatureConfigToString(featureConfig));
+                return null;
+            }
+
+            logger.LogDebug("Default on rule matched: Target({Target}) Flag({Flag})",
+                target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
+            return GetVariation(featureConfig.Variations, defaultVariation);
         }
 
-        private string EvaluateVariationMap(Target target, ICollection<VariationMap> variationMaps)
+        private Variation GetVariation(ICollection<Variation> variations, string variationIdentifier)
         {
-            if (variationMaps == null || target == null) return null;
+            return variations.FirstOrDefault(var => var.Identifier.Equals(variationIdentifier));
+        }
+
+        private string EvaluateVariationMap(Target target, ICollection<VariationMap> variationMaps,
+            string featureIdentifier)
+        {
+            if (variationMaps == null)
+            {
+                if (logger.IsEnabled(LogLevel.Debug))
+                    logger.LogDebug(
+                        "No specific targeting rules found in flag ({FeatureIdentifier})", featureIdentifier);
+                return null;
+            }
+
+            if (target == null) return null;
             foreach (var variationMap in variationMaps)
             {
                 if (variationMap.Targets != null && variationMap.Targets.ToList()
                         .Any(t => t != null && t.Identifier.Equals(target.Identifier))) return variationMap.Variation;
+                // Legacy: the variation to target map no longer contains TargetSegments. These are stored in group rules.
+
                 if (variationMap.TargetSegments != null &&
                     IsTargetIncludedOrExcludedInSegment(variationMap.TargetSegments.ToList(), target))
                     return variationMap.Variation;
@@ -200,76 +215,109 @@ namespace io.harness.cfsdk.client.api
 
         private string EvaluateRules(FeatureConfig featureConfig, Target target)
         {
+            // No rules to evaluate or target is not supplied
             if (featureConfig.Rules == null || target == null) return null;
 
-            foreach (var servingRule in featureConfig.Rules.ToList().OrderBy(sr => sr.Priority))
+            foreach (var servingRule in featureConfig.Rules.OrderBy(sr => sr.Priority))
             {
-                if (servingRule.Clauses != null &&
-                    servingRule.Clauses.ToList().Any(c => EvaluateClause(c, target) == false)) continue;
-
-                if (servingRule.Serve != null)
+                // Invalid state: Log if Clauses are null 
+                if (servingRule.Clauses == null)
                 {
-                    if (servingRule.Serve.Distribution != null)
-                    {
-                        var distributionProcessor = new DistributionProcessor(servingRule.Serve, loggerFactory);
-                        return distributionProcessor.loadKeyName(target);
-                    }
-
-                    if (servingRule.Serve.Variation != null) return servingRule.Serve.Variation;
+                    logger.LogWarning("Clauses are null for servingRule {RuleId} in FeatureConfig {FeatureConfigId}",
+                        servingRule.RuleId, ToStringHelper.FeatureConfigToString(featureConfig));
+                    return null;
                 }
+
+                // Proceed if any clause evaluation fails
+                if (servingRule.Clauses.Any(c => !EvaluateClause(c, target))) continue;
+
+                // Invalid state: Log if Serve is null
+                if (servingRule.Serve == null)
+                {
+                    logger.LogWarning("Serve is null for rule ID {Rule} in FeatureConfig {FeatureConfig}",
+                        servingRule.RuleId, ToStringHelper.FeatureConfigToString(featureConfig));
+                    return null;
+                }
+
+                // Check if percentage rollout applies
+                if (servingRule.Serve.Distribution != null)
+                {
+                    if (logger.IsEnabled(LogLevel.Debug))
+                        logger.LogDebug(
+                            "Percentage rollout applies to group rule, evaluating distribution: Target({Target}) Flag({Flag})",
+                            target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
+
+                    var distributionProcessor = new DistributionProcessor(servingRule.Serve, loggerFactory);
+                    return distributionProcessor.loadKeyName(target);
+                }
+
+                // Invalid state: Log if the variation is null
+                if (servingRule.Serve.Variation == null)
+                {
+                    logger.LogWarning("Serve.Variation is null for a rule in FeatureConfig {FeatureConfig}",
+                        ToStringHelper.FeatureConfigToString(featureConfig));
+                    return null;
+                }
+
+                return servingRule.Serve.Variation;
             }
+
+            // Log if no applicable rule was found
+            if (logger.IsEnabled(LogLevel.Debug))
+                logger.LogDebug("No applicable rule found for Target({Target})  Flag({FeatureConfig})",
+                    target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
 
             return null;
         }
-
-
-        private string EvaluateDistribution(FeatureConfig featureConfig, Target target)
-        {
-            if (featureConfig.Rules == null || target == null) return null;
-
-            var distributionProcessor = new DistributionProcessor(featureConfig.DefaultServe, loggerFactory);
-            return distributionProcessor.loadKeyName(target);
-        }
-
-        private bool IsTargetIncludedOrExcludedInSegment(List<string> segmentList, Target target)
+        
+        private bool IsTargetIncludedOrExcludedInSegment(List<string> segmentList, Target target) 
         {
             foreach (var segmentIdentifier in segmentList)
             {
                 var segment = repository.GetSegment(segmentIdentifier);
-                if (segment != null)
+                if (segment == null)
+                    throw new InvalidCacheStateException(
+                        $"Segment with identifier {segmentIdentifier} could not be found in the cache despite belonging to the flag.");
+
+                logger.LogDebug("Evaluating group rule: Group({Segment} Target({Target}))",
+                    ToStringHelper.SegmentToString(segment), target.ToString());
+
+                // check exclude list
+                if (segment.Excluded != null && segment.Excluded.Any(t => t.Identifier.Equals(target.Identifier)))
                 {
-                    // check exclude list
-                    if (segment.Excluded != null && segment.Excluded.Any(t => t.Identifier.Equals(target.Identifier)))
-                    {
-                        if (logger.IsEnabled(LogLevel.Debug))
-                            logger.LogDebug("Group excluded rule matched: Target({targetName}) Group({segmentName})",
-                                target.ToString(), ToStringHelper.SegmentToString(segment));
-                        return false;
-                    }
+                    if (logger.IsEnabled(LogLevel.Debug))
+                        logger.LogDebug("Group excluded rule matched: Target({TargetName}) Group({SegmentName})",
+                            target.ToString(), ToStringHelper.SegmentToString(segment));
+                    return false;
+                }
 
-                    // check include list
-                    if (segment.Included != null && segment.Included.Any(t => t.Identifier.Equals(target.Identifier)))
-                    {
-                        if (logger.IsEnabled(LogLevel.Debug))
-                            logger.LogDebug("Group included rule matched: Target({targetName}) Group({segmentName})",
-                                target.ToString(), ToStringHelper.SegmentToString(segment));
+                // check include list
+                if (segment.Included != null && segment.Included.Any(t => t.Identifier.Equals(target.Identifier)))
+                {
+                    if (logger.IsEnabled(LogLevel.Debug))
+                        logger.LogDebug("Group included rule matched: Target({TargetName}) Group({SegmentName})",
+                            target.ToString(), ToStringHelper.SegmentToString(segment));
 
-                        return true;
-                    }
+                    return true;
+                }
 
-                    // if we have rules, at least one should pass
-                    if (segment.Rules != null)
-                    {
-                        var firstSuccess = segment.Rules.FirstOrDefault(r => EvaluateClause(r, target));
-                        if (firstSuccess != null)
-                        {
-                            if (logger.IsEnabled(LogLevel.Debug))
-                                logger.LogDebug(
-                                    "Group condition rule matched: Target({targetName}) Group({segmentName})",
-                                    target.ToString(), ToStringHelper.SegmentToString(segment));
-                            return true;
-                        }
-                    }
+                // Check custom rules
+                if (segment.Rules == null)
+                {
+                    if (logger.IsEnabled(LogLevel.Debug))
+                        logger.LogDebug("No group rules found in group: Group({SegmentName})",
+                            ToStringHelper.SegmentToString(segment));
+                    return false;
+                }
+
+                var firstSuccess = segment.Rules.FirstOrDefault(r => EvaluateClause(r, target));
+                if (firstSuccess != null)
+                {
+                    if (logger.IsEnabled(LogLevel.Debug))
+                        logger.LogDebug(
+                            "Group condition rule matched: Condition({Condition}) Target({TargetName}) Group({SegmentName})",
+                            ToStringHelper.ClauseToString(firstSuccess), target.ToString(), ToStringHelper.SegmentToString(segment));
+                    return true;
                 }
             }
 
@@ -283,7 +331,9 @@ namespace io.harness.cfsdk.client.api
 
             if (clause.Values == null || clause.Values.Count == 0) return false;
 
-            if (clause.Op == "segmentMatch") return IsTargetIncludedOrExcludedInSegment(clause.Values.ToList(), target);
+
+            if (clause.Op == "segmentMatch")
+                return IsTargetIncludedOrExcludedInSegment(clause.Values.ToList(), target);
 
             object attrValue = GetAttrValue(target, clause.Attribute);
             if (attrValue == null) return false;
@@ -322,10 +372,27 @@ namespace io.harness.cfsdk.client.api
                 case "name":
                     return target.Name;
                 default:
-                    if ((target.Attributes != null) & target.Attributes.ContainsKey(attribute))
+                    if (target.Attributes != null && target.Attributes.ContainsKey(attribute))
                         return target.Attributes[attribute];
                     return null;
             }
+        }
+    }
+
+    public class InvalidCacheStateException : Exception
+    {
+        public InvalidCacheStateException()
+        {
+        }
+
+        public InvalidCacheStateException(string message)
+            : base(message)
+        {
+        }
+
+        public InvalidCacheStateException(string message, Exception inner)
+            : base(message, inner)
+        {
         }
     }
 }

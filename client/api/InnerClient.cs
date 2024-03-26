@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Target = io.harness.cfsdk.client.dto.Target;
 
 namespace io.harness.cfsdk.client.api
 {
@@ -214,19 +215,66 @@ namespace io.harness.cfsdk.client.api
 
         public bool BoolVariation(string key, dto.Target target, bool defaultValue)
         {
-            return evaluator.BoolVariation(key, target, defaultValue);
+            try
+            {
+                return evaluator.BoolVariation(key, target, defaultValue);
+            }
+            catch (InvalidCacheStateException ex)
+            {
+                logger.LogError(ex, "Invalid cache state detected when evaluating boolean variation for flag {Key}",
+                    key);
+                LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
+                polling.TriggerProcessSegments();
+                return defaultValue;
+            }
         }
+
         public string StringVariation(string key, dto.Target target, string defaultValue)
         {
-            return evaluator.StringVariation(key, target, defaultValue);
+            try
+            {
+                return evaluator.StringVariation(key, target, defaultValue);
+            }
+            catch (InvalidCacheStateException ex)
+            {
+                logger.LogError(ex, "Invalid cache state detected when evaluating string variation for flag {Key}",
+                    key);
+                LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
+                polling.TriggerProcessSegments();
+                return defaultValue;
+            }
         }
-        public double NumberVariation(string key, dto.Target target, double defaultValue)
+
+        public double NumberVariation(string key, Target target, double defaultValue)
         {
-            return evaluator.NumberVariation(key, target, defaultValue);
+            try
+            {
+                return evaluator.NumberVariation(key, target, defaultValue);
+            }
+            catch (InvalidCacheStateException ex)
+            {
+                logger.LogError(ex, "Invalid cache state detected when evaluating number variation for flag {Key}",
+                    key);
+                LogEvaluationFailureError(FeatureConfigKind.Int, key, target, defaultValue.ToString());
+                polling.TriggerProcessSegments();
+                return defaultValue;
+            }
         }
-        public JObject JsonVariation(string key, dto.Target target, JObject defaultValue)
+
+        public JObject JsonVariation(string key, Target target, JObject defaultValue)
         {
-            return evaluator.JsonVariation(key, target, defaultValue);
+            try
+            {
+                return evaluator.JsonVariation(key, target, defaultValue);
+            }
+            catch (InvalidCacheStateException ex)
+            {
+                logger.LogError(ex, "Invalid cache state detected when evaluating json variation for flag {Key}",
+                    key);
+                LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
+                polling.TriggerProcessSegments();
+                return defaultValue;
+            }
         }
 
         public void Close()
@@ -247,6 +295,15 @@ namespace io.harness.cfsdk.client.api
         public void EvaluationProcessed(FeatureConfig featureConfig, dto.Target target, Variation variation)
         {
             this.metric.PushToCache(target, featureConfig, variation);
+        }
+        
+        public void LogEvaluationFailureError(FeatureConfigKind kind, string featureKey, dto.Target target,
+            string defaultValue)
+        {
+            if (logger.IsEnabled(LogLevel.Warning))
+                logger.LogWarning(
+                    "SDKCODE(eval:6001): Failed to evaluate {Kind} variation for {TargetId}, flag {FeatureId} and the default variation {DefaultValue} is being returned",
+                    kind, target?.Identifier ?? "null target", featureKey, defaultValue);
         }
     }
 }

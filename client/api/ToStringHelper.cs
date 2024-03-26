@@ -42,8 +42,8 @@ namespace io.harness.cfsdk.client.api
                 ? string.Join(", ", featureConfig.Prerequisites.Select(p => p.Feature))
                 : "None";
 
-            var variationMapsStr = featureConfig.VariationToTargetMap != null
-                ? string.Join(", ", featureConfig.VariationToTargetMap.Select(vm => vm.Variation))
+            var variationMapsStr = featureConfig.VariationToTargetMap != null && featureConfig.VariationToTargetMap.Any()
+                ? string.Join(", ", featureConfig.VariationToTargetMap.Select(VariationMapToString))
                 : "None";
 
             return
@@ -63,6 +63,25 @@ namespace io.harness.cfsdk.client.api
 
             return
                 $"RuleId: {servingRule.RuleId}, Priority: {servingRule.Priority}, Clauses: [{clausesStr}], Serve: [{serveStr}]";
+        }
+
+        public static string VariationMapToString(VariationMap variationMap)
+        {
+            var targetsStr = variationMap.Targets != null && variationMap.Targets.Any()
+                ? string.Join(", ", variationMap.Targets.Select(t => TargetMapToString(t)))
+                : "None";
+
+            var targetSegmentsStr = variationMap.TargetSegments != null && variationMap.TargetSegments.Any()
+                ? string.Join(", ", variationMap.TargetSegments)
+                : "None";
+
+            return
+                $"Variation: {variationMap.Variation}, Targets: [{targetsStr}], TargetSegments: [{targetSegmentsStr}]";
+        }
+
+        public static string TargetMapToString(TargetMap targetMap)
+        {
+            return $"Identifier: {targetMap.Identifier}";
         }
     }
 }
