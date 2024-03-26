@@ -287,7 +287,7 @@ namespace io.harness.cfsdk.client.api
                     throw new InvalidCacheStateException(
                         $"Segment with identifier {segmentIdentifier} could not be found in the cache. This might indicate a cache inconsistency or missing data.");
 
-                logger.LogDebug("Evaluating group rule: Group({Segment} Target({Target}) )",
+                logger.LogDebug("Evaluating group rule: Group({Segment} Target({Target}))",
                     ToStringHelper.SegmentToString(segment), target.ToString());
 
                 // check exclude list
@@ -309,18 +309,23 @@ namespace io.harness.cfsdk.client.api
                     return true;
                 }
 
-                // if we have rules, at least one should pass
-                if (segment.Rules != null)
+                // Check custom rules
+                if (segment.Rules == null)
                 {
-                    var firstSuccess = segment.Rules.FirstOrDefault(r => EvaluateClause(r, target));
-                    if (firstSuccess != null)
-                    {
-                        if (logger.IsEnabled(LogLevel.Debug))
-                            logger.LogDebug(
-                                "Group condition rule matched: Target({TargetName}) Group({SegmentName})",
-                                target.ToString(), ToStringHelper.SegmentToString(segment));
-                        return true;
-                    }
+                    if (logger.IsEnabled(LogLevel.Debug))
+                        logger.LogDebug("No group rules found in group: Group({SegmentName})",
+                            ToStringHelper.SegmentToString(segment));
+                    return false;
+                }
+
+                var firstSuccess = segment.Rules.FirstOrDefault(r => EvaluateClause(r, target));
+                if (firstSuccess != null)
+                {
+                    if (logger.IsEnabled(LogLevel.Debug))
+                        logger.LogDebug(
+                            "Group condition rule matched: Target({TargetName}) Group({SegmentName})",
+                            target.ToString(), ToStringHelper.SegmentToString(segment));
+                    return true;
                 }
             }
 
