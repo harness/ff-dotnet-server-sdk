@@ -185,12 +185,14 @@ namespace io.harness.cfsdk.client.api
 
         private Variation Evaluate(FeatureConfig featureConfig, Target target)
         {
-            logger.LogDebug("Evaluating: Flag({Flag}) Target({Target})",
-                ToStringHelper.FeatureConfigToString(featureConfig), target.ToString());
+            if (logger.IsEnabled(LogLevel.Debug))
+                logger.LogDebug("Evaluating: Flag({Flag}) Target({Target})",
+                    ToStringHelper.FeatureConfigToString(featureConfig), target.ToString());
 
             if (featureConfig.State == FeatureState.Off)
             {
-                logger.LogDebug("Flag is off: Flag({Flag})", ToStringHelper.FeatureConfigToString(featureConfig));
+                if (logger.IsEnabled(LogLevel.Debug))
+                    logger.LogDebug("Flag is off: Flag({Flag})", ToStringHelper.FeatureConfigToString(featureConfig));
                 return GetVariation(featureConfig.Variations, featureConfig.OffVariation);
             }
 
@@ -259,12 +261,12 @@ namespace io.harness.cfsdk.client.api
 
             foreach (var servingRule in featureConfig.Rules.OrderBy(sr => sr.Priority))
             {
-                // Log if Clauses are null
+                // Invalid state: Log if Clauses are null 
                 if (servingRule.Clauses == null)
                 {
                     logger.LogWarning("Clauses are null for servingRule {RuleId} in FeatureConfig {FeatureConfigId}",
                         servingRule.RuleId, ToStringHelper.FeatureConfigToString(featureConfig));
-                    continue; 
+                    return null;
                 }
                 
                 // Proceed if any clause evaluation fails
@@ -273,7 +275,7 @@ namespace io.harness.cfsdk.client.api
                     continue; 
                 }
 
-                // Handling for servingRule.Serve being null
+                // Invalid state: Log if Serve is null
                 if (servingRule.Serve == null)
                 {
                     logger.LogWarning("Serve is null for rule ID {Rule} in FeatureConfig {FeatureConfig}",
@@ -281,18 +283,21 @@ namespace io.harness.cfsdk.client.api
                     return null;
                 }
 
+                // Check if percentage rollout applies
                 if (servingRule.Serve.Distribution != null)
                 {
-                    logger.LogDebug(
-                        "Percentage rollout applies, evaluating distribution: Target({Target}) Flag({Flag})",
-                        target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
+                    if (logger.IsEnabled(LogLevel.Debug))
+                        logger.LogDebug(
+                            "Percentage rollout applies, evaluating distribution: Target({Target}) Flag({Flag})",
+                            target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
+
                     var distributionProcessor = new DistributionProcessor(servingRule.Serve, loggerFactory);
                     return distributionProcessor.loadKeyName(target);
                 }
 
+                // Invalid state: Log if the variation is null
                 if (servingRule.Serve.Variation == null)
                 {
-                    // Log if servingRule.Serve.Variation is null
                     logger.LogWarning("Serve.Variation is null for a rule in FeatureConfig {FeatureConfig}",
                         ToStringHelper.FeatureConfigToString(featureConfig));
                     return null;
@@ -302,8 +307,9 @@ namespace io.harness.cfsdk.client.api
             }
 
             // Log if no applicable rule was found
-            logger.LogDebug("No applicable rule found for Target({Target}) in FeatureConfig {FeatureConfig}",
-                target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
+            if (logger.IsEnabled(LogLevel.Debug))
+                logger.LogDebug("No applicable rule found for Target({Target}) in FeatureConfig {FeatureConfig}",
+                    target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
 
             return null;
         }
