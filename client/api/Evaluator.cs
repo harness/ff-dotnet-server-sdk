@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
@@ -278,39 +279,44 @@ namespace io.harness.cfsdk.client.api
             foreach (var segmentIdentifier in segmentList)
             {
                 var segment = repository.GetSegment(segmentIdentifier);
-                if (segment != null)
+                if (segment == null)
                 {
-                    // check exclude list
-                    if (segment.Excluded != null && segment.Excluded.Any(t => t.Identifier.Equals(target.Identifier)))
+                    throw new InvalidCacheStateException($"Segment with identifier {segmentIdentifier} could not be found in the cache. This might indicate a cache inconsistency or missing data.");
+                }
+                
+                logger.LogDebug("Evaluating group rule: Group({Segment} Target({Target}) )",
+                    target.ToString(), ToStringHelper.SegmentToString(segment));
+
+                // check exclude list
+                if (segment.Excluded != null && segment.Excluded.Any(t => t.Identifier.Equals(target.Identifier)))
+                {
+                    if (logger.IsEnabled(LogLevel.Debug))
+                        logger.LogDebug("Group excluded rule matched: Target({TargetName}) Group({SegmentName})",
+                            target.ToString(), ToStringHelper.SegmentToString(segment));
+                    return false;
+                }
+
+                // check include list
+                if (segment.Included != null && segment.Included.Any(t => t.Identifier.Equals(target.Identifier)))
+                {
+                    if (logger.IsEnabled(LogLevel.Debug))
+                        logger.LogDebug("Group included rule matched: Target({TargetName}) Group({SegmentName})",
+                            target.ToString(), ToStringHelper.SegmentToString(segment));
+
+                    return true;
+                }
+
+                // if we have rules, at least one should pass
+                if (segment.Rules != null)
+                {
+                    var firstSuccess = segment.Rules.FirstOrDefault(r => EvaluateClause(r, target));
+                    if (firstSuccess != null)
                     {
                         if (logger.IsEnabled(LogLevel.Debug))
-                            logger.LogDebug("Group excluded rule matched: Target({TargetName}) Group({SegmentName})",
+                            logger.LogDebug(
+                                "Group condition rule matched: Target({TargetName}) Group({SegmentName})",
                                 target.ToString(), ToStringHelper.SegmentToString(segment));
-                        return false;
-                    }
-
-                    // check include list
-                    if (segment.Included != null && segment.Included.Any(t => t.Identifier.Equals(target.Identifier)))
-                    {
-                        if (logger.IsEnabled(LogLevel.Debug))
-                            logger.LogDebug("Group included rule matched: Target({TargetName}) Group({SegmentName})",
-                                target.ToString(), ToStringHelper.SegmentToString(segment));
-
                         return true;
-                    }
-
-                    // if we have rules, at least one should pass
-                    if (segment.Rules != null)
-                    {
-                        var firstSuccess = segment.Rules.FirstOrDefault(r => EvaluateClause(r, target));
-                        if (firstSuccess != null)
-                        {
-                            if (logger.IsEnabled(LogLevel.Debug))
-                                logger.LogDebug(
-                                    "Group condition rule matched: Target({TargetName}) Group({SegmentName})",
-                                    target.ToString(), ToStringHelper.SegmentToString(segment));
-                            return true;
-                        }
                     }
                 }
             }
@@ -325,8 +331,16 @@ namespace io.harness.cfsdk.client.api
 
             if (clause.Values == null || clause.Values.Count == 0) return false;
 
-            if (clause.Op == "segmentMatch") return IsTargetIncludedOrExcludedInSegment(clause.Values.ToList(), target);
-
+            try
+            {
+                if (clause.Op == "segmentMatch")
+                    return IsTargetIncludedOrExcludedInSegment(clause.Values.ToList(), target);
+            }
+            catch (InvalidCacheStateException ex)
+            {
+                logger.LogError(ex, "Invalid cache state detected while evaluating group rule {Clause}", ToStringHelper.ClauseToString(clause));
+                return false;
+            }
             object attrValue = GetAttrValue(target, clause.Attribute);
             if (attrValue == null) return false;
 
@@ -368,6 +382,23 @@ namespace io.harness.cfsdk.client.api
                         return target.Attributes[attribute];
                     return null;
             }
+        }
+    }
+
+    public class InvalidCacheStateException : Exception
+    {
+        public InvalidCacheStateException()
+        {
+        }
+
+        public InvalidCacheStateException(string message)
+            : base(message)
+        {
+        }
+
+        public InvalidCacheStateException(string message, Exception inner)
+            : base(message, inner)
+        {
         }
     }
 }
