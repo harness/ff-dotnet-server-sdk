@@ -243,6 +243,7 @@ namespace io.harness.cfsdk.client.api
             {
                 if (variationMap.Targets != null && variationMap.Targets.ToList()
                         .Any(t => t != null && t.Identifier.Equals(target.Identifier))) return variationMap.Variation;
+                // Legacy: the variation to target map no longer contains TargetSegments. These are stored in group rules.
                 if (variationMap.TargetSegments != null &&
                     IsTargetIncludedOrExcludedInSegment(variationMap.TargetSegments.ToList(), target))
                     return variationMap.Variation;
@@ -253,27 +254,88 @@ namespace io.harness.cfsdk.client.api
 
         private string EvaluateRules(FeatureConfig featureConfig, Target target)
         {
+            // No rules to evaluate or target is not supplied
             if (featureConfig.Rules == null || target == null) return null;
 
-            foreach (var servingRule in featureConfig.Rules.ToList().OrderBy(sr => sr.Priority))
+            foreach (var servingRule in featureConfig.Rules.OrderBy(sr => sr.Priority))
             {
-                if (servingRule.Clauses != null &&
-                    servingRule.Clauses.ToList().Any(c => EvaluateClause(c, target) == false)) continue;
-
-                if (servingRule.Serve != null)
+                // Log if Clauses are null
+                if (servingRule.Clauses == null)
                 {
-                    if (servingRule.Serve.Distribution != null)
-                    {
-                        var distributionProcessor = new DistributionProcessor(servingRule.Serve, loggerFactory);
-                        return distributionProcessor.loadKeyName(target);
-                    }
-
-                    if (servingRule.Serve.Variation != null) return servingRule.Serve.Variation;
+                    logger.LogWarning("Clauses are null for servingRule {RuleId} in FeatureConfig {FeatureConfigId}",
+                        servingRule.RuleId, ToStringHelper.FeatureConfigToString(featureConfig));
+                    continue; 
                 }
+                
+                // Proceed if any clause evaluation fails
+                if (servingRule.Clauses.Any(c => !EvaluateClause(c, target)))
+                {
+                    continue; 
+                }
+
+                // Handling for servingRule.Serve being null
+                if (servingRule.Serve == null)
+                {
+                    logger.LogWarning("Serve is null for rule ID {Rule} in FeatureConfig {FeatureConfig}",
+                        servingRule.RuleId, ToStringHelper.FeatureConfigToString(featureConfig));
+                    return null;
+                }
+
+                if (servingRule.Serve.Distribution != null)
+                {
+                    logger.LogDebug(
+                        "Percentage rollout applies, evaluating distribution: Target({Target}) Flag({Flag})",
+                        target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
+                    var distributionProcessor = new DistributionProcessor(servingRule.Serve, loggerFactory);
+                    return distributionProcessor.loadKeyName(target);
+                }
+
+                if (servingRule.Serve.Variation == null)
+                {
+                    // Log if servingRule.Serve.Variation is null
+                    logger.LogWarning("Serve.Variation is null for a rule in FeatureConfig {FeatureConfig}",
+                        ToStringHelper.FeatureConfigToString(featureConfig));
+                    return null;
+                }
+
+                return servingRule.Serve.Variation;
             }
+
+            // Log if no applicable rule was found
+            logger.LogDebug("No applicable rule found for Target({Target}) in FeatureConfig {FeatureConfig}",
+                target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
 
             return null;
         }
+
+
+        // private string EvaluateRules(FeatureConfig featureConfig, Target target)
+        // {
+        //     if (featureConfig.Rules == null || target == null) return null;
+        //
+        //     foreach (var servingRule in featureConfig.Rules.ToList().OrderBy(sr => sr.Priority))
+        //     {
+        //         if (servingRule.Clauses != null &&
+        //             servingRule.Clauses.ToList().Any(c => EvaluateClause(c, target) == false)) continue;
+        //
+        //         if (servingRule.Serve != null)
+        //         {
+        //             if (servingRule.Serve.Distribution != null)
+        //             {
+        //                 if (logger.IsEnabled(LogLevel.Debug))
+        //                     logger.LogDebug(
+        //                         "Percentage rollout applies, evaluating distribution: Target({Target}) Flag({Flag})",
+        //                         target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
+        //                 var distributionProcessor = new DistributionProcessor(servingRule.Serve, loggerFactory);
+        //                 return distributionProcessor.loadKeyName(target);
+        //             }
+        //
+        //             if (servingRule.Serve.Variation != null) return servingRule.Serve.Variation;
+        //         }
+        //     }
+        //
+        //     return null;
+        // }
 
 
         private string EvaluateDistribution(FeatureConfig featureConfig, Target target)
