@@ -151,27 +151,22 @@ namespace io.harness.cfsdk.client.api
             }
 
             // Check for specific targeting match
-            var specificTargetingVariation = EvaluateVariationMap(target, featureConfig.VariationToTargetMap);
+            if (logger.IsEnabled(LogLevel.Debug))
+                logger.LogDebug(
+                    "Evaluating specific targeting: Flag({Flag})",
+                    ToStringHelper.FeatureConfigToString(featureConfig));
+            var specificTargetingVariation =
+                EvaluateVariationMap(target, featureConfig.VariationToTargetMap, featureConfig.Feature);
             if (specificTargetingVariation != null)
             {
-                logger.LogDebug("Specific targeting matched: Target({Target}) Flag({Flag})",
-                    target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
+                logger.LogDebug("Specific targeting matched: Flag({Flag}) Target({Target})",
+                    ToStringHelper.FeatureConfigToString(featureConfig), target.ToString());
                 return GetVariation(featureConfig.Variations, specificTargetingVariation);
             }
 
             // Evaluate rules
             var rulesVariation = EvaluateRules(featureConfig, target);
             if (rulesVariation != null) return GetVariation(featureConfig.Variations, rulesVariation);
-
-            // TODO don't think this is needed, as we evaluate distribution in EvaluateRules
-            // Evaluate distribution
-            var distributionVariation = EvaluateDistribution(featureConfig, target);
-            if (distributionVariation != null)
-            {
-                logger.LogDebug("Percentage rollout matched: Target({Target}) Flag({Flag})",
-                    target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
-                return GetVariation(featureConfig.Variations, distributionVariation);
-            }
 
             // Use default serve variation
             var defaultVariation = featureConfig.DefaultServe.Variation;
@@ -192,9 +187,18 @@ namespace io.harness.cfsdk.client.api
             return variations.FirstOrDefault(var => var.Identifier.Equals(variationIdentifier));
         }
 
-        private string EvaluateVariationMap(Target target, ICollection<VariationMap> variationMaps)
+        private string EvaluateVariationMap(Target target, ICollection<VariationMap> variationMaps,
+            string featureIdentifier)
         {
-            if (variationMaps == null || target == null) return null;
+            if (variationMaps == null)
+            {
+                if (logger.IsEnabled(LogLevel.Debug))
+                    logger.LogDebug(
+                        "No specific targeting rules found in flag ({FeatureIdentifier})", featureIdentifier);
+                return null;
+            }
+
+            if (target == null) return null;
             foreach (var variationMap in variationMaps)
             {
                 if (variationMap.Targets != null && variationMap.Targets.ToList()
@@ -239,7 +243,7 @@ namespace io.harness.cfsdk.client.api
                 {
                     if (logger.IsEnabled(LogLevel.Debug))
                         logger.LogDebug(
-                            "Percentage rollout applies, evaluating distribution: Target({Target}) Flag({Flag})",
+                            "Percentage rollout applies to group rule, evaluating distribution: Target({Target}) Flag({Flag})",
                             target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
 
                     var distributionProcessor = new DistributionProcessor(servingRule.Serve, loggerFactory);
@@ -280,12 +284,11 @@ namespace io.harness.cfsdk.client.api
             {
                 var segment = repository.GetSegment(segmentIdentifier);
                 if (segment == null)
-                {
-                    throw new InvalidCacheStateException($"Segment with identifier {segmentIdentifier} could not be found in the cache. This might indicate a cache inconsistency or missing data.");
-                }
-                
+                    throw new InvalidCacheStateException(
+                        $"Segment with identifier {segmentIdentifier} could not be found in the cache. This might indicate a cache inconsistency or missing data.");
+
                 logger.LogDebug("Evaluating group rule: Group({Segment} Target({Target}) )",
-                    ToStringHelper.SegmentToString(segment), target.ToString() );
+                    ToStringHelper.SegmentToString(segment), target.ToString());
 
                 // check exclude list
                 if (segment.Excluded != null && segment.Excluded.Any(t => t.Identifier.Equals(target.Identifier)))
@@ -338,9 +341,11 @@ namespace io.harness.cfsdk.client.api
             }
             catch (InvalidCacheStateException ex)
             {
-                logger.LogError(ex, "Invalid cache state detected while evaluating group rule {Clause}", ToStringHelper.ClauseToString(clause));
+                logger.LogError(ex, "Invalid cache state detected while evaluating group rule {Clause}",
+                    ToStringHelper.ClauseToString(clause));
                 return false;
             }
+
             object attrValue = GetAttrValue(target, clause.Attribute);
             if (attrValue == null) return false;
 
