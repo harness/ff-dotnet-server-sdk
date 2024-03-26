@@ -204,9 +204,17 @@ namespace io.harness.cfsdk.client.api
                 if (variationMap.Targets != null && variationMap.Targets.ToList()
                         .Any(t => t != null && t.Identifier.Equals(target.Identifier))) return variationMap.Variation;
                 // Legacy: the variation to target map no longer contains TargetSegments. These are stored in group rules.
-                if (variationMap.TargetSegments != null &&
-                    IsTargetIncludedOrExcludedInSegment(variationMap.TargetSegments.ToList(), target))
-                    return variationMap.Variation;
+                try
+                {
+                    if (variationMap.TargetSegments != null &&
+                        IsTargetIncludedOrExcludedInSegment(variationMap.TargetSegments.ToList(), target))
+                        return variationMap.Variation;
+                }
+                catch (InvalidCacheStateException ex)
+                {
+                    logger.LogError(ex, "Invalid cache state detected while evaluating group rule");
+                }
+
             }
 
             return null;
@@ -278,7 +286,7 @@ namespace io.harness.cfsdk.client.api
             return distributionProcessor.loadKeyName(target);
         }
 
-        private bool IsTargetIncludedOrExcludedInSegment(List<string> segmentList, Target target)
+        private bool IsTargetIncludedOrExcludedInSegment(List<string> segmentList, Target target) 
         {
             foreach (var segmentIdentifier in segmentList)
             {
