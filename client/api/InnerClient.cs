@@ -224,6 +224,7 @@ namespace io.harness.cfsdk.client.api
                 logger.LogError(ex, "Invalid cache state detected when evaluating boolean variation for flag {Key}",
                     key);
                 LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
+                polling.TriggerProcessSegments();
                 return defaultValue;
             }
         }
@@ -239,6 +240,7 @@ namespace io.harness.cfsdk.client.api
                 logger.LogError(ex, "Invalid cache state detected when evaluating string variation for flag {Key}",
                     key);
                 LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
+                polling.TriggerProcessSegments();
                 return defaultValue;
             }
         }
@@ -254,6 +256,7 @@ namespace io.harness.cfsdk.client.api
                 logger.LogError(ex, "Invalid cache state detected when evaluating number variation for flag {Key}",
                     key);
                 LogEvaluationFailureError(FeatureConfigKind.Int, key, target, defaultValue.ToString());
+                polling.TriggerProcessSegments();
                 return defaultValue;
             }
         }
@@ -269,6 +272,7 @@ namespace io.harness.cfsdk.client.api
                 logger.LogError(ex, "Invalid cache state detected when evaluating json variation for flag {Key}",
                     key);
                 LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
+                polling.TriggerProcessSegments();
                 return defaultValue;
             }
         }
