@@ -227,10 +227,10 @@ namespace io.harness.cfsdk.client.api
                     "Invalid cache state detected when evaluating boolean variation for flag {Key}, refreshing cache and retrying evaluation ",
                     key);
                 // Attempt to refresh cache
-                var success = polling.RefreshFlagsAndSegments(TimeSpan.FromMilliseconds(2000));
+                var result = polling.RefreshFlagsAndSegments(TimeSpan.FromMilliseconds(2000));
 
                 // If the refresh has failed or exceeded the timout, return default variation
-                if (!success)
+                if (result != RefreshOutcome.Success)
                 {
                     logger.LogError(ex,
                         "Refreshing cache for boolean variation for flag {Key} failed, returning default variation ",
@@ -265,8 +265,8 @@ namespace io.harness.cfsdk.client.api
                 logger.LogWarning(ex,
                     "Invalid cache state detected when evaluating string variation for flag {Key}, refreshing cache and retrying evaluation",
                     key);
-                var success = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
-                if (!success)
+                var result = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
+                if (result != RefreshOutcome.Success)
                 {
                     logger.LogError(
                         "Refreshing cache for string variation for flag {Key} failed, returning default variation",
@@ -302,8 +302,8 @@ namespace io.harness.cfsdk.client.api
                 logger.LogWarning(ex,
                     "Invalid cache state detected when evaluating number variation for flag {Key}, refreshing cache and retrying evaluation",
                     key);
-                var success = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
-                if (!success)
+                var result = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
+                if (result != RefreshOutcome.Success)
                 {
                     logger.LogError(
                         "Refreshing cache for number variation for flag {Key} failed, returning default variation",
@@ -339,8 +339,8 @@ namespace io.harness.cfsdk.client.api
                 logger.LogWarning(ex,
                     "Invalid cache state detected when evaluating json variation for flag {Key}, refreshing cache and retrying evaluation",
                     key);
-                var success = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
-                if (!success)
+                var result = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
+                if (result != RefreshOutcome.Success)
                 {
                     logger.LogError(
                         "Refreshing cache for json variation for flag {Key} failed, returning default variation",
