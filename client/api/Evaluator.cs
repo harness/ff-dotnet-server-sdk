@@ -33,7 +33,7 @@ namespace io.harness.cfsdk.client.api
         private readonly ILogger<Evaluator> logger;
         private readonly ILoggerFactory loggerFactory;
         private readonly IRepository repository;
-        private IPollingProcessor poller;
+        private readonly IPollingProcessor poller;
 
 
         public Evaluator(IRepository repository, IEvaluatorCallback callback, ILoggerFactory loggerFactory,
