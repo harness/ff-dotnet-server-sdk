@@ -33,6 +33,7 @@ namespace io.harness.cfsdk.client.api
         private IEvaluator evaluator;
         private MetricsProcessor metric;
         private IConnector connector;
+        private Config config;
 
         public event EventHandler InitializationCompleted;
         public event EventHandler<string> EvaluationChanged;
@@ -50,6 +51,7 @@ namespace io.harness.cfsdk.client.api
             this.loggerFactory = loggerFactory;
             this.parent = parent;
             this.logger = loggerFactory.CreateLogger<InnerClient>();
+            this.config = config;
             Initialize(apiKey, config);
         }
 
@@ -81,7 +83,7 @@ namespace io.harness.cfsdk.client.api
             this.repository = new StorageRepository(config.Cache, config.Store, this, loggerFactory);
             this.polling = new PollingProcessor(connector, this.repository, config, this, loggerFactory);
             this.update = new UpdateProcessor(connector, this.repository, config, this, loggerFactory);
-            this.evaluator = new Evaluator(this.repository, this, loggerFactory, config.analyticsEnabled, polling);
+            this.evaluator = new Evaluator(this.repository, this, loggerFactory, config.analyticsEnabled, polling, config);
             // Since 1.4.2, we enable the global target for evaluation metrics. 
             this.metric = new MetricsProcessor(config, evaluationAnalyticsCache, targetAnalyticsCache, new AnalyticsPublisherService(connector, evaluationAnalyticsCache, targetAnalyticsCache, loggerFactory), loggerFactory, true);
             Start();
@@ -225,7 +227,7 @@ namespace io.harness.cfsdk.client.api
                     "Invalid cache state detected when evaluating boolean variation for flag {Key}, refreshing cache and retrying evaluation ",
                     key);
                 // Attempt to refresh cache
-                var success = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(2));
+                var success = polling.RefreshFlagsAndSegments(TimeSpan.FromMilliseconds(2000));
 
                 // If the refresh has failed or exceeded the timout, return default variation
                 if (!success)
@@ -263,7 +265,7 @@ namespace io.harness.cfsdk.client.api
                 logger.LogWarning(ex,
                     "Invalid cache state detected when evaluating string variation for flag {Key}, refreshing cache and retrying evaluation",
                     key);
-                var success = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(2));
+                var success = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
                 if (!success)
                 {
                     logger.LogError(
@@ -300,7 +302,7 @@ namespace io.harness.cfsdk.client.api
                 logger.LogWarning(ex,
                     "Invalid cache state detected when evaluating number variation for flag {Key}, refreshing cache and retrying evaluation",
                     key);
-                var success = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(2));
+                var success = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
                 if (!success)
                 {
                     logger.LogError(
@@ -337,7 +339,7 @@ namespace io.harness.cfsdk.client.api
                 logger.LogWarning(ex,
                     "Invalid cache state detected when evaluating json variation for flag {Key}, refreshing cache and retrying evaluation",
                     key);
-                var success = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(2));
+                var success = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
                 if (!success)
                 {
                     logger.LogError(

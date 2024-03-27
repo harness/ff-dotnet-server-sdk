@@ -34,10 +34,11 @@ namespace io.harness.cfsdk.client.api
         private readonly ILoggerFactory loggerFactory;
         private readonly IRepository repository;
         private readonly IPollingProcessor poller;
+        private readonly Config config;
 
 
         public Evaluator(IRepository repository, IEvaluatorCallback callback, ILoggerFactory loggerFactory,
-            bool isAnalyticsEnabled, IPollingProcessor poller)
+            bool isAnalyticsEnabled, IPollingProcessor poller, Config config)
         {
             this.repository = repository;
             this.callback = callback;
@@ -45,6 +46,7 @@ namespace io.harness.cfsdk.client.api
             this.loggerFactory = loggerFactory;
             IsAnalyticsEnabled = isAnalyticsEnabled;
             this.poller = poller;
+            this.config = config;
         }
 
         public bool BoolVariation(string key, Target target, bool defaultValue)
@@ -93,7 +95,7 @@ namespace io.harness.cfsdk.client.api
                 logger.LogWarning(
                     "Unable to find flag {Key} in cache, refreshing flag cache and retrying evaluation ",
                     key);
-                var refreshSuccess = poller.RefreshFlags(TimeSpan.FromSeconds(2));
+                var refreshSuccess = poller.RefreshFlags(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
 
                 if (refreshSuccess)
                     // Re-attempt to fetch the feature config after the refresh
