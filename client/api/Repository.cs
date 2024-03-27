@@ -34,6 +34,8 @@ namespace io.harness.cfsdk.client.api
 
     internal class StorageRepository : IRepository
     {
+        internal static readonly string AdditionalPropertyValueAsSet = "harness-values-as-set";
+
         private readonly ILogger logger;
         private readonly ICache cache;
         private readonly IStore store;
@@ -157,6 +159,21 @@ namespace io.harness.cfsdk.client.api
                 this.callback.OnFlagStored(identifier);
             }
         }
+
+        private void CacheClauseValues(Segment segment)
+        {
+            // The generated API code uses a List which can be inefficient if a lot of values are used
+            // This function will cache values as a HashSet in AdditionalProperties
+            foreach (var clause in segment.Rules)
+            {
+                if (!clause.Op.Equals("in")) continue;
+                HashSet<string> set = new();
+                set.UnionWith(clause.Values);
+                clause.AdditionalProperties.Remove(AdditionalPropertyValueAsSet);
+                clause.AdditionalProperties.Add(AdditionalPropertyValueAsSet, set);
+            }
+        }
+
         void IRepository.SetSegment(string identifier, Segment segment)
         {
             Segment current = GetSegment(identifier, false);
@@ -168,6 +185,7 @@ namespace io.harness.cfsdk.client.api
                 return;
             }
 
+            CacheClauseValues(segment);
             Update(identifier, SegmentKey(identifier), segment);
 
             if (this.callback != null)

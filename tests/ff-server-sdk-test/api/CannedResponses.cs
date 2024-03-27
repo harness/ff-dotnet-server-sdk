@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Text;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using Microsoft.IdentityModel.Logging;
 using Newtonsoft.Json;
+using NUnit.Framework;
 using WireMock.ResponseBuilders;
 using Response = WireMock.ResponseBuilders.Response;
 
@@ -54,8 +56,45 @@ namespace ff_server_sdk_test.api
             return body;
         }
 
-        public static string MakeFeatureConfigBody()
+        public static ServingRule MakeServingRule()
         {
+            var servingRule = new ServingRule
+            {
+                RuleId = "",
+                Priority = 0
+            };
+
+            return servingRule;
+        }
+
+        public static VariationMap MakeVariationMap(string targetSegmentToUse, string variationToReturn)
+        {
+
+            var targetMap = new TargetMap
+            {
+                Identifier = "targerid",
+                Name = "name"
+            };
+
+            var variationMap = new VariationMap
+            {
+                Variation = variationToReturn,
+                Targets = new List<TargetMap> {targetMap},
+                TargetSegments = new List<string> { targetSegmentToUse }
+            };
+
+            return variationMap;
+        }
+
+        public static string MakeFeatureConfigBody(VariationMap variationToTargetMap = null, params ServingRule[] servingRules)
+        {
+            var onVariation = new Variation
+            {
+                Identifier = "on",
+                Name = "On",
+                Value = "true"
+            };
+
             var flag = new FeatureConfig
             {
                 Feature = "Feature",
@@ -63,14 +102,16 @@ namespace ff_server_sdk_test.api
                 Kind = FeatureConfigKind.Boolean,
                 Prerequisites = new List<Prerequisite>(),
                 Project = "Project",
-                Rules = new List<ServingRule>(),
+                Rules = servingRules,
                 State = FeatureState.On,
-                Variations = new List<Variation>(),
+                Variations = new List<Variation> { onVariation },
                 Version = 1,
                 AdditionalProperties = new Dictionary<string, object>(),
                 DefaultServe = new Serve(),
-                OffVariation = "off"
+                OffVariation = "off",
+                VariationToTargetMap = (variationToTargetMap != null) ? new List<VariationMap> {variationToTargetMap} : new List<VariationMap>()
             };
+
             var flags = new List<FeatureConfig> { flag };
 
             var body = JsonConvert.SerializeObject(flags, new JsonSerializerSettings());
@@ -78,13 +119,39 @@ namespace ff_server_sdk_test.api
             return body;
         }
 
-        public static string MakeTargetSegmentsBody()
+        public static Clause MakeInClause(string id, string attributeToFind, int numberOfValues)
+        {
+            List<string> values = new();
+            StringBuilder builder = new();
+            for (var i = 0; i < numberOfValues; i++)
+            {
+                values.Add(builder.Clear().Append("value").Append(i).ToString());
+            }
+
+            Clause clause = new();
+            clause.Op = "in";
+            clause.Id = id;
+            clause.Values = values;
+            clause.Attribute = attributeToFind;
+
+            return clause;
+        }
+
+        public static List<Clause> MakeRules(params Clause[] clauses)
+        {
+            var rules = new List<Clause>();
+            rules.AddRange(clauses);
+
+            return rules;
+        }
+
+        public static string MakeTargetSegmentsBody(string segmentIdentifier = "Identifier", ICollection<Clause> rules = null)
         {
             var segment = new Segment
             {
                 Environment = "Environment",
-                Rules = new List<Clause>(),
-                Identifier = "Identifier",
+                Rules = rules ?? new List<Clause>(),
+                Identifier = segmentIdentifier,
                 Name = "Name",
                 Tags = new List<Tag>(),
                 Version = 1
