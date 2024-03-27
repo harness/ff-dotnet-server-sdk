@@ -145,62 +145,105 @@ namespace io.harness.cfsdk.client.api
 
         public bool RefreshFlagsAndSegments(TimeSpan timeout)
         {
-            var processSegmentsTask = Task.Run(async () => await ProcessSegments());
-            var processFlagsTask = Task.Run(async () => await ProcessFlags());
-
-            try
+            lock (cacheRefreshLock)
             {
-                // Await both tasks to complete within the timeout
-                if (Task.WaitAll(new[] { processSegmentsTask, processFlagsTask }, timeout)) return true;
+                if (!CanRefreshCache()) return false;
 
-                logger.LogWarning("Refreshing flags and groups did not complete within the specified timeout");
-                return false;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Exception occurred while refreshing flags and groups");
-                return false;
+                var processSegmentsTask = Task.Run(async () => await ProcessSegments());
+                var processFlagsTask = Task.Run(async () => await ProcessFlags());
+
+                try
+                {
+                    // Await both tasks to complete within the timeout
+                    var refreshSuccessful = Task.WaitAll(new[] { processSegmentsTask, processFlagsTask }, timeout);
+                    if (refreshSuccessful)
+                    {
+                        UpdateLastRefreshTime();
+                        return true;
+                    }
+
+                    logger.LogWarning("Refreshing flags and segments did not complete within the specified timeout");
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Exception occurred while refreshing flags and segments");
+                    return false;
+                }
             }
         }
-        
+
         public bool RefreshSegments(TimeSpan timeout)
         {
-            try
+            lock (cacheRefreshLock)
             {
-                var task = Task.Run(async () => await ProcessSegments());
-                if (task.Wait(timeout))
-                {
-                    return true; 
-                }
+                if (!CanRefreshCache()) return false;
 
-                logger.LogWarning("RefreshSegments did not complete within the specified timeout");
-                return false; 
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Exception occurred while trying to refresh groups");
-                return false; 
+                try
+                {
+                    var task = Task.Run(async () => await ProcessSegments());
+                    var refreshSuccessful = task.Wait(timeout);
+                    if (refreshSuccessful)
+                    {
+                        UpdateLastRefreshTime();
+                        return true;
+                    }
+
+                    logger.LogWarning("RefreshSegments did not complete within the specified timeout");
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Exception occurred while trying to refresh segments");
+                    return false;
+                }
             }
         }
 
         public bool RefreshFlags(TimeSpan timeout)
         {
-            try
+            lock (cacheRefreshLock)
             {
-                var task = Task.Run(async () => await ProcessFlags());
-                if (task.Wait(timeout))
-                {
-                    return true; 
-                }
+                if (!CanRefreshCache()) return false;
 
-                logger.LogWarning("RefreshFlags did not complete within the specified timeout");
-                return false; 
+                try
+                {
+                    var task = Task.Run(async () => await ProcessFlags());
+                    var refreshSuccessful = task.Wait(timeout);
+                    if (refreshSuccessful)
+                    {
+                        UpdateLastRefreshTime();
+                        return true;
+                    }
+
+                    logger.LogWarning("RefreshFlags did not complete within the specified timeout");
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Exception occurred while trying to refresh flags");
+                    return false;
+                }
             }
-            catch (Exception ex)
+        }
+
+        private bool CanRefreshCache()
+        {
+            var now = DateTime.UtcNow;
+            if (now - lastCacheRefreshTime < refreshCooldown)
             {
-                logger.LogError(ex, "Exception occurred while trying to refresh flags");
-                return false; 
+                logger.LogWarning(
+                    "Cache refresh called too soon. Please wait at least {MaxCacheRefreshTime} seconds between refreshes",
+                    MaxCacheRefreshTime);
+                return false;
             }
+
+            return true;
+        }
+
+        private void UpdateLastRefreshTime()
+        {
+            lastCacheRefreshTime = DateTime.UtcNow;
         }
 
         
