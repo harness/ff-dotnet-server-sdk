@@ -95,11 +95,13 @@ namespace io.harness.cfsdk.client.api
                 logger.LogWarning(
                     "Unable to find flag {Key} in cache, refreshing flag cache and retrying evaluation ",
                     key);
-                var refreshSuccess = poller.RefreshFlags(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
+                var refreshResult = poller.RefreshFlags(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
 
-                if (refreshSuccess)
-                    // Re-attempt to fetch the feature config after the refresh
-                    featureConfig = repository.GetFlag(key);
+                if (refreshResult != RefreshOutcome.Success)
+                    return null;
+
+                // Re-attempt to fetch the feature config after the refresh
+                featureConfig = repository.GetFlag(key);
 
                 // If still not found or doesn't match the kind, return null to indicate failure
                 if (featureConfig == null)
