@@ -43,7 +43,6 @@ namespace io.harness.cfsdk.client.api
             this.debug = debug;
             this.metricsServiceAcceptableDuration = metricsServiceAcceptableDuration;
             this.cacheRecoveryTimeoutInMs = cacheRecoveryTimeoutInMs;
-
         }
 
         public Config()
