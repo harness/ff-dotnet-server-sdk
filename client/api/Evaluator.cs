@@ -33,15 +33,20 @@ namespace io.harness.cfsdk.client.api
         private readonly ILogger<Evaluator> logger;
         private readonly ILoggerFactory loggerFactory;
         private readonly IRepository repository;
+        private readonly IPollingProcessor poller;
+        private readonly Config config;
+
 
         public Evaluator(IRepository repository, IEvaluatorCallback callback, ILoggerFactory loggerFactory,
-            bool isAnalyticsEnabled)
+            bool isAnalyticsEnabled, IPollingProcessor poller, Config config)
         {
             this.repository = repository;
             this.callback = callback;
             logger = loggerFactory.CreateLogger<Evaluator>();
             this.loggerFactory = loggerFactory;
             IsAnalyticsEnabled = isAnalyticsEnabled;
+            this.poller = poller;
+            this.config = config;
         }
 
         public bool BoolVariation(string key, Target target, bool defaultValue)
@@ -85,8 +90,36 @@ namespace io.harness.cfsdk.client.api
         private Variation EvaluateVariation(string key, Target target, FeatureConfigKind kind)
         {
             var featureConfig = repository.GetFlag(key);
-            if (featureConfig == null || featureConfig.Kind != kind)
+            if (featureConfig == null)
+            {
+                logger.LogWarning(
+                    "Unable to find flag {Key} in cache, refreshing flag cache and retrying evaluation ",
+                    key);
+                var refreshResult = poller.RefreshFlags(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
+
+                if (refreshResult != RefreshOutcome.Success)
+                    return null;
+
+                // Re-attempt to fetch the feature config after the refresh
+                featureConfig = repository.GetFlag(key);
+
+                // If still not found or doesn't match the kind, return null to indicate failure
+                if (featureConfig == null)
+                {
+                    logger.LogError(
+                        "Failed to find flag {Key} in cache even after attempting a refresh. Check flag exists in project",
+                        key);
+                    return null;
+                }
+            }
+
+            if (featureConfig.Kind != kind)
+            {
+                logger.LogWarning(
+                    "Requested variation {Kind} does not match flag {Key} which is of type {featureConfigKind}",
+                    kind,  key, featureConfig.Kind);
                 return null;
+            }
 
             var prerequisites = featureConfig.Prerequisites;
             if (prerequisites != null && prerequisites.Count > 0)

@@ -22,10 +22,13 @@ namespace io.harness.cfsdk.client.api
         internal bool streamEnabled = true;
         internal int evaluationMetricsMaxSize = 10000;
         internal int targetMetricsMaxSize = 100000;
+        internal int cacheRecoveryTimeoutInMs = 5000; 
+
+
 
         public Config(string configUrl, string eventUrl, bool streamEnabled, int pollIntervalInSeconds,
             bool analyticsEnabled, int frequency, int targetMetricsMaxSize, int connectionTimeout, int readTimeout,
-            int writeTimeout, bool debug, long metricsServiceAcceptableDuration)
+            int writeTimeout, bool debug, long metricsServiceAcceptableDuration, int cacheRecoveryTimeoutInMs)
         {
             this.configUrl = configUrl;
             this.eventUrl = eventUrl;
@@ -39,6 +42,7 @@ namespace io.harness.cfsdk.client.api
             this.writeTimeout = writeTimeout;
             this.debug = debug;
             this.metricsServiceAcceptableDuration = metricsServiceAcceptableDuration;
+            this.cacheRecoveryTimeoutInMs = cacheRecoveryTimeoutInMs;
         }
 
         public Config()
@@ -64,6 +68,7 @@ namespace io.harness.cfsdk.client.api
 
         public int TargetMetricsMaxSize => targetMetricsMaxSize;
         public int EvaluationMetricsMaxSize => evaluationMetricsMaxSize;
+        public int CacheRecoveryTimeoutInMs => cacheRecoveryTimeoutInMs;
 
 
         /**
@@ -187,6 +192,12 @@ namespace io.harness.cfsdk.client.api
         public ConfigBuilder debug(bool debug)
         {
             configtobuild.debug = debug;
+            return this;
+        }
+        
+        public ConfigBuilder SetCacheRecoveryTimeout(int timeoutMilliseconds)
+        {
+            configtobuild.cacheRecoveryTimeoutInMs = timeoutMilliseconds;
             return this;
         }
 
