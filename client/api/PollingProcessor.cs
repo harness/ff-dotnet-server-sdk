@@ -52,6 +52,11 @@ namespace io.harness.cfsdk.client.api
         private readonly Config config;
         private Timer pollTimer;
         private bool isInitialized = false;
+        private readonly object cacheRefreshLock = new object();
+        private DateTime lastCacheRefreshTime = DateTime.MinValue;
+        private const int MaxCacheRefreshTime = 60;
+
+        private readonly TimeSpan refreshCooldown = TimeSpan.FromSeconds(MaxCacheRefreshTime);
 
         public PollingProcessor(IConnector connector, IRepository repository, Config config, IPollCallback callback, ILoggerFactory loggerFactory)
         {
