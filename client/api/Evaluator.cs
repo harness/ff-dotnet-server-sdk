@@ -112,7 +112,7 @@ namespace io.harness.cfsdk.client.api
             if (featureConfig.Kind != kind)
             {
                 logger.LogWarning(
-                    "Requested variation {Kind} does not match flag {Key} which is of type {featureConfigKind} in cache",
+                    "Requested variation {Kind} does not match flag {Key} which is of type {featureConfigKind}",
                     kind,  key, featureConfig.Kind);
                 return null;
             }
