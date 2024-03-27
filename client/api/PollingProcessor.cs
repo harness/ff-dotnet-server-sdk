@@ -30,7 +30,11 @@ namespace io.harness.cfsdk.client.api
         /// </summary>
         void Start();
 
-        void TriggerProcessSegments();
+    bool RefreshSegments(TimeSpan timeout);
+    bool RefreshFlags(TimeSpan timeout);
+    
+    bool RefreshFlagsAndSegments(TimeSpan timeout);
+
     }
 
     /// <summary>
@@ -133,18 +137,65 @@ namespace io.harness.cfsdk.client.api
                 throw;
             }
         }
-        
-        public void TriggerProcessSegments()
+
+        public bool RefreshFlagsAndSegments(TimeSpan timeout)
         {
-            Task.Run(async () => await ProcessSegments())
-                .ContinueWith(task =>
+            var processSegmentsTask = Task.Run(async () => await ProcessSegments());
+            var processFlagsTask = Task.Run(async () => await ProcessFlags());
+
+            try
+            {
+                // Await both tasks to complete within the timeout
+                if (Task.WaitAll(new[] { processSegmentsTask, processFlagsTask }, timeout)) return true;
+
+                logger.LogWarning("Refreshing flags and groups did not complete within the specified timeout");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Exception occurred while refreshing flags and groups");
+                return false;
+            }
+        }
+        
+        public bool RefreshSegments(TimeSpan timeout)
+        {
+            try
+            {
+                var task = Task.Run(async () => await ProcessSegments());
+                if (task.Wait(timeout))
                 {
-                    if (task.Exception != null)
-                    {
-                        // Handle exceptions from ProcessSegments
-                        logger.LogError(task.Exception, "Error occurred in TriggerProcessSegments");
-                    }
-                });
+                    return true; 
+                }
+
+                logger.LogWarning("RefreshSegments did not complete within the specified timeout");
+                return false; 
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Exception occurred while trying to refresh groups");
+                return false; 
+            }
+        }
+
+        public bool RefreshFlags(TimeSpan timeout)
+        {
+            try
+            {
+                var task = Task.Run(async () => await ProcessFlags());
+                if (task.Wait(timeout))
+                {
+                    return true; 
+                }
+
+                logger.LogWarning("RefreshFlags did not complete within the specified timeout");
+                return false; 
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Exception occurred while trying to refresh flags");
+                return false; 
+            }
         }
 
         

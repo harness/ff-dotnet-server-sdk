@@ -221,11 +221,20 @@ namespace io.harness.cfsdk.client.api
             }
             catch (InvalidCacheStateException ex)
             {
-                logger.LogError(ex, "Invalid cache state detected when evaluating boolean variation for flag {Key}",
+                logger.LogError(ex, "Invalid cache state detected when evaluating boolean variation for flag, refreshing cache and retrying evaluation {Key}",
                     key);
-                LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
-                polling.TriggerProcessSegments();
-                return defaultValue;
+                // Attempt to refresh cache
+                var success = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(2));
+                
+                // If the refresh has failed or exceeded the timout, return default variation
+                if (!success)
+                {
+                    LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
+                    return defaultValue;
+                }
+                
+                return evaluator.BoolVariation(key, target, defaultValue);
+                
             }
         }
 
@@ -240,7 +249,7 @@ namespace io.harness.cfsdk.client.api
                 logger.LogError(ex, "Invalid cache state detected when evaluating string variation for flag {Key}",
                     key);
                 LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
-                polling.TriggerProcessSegments();
+                polling.RefreshFlagsAndSegments(2);
                 return defaultValue;
             }
         }
