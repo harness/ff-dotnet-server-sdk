@@ -211,6 +211,16 @@ namespace io.harness.cfsdk.client.api
         public string stringVariation(string key, dto.Target target, string defaultValue) { return client.StringVariation(key, target, defaultValue); }
         public double numberVariation(string key, dto.Target target, double defaultValue) { return client.NumberVariation(key, target, defaultValue); }
         public JObject jsonVariation(string key, dto.Target target, JObject defaultValue) {  return client.JsonVariation(key, target, defaultValue); }
+        
+        public int GetFlagsCacheSize()
+        {
+            return client.GetFlagsCacheSize();
+        }
+
+        public int GetSegmentsCacheSize()
+        {
+            return client.GetSegmentsCacheSize();
+        }
 
         // force message
         public void Update(Message msg) { client.Update(msg, true);  }
