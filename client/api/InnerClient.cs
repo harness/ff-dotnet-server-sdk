@@ -33,6 +33,7 @@ namespace io.harness.cfsdk.client.api
         private IEvaluator evaluator;
         private MetricsProcessor metric;
         private IConnector connector;
+        private Config config;
 
         public event EventHandler InitializationCompleted;
         public event EventHandler<string> EvaluationChanged;
@@ -50,6 +51,7 @@ namespace io.harness.cfsdk.client.api
             this.loggerFactory = loggerFactory;
             this.parent = parent;
             this.logger = loggerFactory.CreateLogger<InnerClient>();
+            this.config = config;
             Initialize(apiKey, config);
         }
 
@@ -81,7 +83,7 @@ namespace io.harness.cfsdk.client.api
             this.repository = new StorageRepository(config.Cache, config.Store, this, loggerFactory);
             this.polling = new PollingProcessor(connector, this.repository, config, this, loggerFactory);
             this.update = new UpdateProcessor(connector, this.repository, config, this, loggerFactory);
-            this.evaluator = new Evaluator(this.repository, this, loggerFactory, config.analyticsEnabled);
+            this.evaluator = new Evaluator(this.repository, this, loggerFactory, config.analyticsEnabled, polling, config);
             // Since 1.4.2, we enable the global target for evaluation metrics. 
             this.metric = new MetricsProcessor(config, evaluationAnalyticsCache, targetAnalyticsCache, new AnalyticsPublisherService(connector, evaluationAnalyticsCache, targetAnalyticsCache, loggerFactory), loggerFactory, true);
             Start();
@@ -213,7 +215,7 @@ namespace io.harness.cfsdk.client.api
             EvaluationChanged?.Invoke(parent, identifier);
         }
 
-        public bool BoolVariation(string key, dto.Target target, bool defaultValue)
+        public bool BoolVariation(string key, Target target, bool defaultValue)
         {
             try
             {
@@ -221,15 +223,38 @@ namespace io.harness.cfsdk.client.api
             }
             catch (InvalidCacheStateException ex)
             {
-                logger.LogError(ex, "Invalid cache state detected when evaluating boolean variation for flag {Key}",
+                logger.LogWarning(ex,
+                    "Invalid cache state detected when evaluating boolean variation for flag {Key}, refreshing cache and retrying evaluation ",
                     key);
-                LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
-                polling.TriggerProcessSegments();
-                return defaultValue;
+                // Attempt to refresh cache
+                var result = polling.RefreshFlagsAndSegments(TimeSpan.FromMilliseconds(2000));
+
+                // If the refresh has failed or exceeded the timout, return default variation
+                if (result != RefreshOutcome.Success)
+                {
+                    logger.LogError(ex,
+                        "Refreshing cache for boolean variation for flag {Key} failed, returning default variation ",
+                        key);
+                    LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
+                    return defaultValue;
+                }
+
+                try
+                {
+                    return evaluator.BoolVariation(key, target, defaultValue);
+                }
+                catch (InvalidCacheStateException)
+                {
+                    logger.LogError(ex,
+                        "Attempted re-evaluation of boolean variation for flag {Key} after refreshing cache failed due to invalid cache state, returning default variation",
+                        key);
+                    LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
+                    return defaultValue;
+                }
             }
         }
 
-        public string StringVariation(string key, dto.Target target, string defaultValue)
+        public string StringVariation(string key, Target target, string defaultValue)
         {
             try
             {
@@ -237,13 +262,34 @@ namespace io.harness.cfsdk.client.api
             }
             catch (InvalidCacheStateException ex)
             {
-                logger.LogError(ex, "Invalid cache state detected when evaluating string variation for flag {Key}",
+                logger.LogWarning(ex,
+                    "Invalid cache state detected when evaluating string variation for flag {Key}, refreshing cache and retrying evaluation",
                     key);
-                LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
-                polling.TriggerProcessSegments();
-                return defaultValue;
+                var result = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
+                if (result != RefreshOutcome.Success)
+                {
+                    logger.LogError(
+                        "Refreshing cache for string variation for flag {Key} failed, returning default variation",
+                        key);
+                    LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
+                    return defaultValue;
+                }
+
+                try
+                {
+                    return evaluator.StringVariation(key, target, defaultValue);
+                }
+                catch (InvalidCacheStateException)
+                {
+                    logger.LogWarning(
+                        "Attempted re-evaluation of string variation for flag {Key} after refreshing cache failed due to invalid cache state, returning default variation",
+                        key);
+                    LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
+                    return defaultValue;
+                }
             }
         }
+
 
         public double NumberVariation(string key, Target target, double defaultValue)
         {
@@ -253,13 +299,34 @@ namespace io.harness.cfsdk.client.api
             }
             catch (InvalidCacheStateException ex)
             {
-                logger.LogError(ex, "Invalid cache state detected when evaluating number variation for flag {Key}",
+                logger.LogWarning(ex,
+                    "Invalid cache state detected when evaluating number variation for flag {Key}, refreshing cache and retrying evaluation",
                     key);
-                LogEvaluationFailureError(FeatureConfigKind.Int, key, target, defaultValue.ToString());
-                polling.TriggerProcessSegments();
-                return defaultValue;
+                var result = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
+                if (result != RefreshOutcome.Success)
+                {
+                    logger.LogError(
+                        "Refreshing cache for number variation for flag {Key} failed, returning default variation",
+                        key);
+                    LogEvaluationFailureError(FeatureConfigKind.Int, key, target, defaultValue.ToString());
+                    return defaultValue;
+                }
+
+                try
+                {
+                    return evaluator.NumberVariation(key, target, defaultValue);
+                }
+                catch (InvalidCacheStateException)
+                {
+                    logger.LogWarning(
+                        "Attempted re-evaluation of number variation for flag {Key} after refreshing cache failed due to invalid cache state, returning default variation",
+                        key);
+                    LogEvaluationFailureError(FeatureConfigKind.Int, key, target, defaultValue.ToString());
+                    return defaultValue;
+                }
             }
         }
+
 
         public JObject JsonVariation(string key, Target target, JObject defaultValue)
         {
@@ -269,23 +336,34 @@ namespace io.harness.cfsdk.client.api
             }
             catch (InvalidCacheStateException ex)
             {
-                logger.LogError(ex, "Invalid cache state detected when evaluating json variation for flag {Key}",
+                logger.LogWarning(ex,
+                    "Invalid cache state detected when evaluating json variation for flag {Key}, refreshing cache and retrying evaluation",
                     key);
-                LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
-                polling.TriggerProcessSegments();
-                return defaultValue;
+                var result = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
+                if (result != RefreshOutcome.Success)
+                {
+                    logger.LogError(
+                        "Refreshing cache for json variation for flag {Key} failed, returning default variation",
+                        key);
+                    LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
+                    return defaultValue;
+                }
+
+                try
+                {
+                    return evaluator.JsonVariation(key, target, defaultValue);
+                }
+                catch (InvalidCacheStateException)
+                {
+                    logger.LogWarning(
+                        "Attempted re-evaluation of json variation for flag {Key} after refreshing cache failed due to invalid cache state, returning default variation",
+                        key);
+                    LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
+                    return defaultValue;
+                }
             }
         }
 
-        public int GetFlagsCacheSize()
-        {
-            return repository.GetFlagsCount();
-        }
-
-        public int GetSegmentsCacheSize()
-        {
-            return repository.GetSegmentsCount();
-        }
 
         public void Close()
         {
