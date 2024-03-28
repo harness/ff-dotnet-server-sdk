@@ -56,7 +56,7 @@ namespace ff_server_sdk_test
             var listener = new EvaluatorListener();
             cache = new FeatureSegmentCache();
             repository = new StorageRepository(cache, null, null, loggerFactory);
-            evaluator = new Evaluator(repository, listener, loggerFactory, true);
+            evaluator = new Evaluator(repository, listener, loggerFactory, true, null, null);
         }
 
         private static void LoadSegments(List<Segment> segments)
