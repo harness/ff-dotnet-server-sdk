@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using io.harness.cfsdk.client.api;
 using io.harness.cfsdk.client.cache;
@@ -33,7 +34,7 @@ namespace ff_server_sdk_test
             var segmentResult = repo.GetSegment("i_do_not_exist2");
             Assert.IsNull(segmentResult);
 
-            // Get Flags
+            // Set/GetFlags
 
             var flag = new FeatureConfig()
             {
@@ -43,7 +44,13 @@ namespace ff_server_sdk_test
             var getFlagResult = repo.GetFlag("flag1");
             Assert.IsNotNull(getFlagResult);
 
-            // GetSegment
+            var flag2 = new FeatureConfig()
+            {
+                Feature = "ident2"
+            };
+            repo.SetFlags(new List<FeatureConfig>() {flag2, flag2});
+
+            // Set/GetSegment
 
             var segment = new Segment()
             {
@@ -53,6 +60,12 @@ namespace ff_server_sdk_test
             repo.SetSegment("segment1", segment);
             var getSegmentResult = repo.GetSegment("segment1");
             Assert.IsNotNull(getSegmentResult);
+
+            var segment2 = new Segment()
+            {
+                Identifier = "ident2"
+            };
+            repo.SetSegments(new List<Segment>() {segment2, segment2});
 
             // iteration
 
