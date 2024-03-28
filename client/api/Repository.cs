@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using io.harness.cfsdk.client.cache;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using Microsoft.Extensions.Logging;
@@ -21,6 +23,8 @@ namespace io.harness.cfsdk.client.api
         void SetFlag(string identifier, FeatureConfig featureConfig);
         void SetSegment(string identifier, Segment segment);
 
+        void SetFlags(IEnumerable<FeatureConfig> flags);
+        void SetSegments(IEnumerable<Segment> segments);
 
         FeatureConfig GetFlag(string identifier);
         Segment GetSegment(string identifier);
@@ -36,12 +40,14 @@ namespace io.harness.cfsdk.client.api
     {
         internal static readonly string AdditionalPropertyValueAsSet = "harness-values-as-set";
 
+        private readonly ReaderWriterLockSlim rwLock;
         private readonly ILogger logger;
         private readonly ICache cache;
         private readonly IStore store;
-        private readonly IRepositoryCallback callback;
+        private readonly IRepositoryCallback callback; // avoid calling callbacks inside rwLocks!
         public StorageRepository(ICache cache, IStore store, IRepositoryCallback callback, ILoggerFactory loggerFactory)
         {
+            this.rwLock = new ReaderWriterLockSlim();
             this.cache = cache;
             this.store = store;
             this.callback = callback;
@@ -61,58 +67,80 @@ namespace io.harness.cfsdk.client.api
         }
         IEnumerable<string> IRepository.FindFlagsBySegment(string segment)
         {
-            List<string> features = new List<string>();
-            ICollection<string> keys = this.store != null ? this.store.Keys() : this.cache.Keys();
-            foreach( string key in keys)
+            rwLock.EnterReadLock();
+            try
             {
-                FeatureConfig flag = GetFlag(key);
-                if(flag != null && flag.Rules != null)
+                List<string> features = new List<string>();
+                ICollection<string> keys = this.store != null ? this.store.Keys() : this.cache.Keys();
+                foreach (string key in keys)
                 {
-                    foreach( ServingRule rule in flag.Rules)
+                    FeatureConfig flag = GetFlag(key);
+                    if (flag != null && flag.Rules != null)
                     {
-                        foreach (Clause clause in rule.Clauses)
+                        foreach (ServingRule rule in flag.Rules)
                         {
-                            if(clause.Op.Equals("segmentMatch") && clause.Values.Contains(segment))
+                            foreach (Clause clause in rule.Clauses)
                             {
-                                features.Add(flag.Feature);
+                                if (clause.Op.Equals("segmentMatch") && clause.Values.Contains(segment))
+                                {
+                                    features.Add(flag.Feature);
+                                }
                             }
                         }
                     }
                 }
-
+                return features;
             }
-            return features;
+            finally
+            {
+                rwLock.ExitReadLock();
+            }
         }
         public void DeleteFlag(string identifier)
         {
-            string key = FlagKey(identifier);
-            if (store != null)
+            rwLock.EnterWriteLock();
+            try
             {
-                logger.LogDebug("Flag {identifier} successfully deleted from store", identifier);
-                store.Delete(key);
+                string key = FlagKey(identifier);
+                if (store != null)
+                {
+                    logger.LogDebug("Flag {identifier} successfully deleted from store", identifier);
+                    store.Delete(key);
+                }
+
+                this.cache.Delete(key);
+                logger.LogDebug("Flag {identifier} successfully deleted from cache", identifier);
+
             }
-            this.cache.Delete(key);
-            logger.LogDebug("Flag {identifier} successfully deleted from cache", identifier);
-            if (this.callback != null)
+            finally
             {
-                this.callback.OnFlagDeleted(identifier);
+                rwLock.ExitWriteLock();
             }
+
+            this.callback?.OnFlagDeleted(identifier);
         }
 
         public void DeleteSegment(string identifier)
         {
-            string key = SegmentKey(identifier);
-            if (store != null)
+            rwLock.EnterWriteLock();
+            try
             {
-                logger.LogDebug("Segment {identifier} successfully deleted from store", identifier);
-                store.Delete(key);
+                string key = SegmentKey(identifier);
+                if (store != null)
+                {
+                    logger.LogDebug("Segment {identifier} successfully deleted from store", identifier);
+                    store.Delete(key);
+                }
+
+                this.cache.Delete(key);
+                logger.LogDebug("Segment {identifier} successfully deleted from cache", identifier);
             }
-            this.cache.Delete(key);
-            logger.LogDebug("Segment {identifier} successfully deleted from cache", identifier);
-            if (this.callback != null)
+            finally
             {
-                this.callback.OnSegmentDeleted(identifier);
+                rwLock.ExitWriteLock();
             }
+
+            this.callback?.OnSegmentDeleted(identifier);
         }
         private T GetCache<T>(string key, bool updateCache)
         {
@@ -131,6 +159,7 @@ namespace io.harness.cfsdk.client.api
             }
             return (T)item;
         }
+
         private FeatureConfig GetFlag( string identifer, bool updateCache)
         {
             string key = FlagKey(identifer);
@@ -143,21 +172,26 @@ namespace io.harness.cfsdk.client.api
         }
         void IRepository.SetFlag(string identifier, FeatureConfig featureConfig)
         {
-            FeatureConfig current = GetFlag(identifier, false);
-            // Update stored value in case if server returned newer version,
-            // or if version is equal 0 (or doesn't exist)
-            if( current != null && featureConfig.Version != 0 && current.Version >= featureConfig.Version )
+            rwLock.EnterWriteLock();
+            try
             {
-                logger.LogTrace("Flag {identifier} already exists", identifier);
-                return;
+                FeatureConfig current = GetFlag(identifier, false);
+                // Update stored value in case if server returned newer version,
+                // or if version is equal 0 (or doesn't exist)
+                if (current != null && featureConfig.Version != 0 && current.Version >= featureConfig.Version)
+                {
+                    logger.LogTrace("Flag {identifier} already exists", identifier);
+                    return;
+                }
+
+                Update(identifier, FlagKey(identifier), featureConfig);
+            }
+            finally
+            {
+                rwLock.ExitWriteLock();
             }
 
-            Update(identifier, FlagKey(identifier), featureConfig);
-
-            if (this.callback != null)
-            {
-                this.callback.OnFlagStored(identifier);
-            }
+            this.callback?.OnFlagStored(identifier);
         }
 
         private void CacheClauseValues(Segment segment)
@@ -176,21 +210,60 @@ namespace io.harness.cfsdk.client.api
 
         void IRepository.SetSegment(string identifier, Segment segment)
         {
-            Segment current = GetSegment(identifier, false);
-            // Update stored value in case if server returned newer version,
-            // or if version is equal 0 (or doesn't exist)
-            if (current != null && segment.Version != 0 && current.Version >= segment.Version)
+            rwLock.EnterWriteLock();
+            try
             {
-                logger.LogTrace("Segment {identifier} already exists", identifier);
-                return;
+                Segment current = GetSegment(identifier, false);
+                // Update stored value in case if server returned newer version,
+                // or if version is equal 0 (or doesn't exist)
+                if (current != null && segment.Version != 0 && current.Version >= segment.Version)
+                {
+                    logger.LogTrace("Segment {identifier} already exists", identifier);
+                    return;
+                }
+
+                CacheClauseValues(segment);
+                Update(identifier, SegmentKey(identifier), segment);
+            }
+            finally
+            {
+                rwLock.ExitWriteLock();
             }
 
-            CacheClauseValues(segment);
-            Update(identifier, SegmentKey(identifier), segment);
+            this.callback?.OnSegmentStored(identifier);
+        }
 
-            if (this.callback != null)
+
+        public void SetFlags(IEnumerable<FeatureConfig> flags)
+        {
+            rwLock.EnterWriteLock();
+            try
             {
-                this.callback.OnSegmentStored(identifier);
+                foreach (var item in flags)
+                {
+                    Update(item.Feature, FlagKey(item.Feature), item);
+                }
+            }
+            finally
+            {
+                rwLock.ExitWriteLock();
+            }
+        }
+
+        public void SetSegments(IEnumerable<Segment> segments)
+        {
+            rwLock.EnterWriteLock();
+            try
+            {
+                foreach (var item in segments)
+                {
+                    CacheClauseValues(item);
+                    Update(item.Identifier, SegmentKey(item.Identifier), item);
+                }
+            }
+            finally
+            {
+                rwLock.ExitWriteLock();
             }
         }
 
@@ -211,10 +284,7 @@ namespace io.harness.cfsdk.client.api
 
         public void Close()
         {
-            if(this.store != null)
-            {
-                this.store.Close();
-            }
+            this.store?.Close();
         }
     }
 }

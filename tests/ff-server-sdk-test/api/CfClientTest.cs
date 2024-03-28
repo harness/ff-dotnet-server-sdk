@@ -8,6 +8,7 @@ using WireMock.ResponseBuilders;
 using WireMock.Server;
 using WireMock.Settings;
 using NUnit.Framework;
+using WireMock;
 using WireMock.Logging;
 
 
@@ -145,8 +146,6 @@ namespace ff_server_sdk_test.api
             var result = client.boolVariation("Feature", target, false);
             Assert.That(result, Is.EqualTo(true), "did not get correct flag state");
         }
-
-
 
         [Test]
         public void ShouldNotThrowErrorIfTargetToVariationMapNotPopulated()
