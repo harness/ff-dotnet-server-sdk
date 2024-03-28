@@ -50,6 +50,7 @@ namespace ff_server_sdk_test
                 Identifier = "segmentIdent"
             };
             repo.SetSegment("segment1", segment);
+            repo.SetSegment("segment1", segment);
             var getSegmentResult = repo.GetSegment("segment1");
             Assert.IsNotNull(getSegmentResult);
 

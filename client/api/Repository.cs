@@ -115,10 +115,7 @@ namespace io.harness.cfsdk.client.api
                 rwLock.ExitWriteLock();
             }
 
-            if (this.callback != null)
-            {
-                this.callback.OnFlagDeleted(identifier);
-            }
+            this.callback?.OnFlagDeleted(identifier);
         }
 
         public void DeleteSegment(string identifier)
@@ -141,10 +138,7 @@ namespace io.harness.cfsdk.client.api
                 rwLock.ExitWriteLock();
             }
 
-            if (this.callback != null)
-            {
-                this.callback.OnSegmentDeleted(identifier);
-            }
+            this.callback?.OnSegmentDeleted(identifier);
         }
         private T GetCache<T>(string key, bool updateCache)
         {
@@ -195,10 +189,7 @@ namespace io.harness.cfsdk.client.api
                 rwLock.ExitWriteLock();
             }
 
-            if (this.callback != null)
-            {
-                this.callback.OnFlagStored(identifier);
-            }
+            this.callback?.OnFlagStored(identifier);
         }
         void IRepository.SetSegment(string identifier, Segment segment)
         {
@@ -221,10 +212,7 @@ namespace io.harness.cfsdk.client.api
                 rwLock.ExitWriteLock();
             }
 
-            if (this.callback != null)
-            {
-                this.callback.OnSegmentStored(identifier);
-            }
+            this.callback?.OnSegmentStored(identifier);
         }
 
         public void SetFlags(IEnumerable<FeatureConfig> flags)
@@ -276,10 +264,7 @@ namespace io.harness.cfsdk.client.api
 
         public void Close()
         {
-            if(this.store != null)
-            {
-                this.store.Close();
-            }
+            this.store?.Close();
         }
     }
 }
