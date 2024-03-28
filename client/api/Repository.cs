@@ -52,7 +52,6 @@ namespace io.harness.cfsdk.client.api
         private string FlagKey(string identifier) {  return "flags_" + identifier; }
         private string SegmentKey(string identifier) { return "segments_" + identifier; }
         
-        // Implementation in StorageRepository class
         public int GetFlagsCount()
         {
             return cache.Keys().Count(key => key.StartsWith("flags_"));
