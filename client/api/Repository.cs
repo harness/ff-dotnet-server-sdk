@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using io.harness.cfsdk.client.cache;
 using io.harness.cfsdk.HarnessOpenAPIService;
@@ -20,6 +21,8 @@ namespace io.harness.cfsdk.client.api
     {
         void SetFlag(string identifier, FeatureConfig featureConfig);
         void SetSegment(string identifier, Segment segment);
+        int GetFlagsCount();
+        int GetSegmentsCount();
 
 
         FeatureConfig GetFlag(string identifier);
@@ -48,6 +51,17 @@ namespace io.harness.cfsdk.client.api
 
         private string FlagKey(string identifier) {  return "flags_" + identifier; }
         private string SegmentKey(string identifier) { return "segments_" + identifier; }
+        
+        // Implementation in StorageRepository class
+        public int GetFlagsCount()
+        {
+            return cache.Keys().Count(key => key.StartsWith("flags_"));
+        }
+
+        public int GetSegmentsCount()
+        {
+            return cache.Keys().Count(key => key.StartsWith("segments_"));
+        }
 
         public FeatureConfig GetFlag(string identifier)
         {
@@ -96,6 +110,7 @@ namespace io.harness.cfsdk.client.api
                 this.callback.OnFlagDeleted(identifier);
             }
         }
+        
 
         public void DeleteSegment(string identifier)
         {
