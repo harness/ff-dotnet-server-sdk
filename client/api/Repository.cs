@@ -22,6 +22,8 @@ namespace io.harness.cfsdk.client.api
     {
         void SetFlag(string identifier, FeatureConfig featureConfig);
         void SetSegment(string identifier, Segment segment);
+        int GetFlagsCount();
+        int GetSegmentsCount();
 
         void SetFlags(IEnumerable<FeatureConfig> flags);
         void SetSegments(IEnumerable<Segment> segments);
@@ -54,6 +56,16 @@ namespace io.harness.cfsdk.client.api
 
         private string FlagKey(string identifier) {  return "flags_" + identifier; }
         private string SegmentKey(string identifier) { return "segments_" + identifier; }
+        
+        public int GetFlagsCount()
+        {
+            return cache.Keys().Count(key => key.StartsWith("flags_"));
+        }
+
+        public int GetSegmentsCount()
+        {
+            return cache.Keys().Count(key => key.StartsWith("segments_"));
+        }
 
         public FeatureConfig GetFlag(string identifier)
         {
@@ -117,6 +129,7 @@ namespace io.harness.cfsdk.client.api
 
             this.callback?.OnFlagDeleted(identifier);
         }
+        
 
         public void DeleteSegment(string identifier)
         {
