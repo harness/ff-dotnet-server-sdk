@@ -257,7 +257,7 @@ namespace io.harness.cfsdk.client.connector
         
         public async Task<IEnumerable<Segment>> GetSegments()
         {
-            var segments = await ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(_environment, cluster, cancelToken.Token));
+            var segments = await ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(_environment, cluster, cancelToken.Token, logger));
     
             if (segments != null)
             {
@@ -277,7 +277,7 @@ namespace io.harness.cfsdk.client.connector
         }
         public Task<Segment> GetSegment(string identifier)
         {
-            return ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(identifier, _environment, cluster, cancelToken.Token));
+            return ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(identifier, _environment, cluster, cancelToken.Token, logger));
         }
         public IService Stream(IUpdateCallback updater)
         {

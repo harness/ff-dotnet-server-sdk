@@ -214,18 +214,6 @@ namespace io.harness.cfsdk.client.api
         {
             EvaluationChanged?.Invoke(parent, identifier);
         }
-        
-        public int GetFlagsCacheSize()
-        {
-            return repository.GetFlagsCount();
-        }
-
-        public int GetSegmentsCacheSize()
-        {
-            return repository.GetSegmentsCount();
-        }
-
-        
 
         public bool BoolVariation(string key, Target target, bool defaultValue)
         {
@@ -375,7 +363,6 @@ namespace io.harness.cfsdk.client.api
                 }
             }
         }
-
 
 
         public void Close()
