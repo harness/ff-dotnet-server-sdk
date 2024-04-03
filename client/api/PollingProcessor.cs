@@ -116,10 +116,8 @@ namespace io.harness.cfsdk.client.api
                 logger.LogDebug("Fetching flags started");
                 var flags = await this.connector.GetFlags();
                 logger.LogDebug("Fetching flags finished");
-
                 repository.SetFlags(flags);
-                
-                logger.LogInformation("Flag cache loaded {GetFlagsCount} flags", repository.GetFlagsCount());
+                logger.LogDebug("Loaded {SegmentRuleCount} flags", flags.Count());
 
             }
             catch (Exception ex)
@@ -134,11 +132,9 @@ namespace io.harness.cfsdk.client.api
             {
                 logger.LogDebug("Fetching segments started");
                 IEnumerable<Segment> segments = await connector.GetSegments();
-                logger.LogInformation("Count of segments {}", segments.Count());
                 logger.LogDebug("Fetching segments finished");
                 repository.SetSegments(segments);
-
-                logger.LogInformation("Group cache loaded {SegmentRuleCount} groups", repository.GetSegmentsCount());
+                logger.LogDebug("Loaded {SegmentRuleCount} groups", segments.Count());
             }
             catch (Exception ex)
             {

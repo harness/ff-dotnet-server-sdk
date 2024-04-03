@@ -71,6 +71,7 @@ namespace ff_server_sdk_test {
             //Arrange
             var mockHttpClient = MockedHttpClient(new HttpResponseMessage { StatusCode = HttpStatusCode.Forbidden });
             var client = new Client(mockHttpClient);
+            client.BaseUrl = "http://dummy:1234";
             var mockCallback = new Mock<TestCallback>();
             var connector = new HarnessConnector("test", new Config(), mockCallback.Object, new HttpClient(), new HttpClient(), new HttpClient(), client, new NullLoggerFactory());
             await connector.Authenticate();
