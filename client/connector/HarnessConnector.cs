@@ -239,45 +239,37 @@ namespace io.harness.cfsdk.client.connector
                 throw new CfClientException(ex.Message, ex);
             }
         }
+
         public async Task<IEnumerable<FeatureConfig>> GetFlags()
         {
-            var flags = await ReauthenticateIfNeeded(() => harnessClient.ClientEnvFeatureConfigsGetAsync(_environment, cluster, cancelToken.Token, logger));
-    
+            var flags = await ReauthenticateIfNeeded(() =>
+                harnessClient.ClientEnvFeatureConfigsGetAsync(_environment, cluster, cancelToken.Token));
             if (flags != null)
-            {
-                logger.LogInformation("Fetched {Count} feature flags from the server", flags.Count);
-            }
+                logger.LogDebug("Fetched {Count} flags from the server", flags.Count);
             else
-            {
-                logger.LogInformation("No feature flags were fetched from the server");
-            }
-    
+                logger.LogDebug("No feature flags were fetched from the server");
+
             return flags;
         }
-        
+
         public async Task<IEnumerable<Segment>> GetSegments()
         {
-            var segments = await ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(_environment, cluster, cancelToken.Token, logger));
-    
+            var segments = await ReauthenticateIfNeeded(() =>
+                harnessClient.ClientEnvTargetSegmentsGetAsync(_environment, cluster, cancelToken.Token));
             if (segments != null)
-            {
-                logger.LogInformation("Fetched {Count} segments from the server", segments.Count);
-            }
+                logger.LogDebug("Fetched {Count} groups from the server", segments.Count);
             else
-            {
-                logger.LogInformation("No segments were fetched from the server");
-            }
-    
+                logger.LogDebug("No segments were fetched from the server");
+
             return segments;
         }
-        
         public Task<FeatureConfig> GetFlag(string identifier)
         {
             return ReauthenticateIfNeeded(() => harnessClient.ClientEnvFeatureConfigsGetAsync(identifier, _environment, cluster, cancelToken.Token));
         }
         public Task<Segment> GetSegment(string identifier)
         {
-            return ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(identifier, _environment, cluster, cancelToken.Token, logger));
+            return ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(identifier, _environment, cluster, cancelToken.Token));
         }
         public IService Stream(IUpdateCallback updater)
         {

@@ -173,27 +173,28 @@ namespace io.harness.cfsdk.client.api
         private Variation Evaluate(FeatureConfig featureConfig, Target target)
         {
             if (logger.IsEnabled(LogLevel.Debug))
-                logger.LogDebug("Evaluating: Flag({Flag}) Target({Target})",
-                    ToStringHelper.FeatureConfigToString(featureConfig), target.ToString());
+
+                logger.LogDebug("Evaluating: Flag({@FeatureFlag}) Target({@Target})", new { FeatureFlag = featureConfig}, new { Target = target});
+
 
             if (featureConfig.State == FeatureState.Off)
             {
                 if (logger.IsEnabled(LogLevel.Debug))
-                    logger.LogDebug("Flag is off: Flag({Flag})", ToStringHelper.FeatureConfigToString(featureConfig));
+                    logger.LogDebug("Flag is off: Flag({@Flag})", new { FeatureFlag = featureConfig});
                 return GetVariation(featureConfig.Variations, featureConfig.OffVariation);
             }
 
             // Check for specific targeting match
             if (logger.IsEnabled(LogLevel.Debug))
                 logger.LogDebug(
-                    "Evaluating specific targeting: Flag({Flag})",
-                    ToStringHelper.FeatureConfigToString(featureConfig));
+                    "Evaluating specific targeting: Flag({@Flag})",
+                    new { FeatureFlag = featureConfig});
             var specificTargetingVariation =
                 EvaluateVariationMap(target, featureConfig.VariationToTargetMap, featureConfig.Feature);
             if (specificTargetingVariation != null)
             {
-                logger.LogDebug("Specific targeting matched: Flag({Flag}) Target({Target})",
-                    ToStringHelper.FeatureConfigToString(featureConfig), target.ToString());
+                logger.LogDebug("Specific targeting matched: Flag({@Flag}) Target({@Target})",
+                    new { FeatureFlag = featureConfig}, new { Target = target});
                 return GetVariation(featureConfig.Variations, specificTargetingVariation);
             }
 
@@ -205,13 +206,13 @@ namespace io.harness.cfsdk.client.api
             var defaultVariation = featureConfig.DefaultServe.Variation;
             if (defaultVariation == null)
             {
-                logger.LogWarning("Default serve variation not found: Flag({Flag})",
-                    ToStringHelper.FeatureConfigToString(featureConfig));
+                logger.LogWarning("Default serve variation not found: Flag({@Flag})",
+                    new { Flag = featureConfig});
                 return null;
             }
 
-            logger.LogDebug("Default on rule matched: Target({Target}) Flag({Flag})",
-                target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
+            logger.LogDebug("Default on rule matched: Target({@Target}) Flag({@Flag})",
+                new { Target = target}, new { Flag = featureConfig});
             return GetVariation(featureConfig.Variations, defaultVariation);
         }
 
@@ -256,8 +257,8 @@ namespace io.harness.cfsdk.client.api
                 // Invalid state: Log if Clauses are null 
                 if (servingRule.Clauses == null)
                 {
-                    logger.LogWarning("Clauses are null for servingRule {RuleId} in FeatureConfig {FeatureConfigId}",
-                        servingRule.RuleId, ToStringHelper.FeatureConfigToString(featureConfig));
+                    logger.LogWarning("Clauses are null for servingRule {RuleId} in FeatureConfig {@FeatureConfigId}",
+                        servingRule.RuleId, new { Flag = featureConfig});
                     return null;
                 }
 
@@ -267,8 +268,8 @@ namespace io.harness.cfsdk.client.api
                 // Invalid state: Log if Serve is null
                 if (servingRule.Serve == null)
                 {
-                    logger.LogWarning("Serve is null for rule ID {Rule} in FeatureConfig {FeatureConfig}",
-                        servingRule.RuleId, ToStringHelper.FeatureConfigToString(featureConfig));
+                    logger.LogWarning("Serve is null for rule ID {Rule} in FeatureConfig {@FeatureConfig}",
+                        servingRule.RuleId, new { Flag = featureConfig});
                     return null;
                 }
 
@@ -277,8 +278,9 @@ namespace io.harness.cfsdk.client.api
                 {
                     if (logger.IsEnabled(LogLevel.Debug))
                         logger.LogDebug(
-                            "Percentage rollout applies to group rule, evaluating distribution: Target({Target}) Flag({Flag})",
-                            target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
+                            "Percentage rollout applies to group rule, evaluating distribution: Target({@Target}) Flag({@Flag})",
+                            new { Target = target}, new { Flag = featureConfig});
+                            
 
                     var distributionProcessor = new DistributionProcessor(servingRule.Serve, loggerFactory);
                     return distributionProcessor.loadKeyName(target);
@@ -287,8 +289,9 @@ namespace io.harness.cfsdk.client.api
                 // Invalid state: Log if the variation is null
                 if (servingRule.Serve.Variation == null)
                 {
-                    logger.LogWarning("Serve.Variation is null for a rule in FeatureConfig {FeatureConfig}",
-                        ToStringHelper.FeatureConfigToString(featureConfig));
+                    logger.LogWarning("Serve.Variation is null for a rule in Flag({@FeatureConfig})",
+                             new { Flag = featureConfig});
+                        
                     return null;
                 }
 
@@ -297,9 +300,8 @@ namespace io.harness.cfsdk.client.api
 
             // Log if no applicable rule was found
             if (logger.IsEnabled(LogLevel.Debug))
-                logger.LogDebug("No applicable rule found for Target({Target})  Flag({FeatureConfig})",
-                    target.ToString(), ToStringHelper.FeatureConfigToString(featureConfig));
-
+                logger.LogDebug("No applicable rule found for Target({@Target})  Flag({@FeatureConfig})",
+                    new { Target = target}, new { Flag = featureConfig});
             return null;
         }
         
@@ -312,15 +314,15 @@ namespace io.harness.cfsdk.client.api
                     throw new InvalidCacheStateException(
                         $"Segment with identifier {segmentIdentifier} could not be found in the cache despite belonging to the flag.");
 
-                logger.LogDebug("Evaluating group rule: Group({Segment} Target({Target}))",
-                    ToStringHelper.SegmentToString(segment), target.ToString());
+                logger.LogDebug("Evaluating group rule: Group({@Segment} Target({@Target}))",
+                    new { Segment = segment}, new { Target = target});
 
                 // check exclude list
                 if (segment.Excluded != null && segment.Excluded.Any(t => t.Identifier.Equals(target.Identifier)))
                 {
                     if (logger.IsEnabled(LogLevel.Debug))
-                        logger.LogDebug("Group excluded rule matched: Target({TargetName}) Group({SegmentName})",
-                            target.ToString(), ToStringHelper.SegmentToString(segment));
+                        logger.LogDebug("Group excluded rule matched: Target({@TargetName}) Group({@SegmentName})",
+                            new { Target = target}, new { Segment = segment});
                     return false;
                 }
 
@@ -328,8 +330,8 @@ namespace io.harness.cfsdk.client.api
                 if (segment.Included != null && segment.Included.Any(t => t.Identifier.Equals(target.Identifier)))
                 {
                     if (logger.IsEnabled(LogLevel.Debug))
-                        logger.LogDebug("Group included rule matched: Target({TargetName}) Group({SegmentName})",
-                            target.ToString(), ToStringHelper.SegmentToString(segment));
+                        logger.LogDebug("Group included rule matched: Target({@TargetName}) Group({@SegmentName})",
+                            new { Target = target}, new { Segment = segment});
 
                     return true;
                 }
@@ -338,8 +340,8 @@ namespace io.harness.cfsdk.client.api
                 if (segment.Rules == null)
                 {
                     if (logger.IsEnabled(LogLevel.Debug))
-                        logger.LogDebug("No group rules found in group: Group({SegmentName})",
-                            ToStringHelper.SegmentToString(segment));
+                        logger.LogDebug("No group rules found in group: Group({@SegmentName})",
+                            new { Segment = segment});
                     return false;
                 }
 
@@ -348,8 +350,8 @@ namespace io.harness.cfsdk.client.api
                 {
                     if (logger.IsEnabled(LogLevel.Debug))
                         logger.LogDebug(
-                            "Group condition rule matched: Condition({Condition}) Target({TargetName}) Group({SegmentName})",
-                            ToStringHelper.ClauseToString(firstSuccess), target.ToString(), ToStringHelper.SegmentToString(segment));
+                            "Group condition rule matched: Condition({@Condition}) Target({@TargetName}) Group({@SegmentName})",
+                            new { Condition = firstSuccess}, new { Target = target}, new { Segment = segment});
                     return true;
                 }
             }
