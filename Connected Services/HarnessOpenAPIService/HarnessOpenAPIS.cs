@@ -4,8 +4,6 @@
 // </auto-generated>
 //----------------------
 
-using Microsoft.Extensions.Logging;
-
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
 #pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
@@ -65,9 +63,9 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<System.Collections.Generic.ICollection<FeatureConfig>> ClientEnvFeatureConfigsGetAsync(string environmentUUID, string cluster, ILogger logger)
+        public virtual System.Threading.Tasks.Task<System.Collections.Generic.ICollection<FeatureConfig>> ClientEnvFeatureConfigsGetAsync(string environmentUUID, string cluster)
         {
-            return ClientEnvFeatureConfigsGetAsync(environmentUUID, cluster, System.Threading.CancellationToken.None, logger);
+            return ClientEnvFeatureConfigsGetAsync(environmentUUID, cluster, System.Threading.CancellationToken.None);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -81,7 +79,7 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<FeatureConfig>> ClientEnvFeatureConfigsGetAsync(string environmentUUID, string cluster, System.Threading.CancellationToken cancellationToken, ILogger logger)
+        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<FeatureConfig>> ClientEnvFeatureConfigsGetAsync(string environmentUUID, string cluster, System.Threading.CancellationToken cancellationToken)
         {
             if (environmentUUID == null)
                 throw new System.ArgumentNullException("environmentUUID");
@@ -127,10 +125,6 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
                         var status_ = (int)response_.StatusCode;
                         if (status_ == 200)
                         {
-                            var rawResponseData = await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            // Log the raw JSON response data
-                            logger.LogInformation("Raw FlagJSON response data: {RawResponseData}", rawResponseData);
-
                             var objectResponse_ = await ReadObjectResponseAsync<System.Collections.Generic.ICollection<FeatureConfig>>(response_, headers_, cancellationToken).ConfigureAwait(false);
                             if (objectResponse_.Object == null)
                             {
@@ -138,7 +132,6 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
                             }
                             return objectResponse_.Object;
                         }
-
                         else
                         {
                             var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -167,7 +160,7 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<FeatureConfig> ClientEnvFeatureConfigsGetAsync(string identifier, string environmentUUID, string cluster, ILogger logger)
+        public virtual System.Threading.Tasks.Task<FeatureConfig> ClientEnvFeatureConfigsGetAsync(string identifier, string environmentUUID, string cluster)
         {
             return ClientEnvFeatureConfigsGetAsync(identifier, environmentUUID, cluster, System.Threading.CancellationToken.None);
         }
@@ -268,9 +261,9 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<System.Collections.Generic.ICollection<Segment>> ClientEnvTargetSegmentsGetAsync(string environmentUUID, string cluster, ILogger logger)
+        public virtual System.Threading.Tasks.Task<System.Collections.Generic.ICollection<Segment>> ClientEnvTargetSegmentsGetAsync(string environmentUUID, string cluster)
         {
-            return ClientEnvTargetSegmentsGetAsync(environmentUUID, cluster, System.Threading.CancellationToken.None, logger);
+            return ClientEnvTargetSegmentsGetAsync(environmentUUID, cluster, System.Threading.CancellationToken.None);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -284,7 +277,7 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<Segment>> ClientEnvTargetSegmentsGetAsync(string environmentUUID, string cluster, System.Threading.CancellationToken cancellationToken, ILogger logger)
+        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<Segment>> ClientEnvTargetSegmentsGetAsync(string environmentUUID, string cluster, System.Threading.CancellationToken cancellationToken)
         {
             if (environmentUUID == null)
                 throw new System.ArgumentNullException("environmentUUID");
@@ -330,11 +323,6 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
                         var status_ = (int)response_.StatusCode;
                         if (status_ == 200)
                         {
-                            var rawResponseData = await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            // Log the raw JSON response data
-                            logger.LogInformation("Raw GroupSON response data: {RawResponseData}", rawResponseData);
-
-                            
                             var objectResponse_ = await ReadObjectResponseAsync<System.Collections.Generic.ICollection<Segment>>(response_, headers_, cancellationToken).ConfigureAwait(false);
                             if (objectResponse_.Object == null)
                             {
@@ -413,9 +401,9 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<Segment> ClientEnvTargetSegmentsGetAsync(string identifier, string environmentUUID, string cluster, ILogger logger)
+        public virtual System.Threading.Tasks.Task<Segment> ClientEnvTargetSegmentsGetAsync(string identifier, string environmentUUID, string cluster)
         {
-            return ClientEnvTargetSegmentsGetAsync(identifier, environmentUUID, cluster, System.Threading.CancellationToken.None, logger);
+            return ClientEnvTargetSegmentsGetAsync(identifier, environmentUUID, cluster, System.Threading.CancellationToken.None);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -430,7 +418,7 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<Segment> ClientEnvTargetSegmentsGetAsync(string identifier, string environmentUUID, string cluster, System.Threading.CancellationToken cancellationToken, ILogger logger)
+        public virtual async System.Threading.Tasks.Task<Segment> ClientEnvTargetSegmentsGetAsync(string identifier, string environmentUUID, string cluster, System.Threading.CancellationToken cancellationToken)
         {
             if (identifier == null)
                 throw new System.ArgumentNullException("identifier");

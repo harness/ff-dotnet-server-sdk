@@ -241,43 +241,20 @@ namespace io.harness.cfsdk.client.connector
         }
         public async Task<IEnumerable<FeatureConfig>> GetFlags()
         {
-            var flags = await ReauthenticateIfNeeded(() => harnessClient.ClientEnvFeatureConfigsGetAsync(_environment, cluster, cancelToken.Token, logger));
-    
-            if (flags != null)
-            {
-                logger.LogInformation("Fetched {Count} feature flags from the server", flags.Count);
-            }
-            else
-            {
-                logger.LogInformation("No feature flags were fetched from the server");
-            }
-    
-            return flags;
+            return await ReauthenticateIfNeeded(() => harnessClient.ClientEnvFeatureConfigsGetAsync(_environment, cluster, cancelToken.Token));
         }
         
         public async Task<IEnumerable<Segment>> GetSegments()
         {
-            var segments = await ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(_environment, cluster, cancelToken.Token, logger));
-    
-            if (segments != null)
-            {
-                logger.LogInformation("Fetched {Count} segments from the server", segments.Count);
-            }
-            else
-            {
-                logger.LogInformation("No segments were fetched from the server");
-            }
-    
-            return segments;
+            return await ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(_environment, cluster, cancelToken.Token));
         }
-        
         public Task<FeatureConfig> GetFlag(string identifier)
         {
             return ReauthenticateIfNeeded(() => harnessClient.ClientEnvFeatureConfigsGetAsync(identifier, _environment, cluster, cancelToken.Token));
         }
         public Task<Segment> GetSegment(string identifier)
         {
-            return ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(identifier, _environment, cluster, cancelToken.Token, logger));
+            return ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(identifier, _environment, cluster, cancelToken.Token));
         }
         public IService Stream(IUpdateCallback updater)
         {
