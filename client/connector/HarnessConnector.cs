@@ -245,9 +245,9 @@ namespace io.harness.cfsdk.client.connector
             var flags = await ReauthenticateIfNeeded(() =>
                 harnessClient.ClientEnvFeatureConfigsGetAsync(_environment, cluster, cancelToken.Token));
             if (flags != null)
-                logger.LogInformation("Fetched {Count} flags from the server", flags.Count);
+                logger.LogDebug("Fetched {Count} flags from the server", flags.Count);
             else
-                logger.LogInformation("No feature flags were fetched from the server");
+                logger.LogDebug("No feature flags were fetched from the server");
 
             return flags;
         }
