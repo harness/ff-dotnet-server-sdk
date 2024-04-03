@@ -239,14 +239,29 @@ namespace io.harness.cfsdk.client.connector
                 throw new CfClientException(ex.Message, ex);
             }
         }
+
         public async Task<IEnumerable<FeatureConfig>> GetFlags()
         {
-            return await ReauthenticateIfNeeded(() => harnessClient.ClientEnvFeatureConfigsGetAsync(_environment, cluster, cancelToken.Token));
+            var flags = await ReauthenticateIfNeeded(() =>
+                harnessClient.ClientEnvFeatureConfigsGetAsync(_environment, cluster, cancelToken.Token));
+            if (flags != null)
+                logger.LogInformation("Fetched {Count} flags from the server", flags.Count);
+            else
+                logger.LogInformation("No feature flags were fetched from the server");
+
+            return flags;
         }
-        
+
         public async Task<IEnumerable<Segment>> GetSegments()
         {
-            return await ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(_environment, cluster, cancelToken.Token));
+            var segments = await ReauthenticateIfNeeded(() =>
+                harnessClient.ClientEnvTargetSegmentsGetAsync(_environment, cluster, cancelToken.Token));
+            if (segments != null)
+                logger.LogDebug("Fetched {Count} groups from the server", segments.Count);
+            else
+                logger.LogDebug("No segments were fetched from the server");
+
+            return segments;
         }
         public Task<FeatureConfig> GetFlag(string identifier)
         {
