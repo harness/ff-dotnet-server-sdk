@@ -77,7 +77,7 @@
       "JsonLibrary": 0,
       "GenerateDefaultValues": true,
       "GenerateDataAnnotations": true,
-      "ExcludedTypeNames": [],
+      "ExcludedTypeNames": ["Metrics"],
       "ExcludedParameterNames": [],
       "HandleReferences": false,
       "GenerateImmutableArrayProperties": false,

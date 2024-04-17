@@ -968,13 +968,14 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         /// </remarks>
         /// <param name="pageNumber">PageNumber</param>
         /// <param name="pageSize">PageSize</param>
+        /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <param name="environment">Accepts an EnvironmentID. If this is provided then the endpoint will only return config for this environment. If this is left empty then the Proxy will return config for all environments associated with the Proxy Key.</param>
         /// <param name="key">Accpets a Proxy Key.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<ProxyConfig> ProxyConfigAsync(int? pageNumber, int? pageSize, string environment, string key)
+        public virtual System.Threading.Tasks.Task<ProxyConfig> ProxyConfigAsync(int? pageNumber, int? pageSize, string cluster, string environment, string key)
         {
-            return ProxyConfigAsync(pageNumber, pageSize, environment, key, System.Threading.CancellationToken.None);
+            return ProxyConfigAsync(pageNumber, pageSize, cluster, environment, key, System.Threading.CancellationToken.None);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -986,11 +987,12 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         /// </remarks>
         /// <param name="pageNumber">PageNumber</param>
         /// <param name="pageSize">PageSize</param>
+        /// <param name="cluster">Unique identifier for the cluster for the account</param>
         /// <param name="environment">Accepts an EnvironmentID. If this is provided then the endpoint will only return config for this environment. If this is left empty then the Proxy will return config for all environments associated with the Proxy Key.</param>
         /// <param name="key">Accpets a Proxy Key.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<ProxyConfig> ProxyConfigAsync(int? pageNumber, int? pageSize, string environment, string key, System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task<ProxyConfig> ProxyConfigAsync(int? pageNumber, int? pageSize, string cluster, string environment, string key, System.Threading.CancellationToken cancellationToken)
         {
             if (key == null)
                 throw new System.ArgumentNullException("key");
@@ -1004,6 +1006,10 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
             if (pageSize != null)
             {
                 urlBuilder_.Append(System.Uri.EscapeDataString("pageSize") + "=").Append(System.Uri.EscapeDataString(ConvertToString(pageSize, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
+            }
+            if (cluster != null)
+            {
+                urlBuilder_.Append(System.Uri.EscapeDataString("cluster") + "=").Append(System.Uri.EscapeDataString(ConvertToString(cluster, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
             }
             if (environment != null)
             {
@@ -1050,6 +1056,16 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
                                 throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                             }
                             return objectResponse_.Object;
+                        }
+                        else
+                        if (status_ == 400)
+                        {
+                            var objectResponse_ = await ReadObjectResponseAsync<Error>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                            if (objectResponse_.Object == null)
+                            {
+                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            }
+                            throw new ApiException<Error>("Bad request", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
                         }
                         else
                         if (status_ == 401)
@@ -1810,11 +1826,14 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         [Newtonsoft.Json.JsonProperty("excluded", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Collections.Generic.ICollection<Target> Excluded { get; set; }
 
+        [Newtonsoft.Json.JsonProperty("rules", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.ICollection<Clause> Rules { get; set; }
+
         /// <summary>
         /// An array of rules that can cause a user to be included in this segment.
         /// </summary>
-        [Newtonsoft.Json.JsonProperty("rules", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<Clause> Rules { get; set; }
+        [Newtonsoft.Json.JsonProperty("servingRules", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.ICollection<GroupServingRule> ServingRules { get; set; }
 
         /// <summary>
         /// The data and time in milliseconds when the group was created
@@ -1916,6 +1935,43 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         /// </summary>
         [Newtonsoft.Json.JsonProperty("segments", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Collections.Generic.ICollection<Segment> Segments { get; set; }
+
+        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
+
+        [Newtonsoft.Json.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        {
+            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+            set { _additionalProperties = value; }
+        }
+
+    }
+
+    /// <summary>
+    /// The rule used to determine what variation to serve to a target
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "13.20.0.0 (NJsonSchema v10.9.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class GroupServingRule
+    {
+        /// <summary>
+        /// The unique identifier for this rule
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("ruleId", Required = Newtonsoft.Json.Required.Always)]
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public string RuleId { get; set; }
+
+        /// <summary>
+        /// The rules priority relative to other rules.  The rules are evaluated in order with 1 being the highest
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("priority", Required = Newtonsoft.Json.Required.Always)]
+        public int Priority { get; set; }
+
+        /// <summary>
+        /// A list of clauses to use in the rule
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("clauses", Required = Newtonsoft.Json.Required.Always)]
+        [System.ComponentModel.DataAnnotations.Required]
+        public System.Collections.Generic.ICollection<Clause> Clauses { get; set; } = new System.Collections.ObjectModel.Collection<Clause>();
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
@@ -2081,26 +2137,41 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "13.20.0.0 (NJsonSchema v10.9.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class TargetSegment
+    public partial class KeyValue
     {
-        /// <summary>
-        /// Unique identifier for the segment.
-        /// </summary>
+        [Newtonsoft.Json.JsonProperty("key", Required = Newtonsoft.Json.Required.Always)]
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public string Key { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("value", Required = Newtonsoft.Json.Required.Always)]
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public string Value { get; set; }
+
+        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
+
+        [Newtonsoft.Json.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        {
+            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+            set { _additionalProperties = value; }
+        }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "13.20.0.0 (NJsonSchema v10.9.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class TargetData
+    {
         [Newtonsoft.Json.JsonProperty("identifier", Required = Newtonsoft.Json.Required.Always)]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public string Identifier { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("included", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<string> Included { get; set; }
+        [Newtonsoft.Json.JsonProperty("name", Required = Newtonsoft.Json.Required.Always)]
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public string Name { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("excluded", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<string> Excluded { get; set; }
-
-        /// <summary>
-        /// An array of rules that can cause a user to be included in this segment.
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("rules", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<Clause> Rules { get; set; }
+        [Newtonsoft.Json.JsonProperty("attributes", Required = Newtonsoft.Json.Required.Always)]
+        [System.ComponentModel.DataAnnotations.Required]
+        public System.Collections.Generic.ICollection<KeyValue> Attributes { get; set; } = new System.Collections.ObjectModel.Collection<KeyValue>();
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
@@ -2206,7 +2277,7 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         public System.Collections.Generic.ICollection<FeatureConfig> FeatureConfigs { get; set; }
 
         [Newtonsoft.Json.JsonProperty("segments", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<TargetSegment> Segments { get; set; }
+        public System.Collections.Generic.ICollection<Segment> Segments { get; set; }
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 

@@ -477,6 +477,9 @@
             "$ref": "#/components/parameters/pageSize/schema"
           },
           {
+            "$ref": "#/components/parameters/clusterQueryOptionalParam/schema"
+          },
+          {
             "name": "environment",
             "in": "query",
             "description": "Accepts an EnvironmentID. If this is provided then the endpoint will only return config for this environment. If this is left empty then the Proxy will return config for all environments associated with the Proxy Key.",
@@ -497,6 +500,10 @@
         "responses": {
           "200": {
             "$ref": "#/components/responses/ProxyConfigResponse",
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest",
             "description": ""
           },
           "401": {
@@ -944,9 +951,15 @@
           },
           "rules": {
             "type": "array",
-            "description": "An array of rules that can cause a user to be included in this segment.",
             "items": {
               "$ref": "#/components/schemas/Clause"
+            }
+          },
+          "servingRules": {
+            "type": "array",
+            "description": "An array of rules that can cause a user to be included in this segment.",
+            "items": {
+              "$ref": "#/components/schemas/GroupServingRule"
             }
           },
           "createdAt": {
@@ -1028,6 +1041,33 @@
             "description": "A list of Target Groups (Segments) that this Target belongs to",
             "items": {
               "$ref": "#/components/schemas/Segment"
+            }
+          }
+        }
+      },
+      "GroupServingRule": {
+        "type": "object",
+        "description": "The rule used to determine what variation to serve to a target",
+        "required": [
+          "ruleId",
+          "clauses",
+          "priority"
+        ],
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "description": "The unique identifier for this rule"
+          },
+          "priority": {
+            "type": "integer",
+            "description": "The rules priority relative to other rules.  The rules are evaluated in order with 1 being the highest",
+            "example": "1"
+          },
+          "clauses": {
+            "type": "array",
+            "description": "A list of clauses to use in the rule",
+            "items": {
+              "$ref": "#/components/schemas/Clause"
             }
           }
         }
@@ -1162,33 +1202,39 @@
           "$ref": "#/components/schemas/Evaluation"
         }
       },
-      "TargetSegment": {
+      "KeyValue": {
         "type": "object",
         "required": [
-          "identifier"
+          "key",
+          "value"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "TargetData": {
+        "type": "object",
+        "required": [
+          "name",
+          "identifier",
+          "attributes"
         ],
         "properties": {
           "identifier": {
-            "type": "string",
-            "description": "Unique identifier for the segment."
+            "type": "string"
           },
-          "included": {
+          "name": {
+            "type": "string"
+          },
+          "attributes": {
             "type": "array",
             "items": {
-              "type": "string"
-            }
-          },
-          "excluded": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "rules": {
-            "type": "array",
-            "description": "An array of rules that can cause a user to be included in this segment.",
-            "items": {
-              "$ref": "#/components/schemas/Clause"
+              "$ref": "#/components/schemas/KeyValue"
             }
           }
         }
@@ -1225,7 +1271,7 @@
                     "segments": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/TargetSegment"
+                        "$ref": "#/components/schemas/Segment"
                       }
                     }
                   }
@@ -1283,6 +1329,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/ProxyConfig"
+            }
+          }
+        }
+      },
+      "BadRequest": {
+        "description": "Bad request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
             }
           }
         }
