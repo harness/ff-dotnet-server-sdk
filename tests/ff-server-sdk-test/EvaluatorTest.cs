@@ -216,10 +216,7 @@ namespace ff_server_sdk_test
             bool result = evaluator.BoolVariation(flagName, target, false);
 
             Assert.AreEqual(expected, result);
-
         }
-
-
 
         private void LoadFlags(IRepository repo, String fileName)
         {
