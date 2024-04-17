@@ -286,6 +286,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/pageNumber'
         - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/clusterQueryOptionalParam'
         - in: query
           name: environment
           description: >-
@@ -307,6 +308,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/ProxyConfigResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthenticated'
         '403':
@@ -628,6 +631,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Clause'
+        servingRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupServingRule'
           description: >-
             An array of rules that can cause a user to be included in this
             segment.
@@ -699,6 +706,28 @@ components:
         - project
         - account
         - org
+    GroupServingRule:
+      type: object
+      description: The rule used to determine what variation to serve to a target
+      properties:
+        ruleId:
+          type: string
+          description: The unique identifier for this rule
+        priority:
+          type: integer
+          description: >-
+            The rules priority relative to other rules.  The rules are evaluated
+            in order with 1 being the highest
+          example: 1
+        clauses:
+          type: array
+          description: A list of clauses to use in the rule
+          items:
+            $ref: '#/components/schemas/Clause'
+      required:
+        - ruleId
+        - clauses
+        - priority
     Error:
       type: object
       properties:
@@ -793,29 +822,31 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/Evaluation'
-    TargetSegment:
+    KeyValue:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+      required:
+        - key
+        - value
+    TargetData:
       type: object
       properties:
         identifier:
           type: string
-          description: Unique identifier for the segment.
-        included:
+        name:
+          type: string
+        attributes:
           type: array
           items:
-            type: string
-        excluded:
-          type: array
-          items:
-            type: string
-        rules:
-          type: array
-          items:
-            $ref: '#/components/schemas/Clause'
-          description: >-
-            An array of rules that can cause a user to be included in this
-            segment.
+            $ref: '#/components/schemas/KeyValue'
       required:
+        - name
         - identifier
+        - attributes
     ProxyConfig:
       type: object
       description: TBD
@@ -840,7 +871,7 @@ components:
                   segments:
                     type: array
                     items:
-                      $ref: '#/components/schemas/TargetSegment'
+                      $ref: '#/components/schemas/Segment'
   securitySchemes:
     ApiKeyAuth:
       type: apiKey
@@ -910,3 +941,9 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ProxyConfig'
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
