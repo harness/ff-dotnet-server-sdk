@@ -39,6 +39,11 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+  <Content Include="local-test-cases\*.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\ff-netF48-server-sdk.csproj" />
   </ItemGroup>
   <ItemGroup>

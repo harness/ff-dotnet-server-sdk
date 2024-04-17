@@ -8,6 +8,7 @@ using io.harness.cfsdk.HarnessOpenAPIService;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using Target = io.harness.cfsdk.client.dto.Target;
+using System.Collections.Generic;
 
 [assembly: InternalsVisibleToAttribute("ff-server-sdk-test")]
 
@@ -95,10 +96,14 @@ namespace io.harness.cfsdk.client.api
                 logger.LogWarning(
                     "Unable to find flag {Key} in cache, refreshing flag cache and retrying evaluation ",
                     key);
-                var refreshResult = poller.RefreshFlags(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
 
-                if (refreshResult != RefreshOutcome.Success)
-                    return null;
+                if (poller != null)
+                {
+                    var refreshResult = poller.RefreshFlags(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
+
+                    if (refreshResult != RefreshOutcome.Success)
+                        return null;
+                }
 
                 // Re-attempt to fetch the feature config after the refresh
                 featureConfig = repository.GetFlag(key);
@@ -336,24 +341,40 @@ namespace io.harness.cfsdk.client.api
                     return true;
                 }
 
-                // Check custom rules
-                if (segment.Rules == null)
+                var servingRules = segment.ServingRules;
+                if (servingRules != null && servingRules.Count > 0)
                 {
-                    if (logger.IsEnabled(LogLevel.Debug))
-                        logger.LogDebug("No group rules found in group: Group({@SegmentName})",
-                            new { Segment = segment});
-                    return false;
+                    // Use enhanced rules first if they're available
+                    var sortedServingRules = servingRules.OrderBy(r => r.Priority);
+
+                    if (sortedServingRules.Any(r => r.Clauses.All(c => EvaluateClause(c, target))))
+                    {
+                        return true;
+                    }
+                }
+                else
+                {
+                    // Fall back to legacy rules
+                    // Check custom rules
+                    if (segment.Rules == null)
+                    {
+                        if (logger.IsEnabled(LogLevel.Debug))
+                            logger.LogDebug("No group rules found in group: Group({@SegmentName})",
+                                new { Segment = segment });
+                        return false;
+                    }
+
+                    var firstSuccess = segment.Rules.FirstOrDefault(r => EvaluateClause(r, target));
+                    if (firstSuccess != null)
+                    {
+                        if (logger.IsEnabled(LogLevel.Debug))
+                            logger.LogDebug(
+                                "Group condition rule matched: Condition({@Condition}) Target({@TargetName}) Group({@SegmentName})",
+                                new { Condition = firstSuccess }, new { Target = target }, new { Segment = segment });
+                        return true;
+                    }
                 }
 
-                var firstSuccess = segment.Rules.FirstOrDefault(r => EvaluateClause(r, target));
-                if (firstSuccess != null)
-                {
-                    if (logger.IsEnabled(LogLevel.Debug))
-                        logger.LogDebug(
-                            "Group condition rule matched: Condition({@Condition}) Target({@TargetName}) Group({@SegmentName})",
-                            new { Condition = firstSuccess}, new { Target = target}, new { Segment = segment});
-                    return true;
-                }
             }
 
             return false;

@@ -193,5 +193,54 @@ namespace ff_server_sdk_test
             }
         }
 
+        // if (target.attr.email endswith '@harness.io' && target.attr.role = 'developer')
+        [TestCase("boolflag_and", "email_is_dev","user@harness.io","developer", true)]
+        [TestCase("boolflag_and", "email_is_mgr","user@harness.io","manager", false)]
+        [TestCase("boolflag_and", "external_email_is_dev","user@gmail.com","developer", false)]
+        [TestCase("boolflag_and", "external_email_is_mgr","user@gmail.com","manager", false)]
+        // if (target.attr.email endswith '@harness.io' || target.attr.email endswith '@somethingelse.com')
+        [TestCase("boolflag_or", "email_is_harness","user@harness.io","n/a", true)]
+        [TestCase("boolflag_or", "email_is_something_else","user@somethingelse.com","n/a", true)]
+        [TestCase("boolflag_or", "email_is_gmail","user@gmail.com","n/a", false)]
+        public void TestV2Rules_And(string flagName, string name, string email, string role, bool expected)
+        {
+            LoadFlags(repository, "./local-test-cases/v2-andor-flags.json");
+            LoadSegments(repository, "./local-test-cases/v2-andor-segments.json");
+
+            var target = io.harness.cfsdk.client.dto.Target.builder()
+                .Name(name)
+                .Identifier(name)
+                .Attributes(new Dictionary<string, string> {{"email", email}, {"role", role}})
+                .build();
+
+            bool result = evaluator.BoolVariation(flagName, target, false);
+
+            Assert.AreEqual(expected, result);
+        }
+
+        private void LoadFlags(IRepository repo, String fileName)
+        {
+            var json = File.ReadAllText(fileName);
+            var testModel = JsonConvert.DeserializeObject<List<FeatureConfig>>(json,
+                new JsonSerializerSettings
+                {
+                    ContractResolver = new LenientContractResolver()
+                });
+
+            repo.SetFlags(testModel);
+        }
+
+        private void LoadSegments(IRepository repo, String fileName)
+        {
+            var json = File.ReadAllText(fileName);
+            var testModel = JsonConvert.DeserializeObject<List<Segment>>(json,
+                new JsonSerializerSettings
+                {
+                    ContractResolver = new LenientContractResolver()
+                });
+
+            repo.SetSegments(testModel);
+        }
+
     }
 }
