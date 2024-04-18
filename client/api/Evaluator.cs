@@ -347,7 +347,7 @@ namespace io.harness.cfsdk.client.api
                     // Use enhanced rules first if they're available
                     var sortedServingRules = servingRules.OrderBy(r => r.Priority);
 
-                    if (sortedServingRules.Any(r => r.Clauses.All(c => EvaluateClause(c, target))))
+                    if (sortedServingRules.Any(r => r.Clauses.Count > 0 && r.Clauses.All(c => EvaluateClause(c, target))))
                     {
                         return true;
                     }
