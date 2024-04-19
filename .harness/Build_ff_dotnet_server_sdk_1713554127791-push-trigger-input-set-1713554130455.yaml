@@ -1,0 +1,14 @@
+inputSet:
+  name: Build_ff_dotnet_server_sdk_1713554127791-push-trigger-input-set
+  identifier: Build_ff_dotnet_server_sdk_1713554127791pushtriggerinputset
+  orgIdentifier: default
+  projectIdentifier: CF_EMPTY_1713436047
+  pipeline:
+    identifier: Build_ff_dotnet_server_sdk_1713554127791
+    properties:
+      ci:
+        codebase:
+          build:
+            type: branch
+            spec:
+              branch: <+trigger.branch>
