@@ -1,0 +1,35 @@
+pipeline:
+  identifier: Build_ff_dotnet_server_sdk_1713554127791
+  name: Build ff-dotnet-server-sdk
+  orgIdentifier: default
+  projectIdentifier: CF_EMPTY_1713436047
+  properties:
+    ci:
+      codebase:
+        build: <+input>
+        connectorRef: account.ffgitsync
+        repoName: ff-dotnet-server-sdk
+  stages:
+    - stage:
+        identifier: build
+        name: build
+        spec:
+          caching:
+            enabled: true
+          cloneCodebase: true
+          execution:
+            steps:
+              - step:
+                  identifier: echo
+                  name: echo
+                  spec:
+                    command: echo hello world
+                  timeout: ""
+                  type: Run
+          platform:
+            arch: Amd64
+            os: Linux
+          runtime:
+            spec: {}
+            type: Cloud
+        type: CI
