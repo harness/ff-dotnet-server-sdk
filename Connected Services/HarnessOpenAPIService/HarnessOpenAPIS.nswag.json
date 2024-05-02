@@ -133,6 +133,9 @@
           },
           {
             "$ref": "#/components/parameters/clusterQueryOptionalParam/schema"
+          },
+          {
+            "$ref": "#/components/parameters/segmentRulesV2QueryParam/schema"
           }
         ],
         "responses": {
@@ -202,6 +205,9 @@
           },
           {
             "$ref": "#/components/parameters/clusterQueryOptionalParam/schema"
+          },
+          {
+            "$ref": "#/components/parameters/segmentRulesV2QueryParam/schema"
           }
         ],
         "responses": {
@@ -394,6 +400,58 @@
           }
         },
         "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/metrics/{environmentUUID}": {
+      "post": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Send metrics to the Analytics server.",
+        "description": "Send metrics to Analytics server",
+        "operationId": "postMetrics",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/environmentPathParam/schema"
+          },
+          {
+            "$ref": "#/components/parameters/clusterQueryOptionalParam/schema"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Metrics"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated",
+            "description": ""
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized",
+            "description": ""
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError",
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
           {
             "BearerAuth": []
           }
@@ -1239,6 +1297,56 @@
           }
         }
       },
+      "MetricsData": {
+        "type": "object",
+        "required": [
+          "attributes",
+          "count",
+          "timestamp",
+          "metricsType"
+        ],
+        "properties": {
+          "timestamp": {
+            "type": "integer",
+            "description": "time at when this data was recorded",
+            "format": "int64",
+            "example": "1608175465"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "metricsType": {
+            "type": "string",
+            "description": "This can be of type FeatureMetrics",
+            "enum": [
+              "FFMETRICS"
+            ]
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KeyValue"
+            }
+          }
+        }
+      },
+      "Metrics": {
+        "type": "object",
+        "properties": {
+          "targetData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TargetData"
+            }
+          },
+          "metricsData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetricsData"
+            }
+          }
+        }
+      },
       "ProxyConfig": {
         "type": "object",
         "description": "TBD",
@@ -1353,6 +1461,15 @@
           "type": "string"
         }
       },
+      "segmentRulesV2QueryParam": {
+        "name": "rules",
+        "in": "query",
+        "allowEmptyValue": true,
+        "description": "When set to rules=v2 will return AND rule compatible serving_rules field. When not set or set to any other value will return old rules field only compatible with OR rules.",
+        "schema": {
+          "type": "string"
+        }
+      },
       "environmentPathParam": {
         "name": "environmentUUID",
         "in": "path",
@@ -1395,6 +1512,9 @@
   "tags": [
     {
       "name": "client"
+    },
+    {
+      "name": "metrics"
     },
     {
       "name": "Proxy",

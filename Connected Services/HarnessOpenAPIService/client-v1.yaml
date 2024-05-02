@@ -13,6 +13,7 @@ servers:
     description: CfClient description
 tags:
   - name: client
+  - name: metrics
   - name: Proxy
     description: APIs used by the ff-proxy
 paths:
@@ -86,6 +87,7 @@ paths:
           schema:
             type: string
         - $ref: '#/components/parameters/clusterQueryOptionalParam'
+        - $ref: '#/components/parameters/segmentRulesV2QueryParam'
       security:
         - BearerAuth: []
       responses:
@@ -126,6 +128,7 @@ paths:
           schema:
             type: string
         - $ref: '#/components/parameters/clusterQueryOptionalParam'
+        - $ref: '#/components/parameters/segmentRulesV2QueryParam'
       security:
         - BearerAuth: []
       responses:
@@ -236,6 +239,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Evaluation'
+  '/metrics/{environmentUUID}':
+    post:
+      tags:
+        - metrics
+      summary: Send metrics to the Analytics server.
+      description: Send metrics to Analytics server
+      operationId: postMetrics
+      parameters:
+        - $ref: '#/components/parameters/environmentPathParam'
+        - $ref: '#/components/parameters/clusterQueryOptionalParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Metrics'
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      responses:
+        '200':
+          description: OK
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /stream:
     get:
       summary: Stream endpoint.
@@ -847,6 +877,41 @@ components:
         - name
         - identifier
         - attributes
+    MetricsData:
+      type: object
+      properties:
+        timestamp:
+          type: integer
+          format: int64
+          example: 1608175465
+          description: time at when this data was recorded
+        count:
+          type: integer
+        metricsType:
+          type: string
+          enum:
+            - FFMETRICS
+          description: This can be of type FeatureMetrics
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/KeyValue'
+      required:
+        - attributes
+        - count
+        - timestamp
+        - metricsType
+    Metrics:
+      type: object
+      properties:
+        targetData:
+          type: array
+          items:
+            $ref: '#/components/schemas/TargetData'
+        metricsData:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricsData'
     ProxyConfig:
       type: object
       description: TBD
@@ -887,6 +952,17 @@ components:
       in: query
       required: false
       description: Unique identifier for the cluster for the account
+      schema:
+        type: string
+    segmentRulesV2QueryParam:
+      name: rules
+      in: query
+      required: false
+      description: >-
+        When set to rules=v2 will return AND rule compatible serving_rules
+        field. When not set or set to any other value will return old rules
+        field only compatible with OR rules.
+      allowEmptyValue: true
       schema:
         type: string
     environmentPathParam:
