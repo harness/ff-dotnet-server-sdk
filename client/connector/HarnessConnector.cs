@@ -270,7 +270,8 @@ namespace io.harness.cfsdk.client.connector
         }
         public Task<Segment> GetSegment(string identifier)
         {
-            return ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(identifier, _environment,  cluster, targetSegmentRulesQueryParameter, cancelToken.Token));
+            return ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(identifier, _environment,
+                cluster, targetSegmentRulesQueryParameter, cancelToken.Token));
         }
         public IService Stream(IUpdateCallback updater)
         {
