@@ -256,7 +256,8 @@ namespace io.harness.cfsdk.client.connector
         public async Task<IEnumerable<Segment>> GetSegments()
         {
             var segments = await ReauthenticateIfNeeded(() =>
-                harnessClient.ClientEnvTargetSegmentsGetAsync(_environment, cluster, targetSegmentRulesQueryParameter, cancelToken.Token));
+                harnessClient.ClientEnvTargetSegmentsGetAsync(_environment, cluster, targetSegmentRulesQueryParameter,
+                    cancelToken.Token));
             if (segments != null)
                 logger.LogDebug("Fetched {Count} groups from the server", segments.Count);
             else
