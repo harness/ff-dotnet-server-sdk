@@ -259,11 +259,12 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         /// </remarks>
         /// <param name="environmentUUID">Unique identifier for the environment object in the API.</param>
         /// <param name="cluster">Unique identifier for the cluster for the account</param>
+        /// <param name="rules">When set to rules=v2 will return AND rule compatible serving_rules field. When not set or set to any other value will return old rules field only compatible with OR rules.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<System.Collections.Generic.ICollection<Segment>> ClientEnvTargetSegmentsGetAsync(string environmentUUID, string cluster)
+        public virtual System.Threading.Tasks.Task<System.Collections.Generic.ICollection<Segment>> ClientEnvTargetSegmentsGetAsync(string environmentUUID, string cluster, string rules)
         {
-            return ClientEnvTargetSegmentsGetAsync(environmentUUID, cluster, System.Threading.CancellationToken.None);
+            return ClientEnvTargetSegmentsGetAsync(environmentUUID, cluster, rules, System.Threading.CancellationToken.None);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -275,9 +276,10 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         /// </remarks>
         /// <param name="environmentUUID">Unique identifier for the environment object in the API.</param>
         /// <param name="cluster">Unique identifier for the cluster for the account</param>
+        /// <param name="rules">When set to rules=v2 will return AND rule compatible serving_rules field. When not set or set to any other value will return old rules field only compatible with OR rules.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<Segment>> ClientEnvTargetSegmentsGetAsync(string environmentUUID, string cluster, System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<Segment>> ClientEnvTargetSegmentsGetAsync(string environmentUUID, string cluster, string rules, System.Threading.CancellationToken cancellationToken)
         {
             if (environmentUUID == null)
                 throw new System.ArgumentNullException("environmentUUID");
@@ -288,6 +290,10 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
             if (cluster != null)
             {
                 urlBuilder_.Append(System.Uri.EscapeDataString("cluster") + "=").Append(System.Uri.EscapeDataString(ConvertToString(cluster, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
+            }
+            if (rules != null)
+            {
+                urlBuilder_.Append(System.Uri.EscapeDataString("rules") + "=").Append(System.Uri.EscapeDataString(ConvertToString(rules, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
             }
             urlBuilder_.Length--;
 
@@ -399,11 +405,12 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         /// <param name="identifier">Unique identifier for the segment object in the API</param>
         /// <param name="environmentUUID">Unique identifier for the environment object in the API</param>
         /// <param name="cluster">Unique identifier for the cluster for the account</param>
+        /// <param name="rules">When set to rules=v2 will return AND rule compatible serving_rules field. When not set or set to any other value will return old rules field only compatible with OR rules.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<Segment> ClientEnvTargetSegmentsGetAsync(string identifier, string environmentUUID, string cluster)
+        public virtual System.Threading.Tasks.Task<Segment> ClientEnvTargetSegmentsGetAsync(string identifier, string environmentUUID, string cluster, string rules)
         {
-            return ClientEnvTargetSegmentsGetAsync(identifier, environmentUUID, cluster, System.Threading.CancellationToken.None);
+            return ClientEnvTargetSegmentsGetAsync(identifier, environmentUUID, cluster, rules, System.Threading.CancellationToken.None);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -416,9 +423,10 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
         /// <param name="identifier">Unique identifier for the segment object in the API</param>
         /// <param name="environmentUUID">Unique identifier for the environment object in the API</param>
         /// <param name="cluster">Unique identifier for the cluster for the account</param>
+        /// <param name="rules">When set to rules=v2 will return AND rule compatible serving_rules field. When not set or set to any other value will return old rules field only compatible with OR rules.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<Segment> ClientEnvTargetSegmentsGetAsync(string identifier, string environmentUUID, string cluster, System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task<Segment> ClientEnvTargetSegmentsGetAsync(string identifier, string environmentUUID, string cluster, string rules, System.Threading.CancellationToken cancellationToken)
         {
             if (identifier == null)
                 throw new System.ArgumentNullException("identifier");
@@ -433,6 +441,10 @@ namespace io.harness.cfsdk.HarnessOpenAPIService
             if (cluster != null)
             {
                 urlBuilder_.Append(System.Uri.EscapeDataString("cluster") + "=").Append(System.Uri.EscapeDataString(ConvertToString(cluster, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
+            }
+            if (rules != null)
+            {
+                urlBuilder_.Append(System.Uri.EscapeDataString("rules") + "=").Append(System.Uri.EscapeDataString(ConvertToString(rules, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
             }
             urlBuilder_.Length--;
 
