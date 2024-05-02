@@ -406,58 +406,6 @@
         ]
       }
     },
-    "/metrics/{environmentUUID}": {
-      "post": {
-        "tags": [
-          "metrics"
-        ],
-        "summary": "Send metrics to the Analytics server.",
-        "description": "Send metrics to Analytics server",
-        "operationId": "postMetrics",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/environmentPathParam/schema"
-          },
-          {
-            "$ref": "#/components/parameters/clusterQueryOptionalParam/schema"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Metrics"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthenticated",
-            "description": ""
-          },
-          "403": {
-            "$ref": "#/components/responses/Unauthorized",
-            "description": ""
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError",
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "ApiKeyAuth": []
-          },
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
     "/stream": {
       "get": {
         "tags": [
@@ -1297,56 +1245,6 @@
           }
         }
       },
-      "MetricsData": {
-        "type": "object",
-        "required": [
-          "attributes",
-          "count",
-          "timestamp",
-          "metricsType"
-        ],
-        "properties": {
-          "timestamp": {
-            "type": "integer",
-            "description": "time at when this data was recorded",
-            "format": "int64",
-            "example": "1608175465"
-          },
-          "count": {
-            "type": "integer"
-          },
-          "metricsType": {
-            "type": "string",
-            "description": "This can be of type FeatureMetrics",
-            "enum": [
-              "FFMETRICS"
-            ]
-          },
-          "attributes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/KeyValue"
-            }
-          }
-        }
-      },
-      "Metrics": {
-        "type": "object",
-        "properties": {
-          "targetData": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TargetData"
-            }
-          },
-          "metricsData": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MetricsData"
-            }
-          }
-        }
-      },
       "ProxyConfig": {
         "type": "object",
         "description": "TBD",
@@ -1512,9 +1410,6 @@
   "tags": [
     {
       "name": "client"
-    },
-    {
-      "name": "metrics"
     },
     {
       "name": "Proxy",
