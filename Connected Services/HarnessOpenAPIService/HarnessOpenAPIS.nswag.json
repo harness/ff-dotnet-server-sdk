@@ -133,6 +133,9 @@
           },
           {
             "$ref": "#/components/parameters/clusterQueryOptionalParam/schema"
+          },
+          {
+            "$ref": "#/components/parameters/segmentRulesV2QueryParam/schema"
           }
         ],
         "responses": {
@@ -202,6 +205,9 @@
           },
           {
             "$ref": "#/components/parameters/clusterQueryOptionalParam/schema"
+          },
+          {
+            "$ref": "#/components/parameters/segmentRulesV2QueryParam/schema"
           }
         ],
         "responses": {
@@ -1349,6 +1355,15 @@
         "name": "cluster",
         "in": "query",
         "description": "Unique identifier for the cluster for the account",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "segmentRulesV2QueryParam": {
+        "name": "rules",
+        "in": "query",
+        "allowEmptyValue": true,
+        "description": "When set to rules=v2 will return AND rule compatible serving_rules field. When not set or set to any other value will return old rules field only compatible with OR rules.",
         "schema": {
           "type": "string"
         }
