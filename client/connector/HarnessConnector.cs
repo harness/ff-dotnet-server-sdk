@@ -29,6 +29,7 @@ namespace io.harness.cfsdk.client.connector
     {
         private readonly ILogger<HarnessConnector> logger;
         private readonly ILoggerFactory loggerFactory;
+        private readonly string targetSegmentRulesQueryParameter = "v2";
         private string token;
         private static string _environment;
         private static string _accountId;
@@ -255,7 +256,7 @@ namespace io.harness.cfsdk.client.connector
         public async Task<IEnumerable<Segment>> GetSegments()
         {
             var segments = await ReauthenticateIfNeeded(() =>
-                harnessClient.ClientEnvTargetSegmentsGetAsync(_environment, cluster, cancelToken.Token));
+                harnessClient.ClientEnvTargetSegmentsGetAsync(_environment, cluster, targetSegmentRulesQueryParameter, cancelToken.Token));
             if (segments != null)
                 logger.LogDebug("Fetched {Count} groups from the server", segments.Count);
             else
@@ -269,7 +270,7 @@ namespace io.harness.cfsdk.client.connector
         }
         public Task<Segment> GetSegment(string identifier)
         {
-            return ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(identifier, _environment, cluster, cancelToken.Token));
+            return ReauthenticateIfNeeded(() => harnessClient.ClientEnvTargetSegmentsGetAsync(identifier, _environment,  cluster, targetSegmentRulesQueryParameter, cancelToken.Token));
         }
         public IService Stream(IUpdateCallback updater)
         {
