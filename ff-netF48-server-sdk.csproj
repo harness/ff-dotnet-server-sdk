@@ -15,7 +15,7 @@
         <Authors>support@harness.io</Authors>
         <Copyright>Copyright © 2024</Copyright>
         <PackageIconUrl>https://harness.io/icon-ff.svg</PackageIconUrl>
-        <PackageLicenseUrl>https://github.com/drone/ff-dotnet-server-sdk/blob/main/LICENSE</PackageLicenseUrl>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
         <PackageProjectUrl>https://github.com/drone/ff-dotnet-server-sdk</PackageProjectUrl>
         <Summary>.NET Server SDK for Harness Feature Flag platform</Summary>
