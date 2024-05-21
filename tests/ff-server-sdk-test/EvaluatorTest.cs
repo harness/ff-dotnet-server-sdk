@@ -57,7 +57,7 @@ namespace ff_server_sdk_test
             var config = Config.Builder().UseMapForInClause(true).Build();
             cache = new FeatureSegmentCache();
             repository = new StorageRepository(cache, null, null, loggerFactory, config);
-            evaluator = new Evaluator(repository, listener, loggerFactory, true, null, null);
+            evaluator = new Evaluator(repository, listener, loggerFactory, true, null, config);
         }
 
         private static void LoadSegments(List<Segment> segments)

@@ -199,7 +199,7 @@ namespace io.harness.cfsdk.client.api
 
         private void CacheClauseValues(Segment segment)
         {
-            if (!config.UseMapForInClause)
+            if (!config.UseMapForInClause || segment == null || segment.Rules == null)
                 return;
 
             // The generated API code uses a List which can be inefficient if a lot of values are used
