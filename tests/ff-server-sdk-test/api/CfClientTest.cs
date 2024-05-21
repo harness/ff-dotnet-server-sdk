@@ -126,6 +126,7 @@ namespace ff_server_sdk_test.api
                 .debug(true)
                 .SetStreamEnabled(false)
                 .SetAnalyticsEnabled(false)
+                .UseMapForInClause(true)
                 .ConfigUrl(server.Url + "/api/1.0")
                 .Build());
 

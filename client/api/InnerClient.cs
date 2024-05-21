@@ -80,7 +80,7 @@ namespace io.harness.cfsdk.client.api
             this.sdkReadyLatch.Reset(1);
             this.connector = connector;
             this.authService = new AuthService(connector, config, this, loggerFactory);
-            this.repository = new StorageRepository(config.Cache, config.Store, this, loggerFactory);
+            this.repository = new StorageRepository(config.Cache, config.Store, this, loggerFactory, config);
             this.polling = new PollingProcessor(connector, this.repository, config, this, loggerFactory);
             this.update = new UpdateProcessor(connector, this.repository, config, this, loggerFactory);
             this.evaluator = new Evaluator(this.repository, this, loggerFactory, config.analyticsEnabled, polling, config);

@@ -54,8 +54,9 @@ namespace ff_server_sdk_test
         {
             var loggerFactory = LoggerFactory.Create(builder => { builder.AddConsole(); });
             var listener = new EvaluatorListener();
+            var config = Config.Builder().UseMapForInClause(true).Build();
             cache = new FeatureSegmentCache();
-            repository = new StorageRepository(cache, null, null, loggerFactory);
+            repository = new StorageRepository(cache, null, null, loggerFactory, config);
             evaluator = new Evaluator(repository, listener, loggerFactory, true, null, null);
         }
 
@@ -122,6 +123,7 @@ namespace ff_server_sdk_test
                     });
 
                 Assert.NotNull(testModel);
+                Assert.NotNull(testModel.tests);
 
                 foreach (Dictionary<string, object> nextTest in testModel.tests)
                 {

@@ -45,12 +45,15 @@ namespace io.harness.cfsdk.client.api
         private readonly ICache cache;
         private readonly IStore store;
         private readonly IRepositoryCallback callback; // avoid calling callbacks inside rwLocks!
-        public StorageRepository(ICache cache, IStore store, IRepositoryCallback callback, ILoggerFactory loggerFactory)
+        private readonly Config config;
+
+        public StorageRepository(ICache cache, IStore store, IRepositoryCallback callback, ILoggerFactory loggerFactory, Config config)
         {
             this.rwLock = new ReaderWriterLockSlim();
             this.cache = cache;
             this.store = store;
             this.callback = callback;
+            this.config = config;
             this.logger = loggerFactory.CreateLogger<StorageRepository>();
         }
 
@@ -196,6 +199,9 @@ namespace io.harness.cfsdk.client.api
 
         private void CacheClauseValues(Segment segment)
         {
+            if (!config.UseMapForInClause)
+                return;
+
             // The generated API code uses a List which can be inefficient if a lot of values are used
             // This function will cache values as a HashSet in AdditionalProperties
             foreach (var clause in segment.Rules)
