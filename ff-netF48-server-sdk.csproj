@@ -8,9 +8,9 @@
         <PackageId>ff-dotnet-server-sdk</PackageId>
         <RootNamespace>io.harness.cfsdk</RootNamespace>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-        <Version>1.7.0</Version>
+        <Version>1.7.0-rc1</Version>
         <PackOnBuild>true</PackOnBuild>
-        <PackageVersion>1.7.0</PackageVersion>
+        <PackageVersion>1.7.0-rc1</PackageVersion>
         <AssemblyVersion>1.7.0</AssemblyVersion>
         <Authors>support@harness.io</Authors>
         <Copyright>Copyright © 2024</Copyright>
@@ -39,7 +39,7 @@
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.34.0" />
-        <PackageReference Include="System.Net.Http" Version="4.3.4" />
+        <PackageReference Include="System.Net.Http" Version="4.3.4" Condition="'$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'net461'" />
         <PackageReference Include="NSwag.ApiDescription.Client" Version="13.0.5">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
