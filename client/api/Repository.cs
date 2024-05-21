@@ -212,6 +212,8 @@ namespace io.harness.cfsdk.client.api
                 clause.AdditionalProperties.Remove(AdditionalPropertyValueAsSet);
                 clause.AdditionalProperties.Add(AdditionalPropertyValueAsSet, set);
             }
+
+            this.callback?.OnFlagStored(identifier);
         }
 
         void IRepository.SetSegment(string identifier, Segment segment)
@@ -238,7 +240,6 @@ namespace io.harness.cfsdk.client.api
 
             this.callback?.OnSegmentStored(identifier);
         }
-
 
         public void SetFlags(IEnumerable<FeatureConfig> flags)
         {
