@@ -38,17 +38,22 @@ namespace io.harness.cfsdk.client.api
 
     internal class StorageRepository : IRepository
     {
+        internal static readonly string AdditionalPropertyValueAsSet = "harness-values-as-set";
+
         private readonly ReaderWriterLockSlim rwLock;
         private readonly ILogger logger;
         private readonly ICache cache;
         private readonly IStore store;
         private readonly IRepositoryCallback callback; // avoid calling callbacks inside rwLocks!
-        public StorageRepository(ICache cache, IStore store, IRepositoryCallback callback, ILoggerFactory loggerFactory)
+        private readonly Config config;
+
+        public StorageRepository(ICache cache, IStore store, IRepositoryCallback callback, ILoggerFactory loggerFactory, Config config)
         {
             this.rwLock = new ReaderWriterLockSlim();
             this.cache = cache;
             this.store = store;
             this.callback = callback;
+            this.config = config;
             this.logger = loggerFactory.CreateLogger<StorageRepository>();
         }
 
@@ -191,6 +196,24 @@ namespace io.harness.cfsdk.client.api
 
             this.callback?.OnFlagStored(identifier);
         }
+
+        private void CacheClauseValues(Segment segment)
+        {
+            if (!config.UseMapForInClause || segment == null || segment.Rules == null)
+                return;
+
+            // The generated API code uses a List which can be inefficient if a lot of values are used
+            // This function will cache values as a HashSet in AdditionalProperties
+            foreach (var clause in segment.Rules)
+            {
+                if (!clause.Op.Equals("in")) continue;
+                HashSet<string> set = new();
+                set.UnionWith(clause.Values);
+                clause.AdditionalProperties.Remove(AdditionalPropertyValueAsSet);
+                clause.AdditionalProperties.Add(AdditionalPropertyValueAsSet, set);
+            }
+        }
+
         void IRepository.SetSegment(string identifier, Segment segment)
         {
             rwLock.EnterWriteLock();
@@ -205,6 +228,7 @@ namespace io.harness.cfsdk.client.api
                     return;
                 }
 
+                CacheClauseValues(segment);
                 Update(identifier, SegmentKey(identifier), segment);
             }
             finally
@@ -238,6 +262,7 @@ namespace io.harness.cfsdk.client.api
             {
                 foreach (var item in segments)
                 {
+                    CacheClauseValues(item);
                     Update(item.Identifier, SegmentKey(item.Identifier), item);
                 }
             }

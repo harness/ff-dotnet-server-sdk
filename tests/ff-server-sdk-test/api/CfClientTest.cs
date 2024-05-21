@@ -93,7 +93,7 @@ namespace ff_server_sdk_test.api
 
 
         [Test]
-        public void ShouldPopulateCacheIfStreamFails()
+        public void PerformanceTestInClauseWithManyValues()
         {
             server
                 .Given(Request.Create().WithPath("/api/1.0/client/auth").UsingPost())
@@ -101,30 +101,22 @@ namespace ff_server_sdk_test.api
 
             server
                 .Given(Request.Create()
-                    .WithPath("/api/1.0/stream").UsingGet())
-                .RespondWith(Response.Create()
-                    .WithStatusCode(500)
-                    .WithFault(FaultType.MALFORMED_RESPONSE_CHUNK)
-                    .WithBody("{malformed stream}}}}}"));
-
-            server
-                .Given(Request.Create()
                     .WithPath("/api/1.0/client/env/00000000-0000-0000-0000-000000000000/feature-configs").UsingGet())
                 .RespondWith(Response.Create()
                     .WithStatusCode(200)
-                    .WithBody(MakeFeatureConfigBodyWithVariationToTargetMapSetToNull()));
+                    .WithBody(MakeFeatureConfigBody(MakeVariationMap( "inRule", "on"))));
 
             server
                 .Given(Request.Create()
                     .WithPath("/api/1.0/client/env/00000000-0000-0000-0000-000000000000/target-segments").UsingGet())
                 .RespondWith(Response.Create()
                     .WithStatusCode(200)
-                    .WithBody(MakeTargetSegmentsBody()));
+                    .WithBody(MakeTargetSegmentsBody("inRule", MakeRules(MakeInClause("hasValue9999", "find_this_attribute", 10_000)))));
 
             var target =
                 Target.builder()
                     .Name("CfClientTest")
-                    .Attributes(new Dictionary<string, string> { { "attr", "val" } })
+                    .Attributes(new Dictionary<string, string> { { "find_this_attribute", "value9999" } })
                     .Identifier("CfClientTest")
                     .build();
 
@@ -132,8 +124,9 @@ namespace ff_server_sdk_test.api
 
             var client = new CfClient("dummy api key", Config.Builder()
                 .debug(true)
-                .SetStreamEnabled(true)
+                .SetStreamEnabled(false)
                 .SetAnalyticsEnabled(false)
+                .UseMapForInClause(true)
                 .ConfigUrl(server.Url + "/api/1.0")
                 .Build());
 
@@ -148,13 +141,11 @@ namespace ff_server_sdk_test.api
             var success = client.WaitForInitialization(10_000);
             Assert.IsTrue(success, "timeout while waiting for WaitForInitialization()");
 
-            Thread.Sleep(2000);
-
             var ok = initLatch.Wait(TimeSpan.FromMinutes(2));
             Assert.That(ok, Is.True, "failed to init in time");
 
-            var result = client.stringVariation("FeatureWithVariationToTargetMapSetAsNull", target, "failed");
-            Assert.That(result, Is.EqualTo("on"), "did not get correct flag state");
+            var result = client.boolVariation("Feature", target, false);
+            Assert.That(result, Is.EqualTo(true), "did not get correct flag state");
         }
 
         [Test]

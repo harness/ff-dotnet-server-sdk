@@ -25,7 +25,9 @@ namespace ff_server_sdk_test
                     .AddConsole();
             });
 
-            IRepository repo = new StorageRepository(cache, store, callback, factory);
+
+            var config = Config.Builder().UseMapForInClause(false).Build();
+            IRepository repo = new StorageRepository(cache, store, callback, factory, config);
 
             // Flags that don't exist
 

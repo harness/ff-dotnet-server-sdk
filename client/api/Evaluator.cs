@@ -413,7 +413,11 @@ namespace io.harness.cfsdk.client.api
                 case "equal_sensitive":
                     return attrStr.Equals(value);
                 case "in":
-                    return clause.Values.Contains(attrStr);
+                    if (config.UseMapForInClause && clause.AdditionalProperties.TryGetValue(StorageRepository.AdditionalPropertyValueAsSet, out var valuesObj))
+                    {
+                        return ((HashSet<string>)valuesObj).Contains(attrStr);  // O(1) lookup
+                    }
+                    return clause.Values.Contains(attrStr); // O(n) lookup
                 default:
                     return false;
             }

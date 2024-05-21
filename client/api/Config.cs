@@ -22,13 +22,12 @@ namespace io.harness.cfsdk.client.api
         internal bool streamEnabled = true;
         internal int evaluationMetricsMaxSize = 10000;
         internal int targetMetricsMaxSize = 100000;
-        internal int cacheRecoveryTimeoutInMs = 5000; 
-
-
+        internal int cacheRecoveryTimeoutInMs = 5000;
+        internal bool useMapForInClause = false;
 
         public Config(string configUrl, string eventUrl, bool streamEnabled, int pollIntervalInSeconds,
             bool analyticsEnabled, int frequency, int targetMetricsMaxSize, int connectionTimeout, int readTimeout,
-            int writeTimeout, bool debug, long metricsServiceAcceptableDuration, int cacheRecoveryTimeoutInMs)
+            int writeTimeout, bool debug, long metricsServiceAcceptableDuration, int cacheRecoveryTimeoutInMs, bool useMapForInClause)
         {
             this.configUrl = configUrl;
             this.eventUrl = eventUrl;
@@ -43,6 +42,7 @@ namespace io.harness.cfsdk.client.api
             this.debug = debug;
             this.metricsServiceAcceptableDuration = metricsServiceAcceptableDuration;
             this.cacheRecoveryTimeoutInMs = cacheRecoveryTimeoutInMs;
+            this.useMapForInClause = useMapForInClause;
         }
 
         public Config()
@@ -70,6 +70,7 @@ namespace io.harness.cfsdk.client.api
         public int EvaluationMetricsMaxSize => evaluationMetricsMaxSize;
         public int CacheRecoveryTimeoutInMs => cacheRecoveryTimeoutInMs;
 
+        public bool UseMapForInClause => useMapForInClause;
 
         /**
          * timeout in milliseconds to connect to CF Server
@@ -198,6 +199,19 @@ namespace io.harness.cfsdk.client.api
         public ConfigBuilder SetCacheRecoveryTimeout(int timeoutMilliseconds)
         {
             configtobuild.cacheRecoveryTimeoutInMs = timeoutMilliseconds;
+            return this;
+        }
+
+        /**
+         * <summary>
+         * Enable map for storing IN clause values for faster performance.
+         * If you have a lot of values stored in any of your IN clauses it might be useful to enable this feature to
+         * speed up the processing on those rules at the expense of using more memory.
+         * </summary>
+         */
+        public ConfigBuilder UseMapForInClause(bool useMapForInClause)
+        {
+            configtobuild.useMapForInClause = useMapForInClause;
             return this;
         }
 
