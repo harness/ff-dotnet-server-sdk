@@ -52,6 +52,42 @@ namespace ff_server_sdk_test.api.analytics
             Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(1));
             Assert.That(targetAnalyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(1));
         }
+        
+        [Test]
+        public void Should_add_single_evaluation_and_no_target_for_null_target()
+        {
+            var evaluationAnalyticsCacheMock = new EvaluationAnalyticsCache();
+            var targetAnalyticsCacheMock = new TargetAnalyticsCache();
+            var connectorMock = new Mock<IConnector>();
+            var analyticsPublisherServiceMock =
+                new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock,
+                    targetAnalyticsCacheMock, new NullLoggerFactory());
+
+            var variation = new Variation();
+
+            var featureConfig1 = CreateFeatureConfig("feature1");
+            var evaluationAnalytics = new EvaluationAnalytics(featureConfig1, variation, null);
+            var targetAnalytics = new TargetAnalytics(null);
+
+            var sut = new MetricsProcessor(new Config(), evaluationAnalyticsCacheMock, targetAnalyticsCacheMock,
+                analyticsPublisherServiceMock,
+                new NullLoggerFactory(), false);
+
+
+            sut.PushToCache(null, featureConfig1, variation);
+
+            // Ensure the cache totals are correct
+            Assert.That(evaluationAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(1));
+            Assert.That(targetAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(0));
+
+
+            // Ensure the cache total and breakdown of the type of analytics is correct
+            Assert.That(evaluationAnalyticsCacheMock.GetAllElements().Count, Is.EqualTo(1));
+
+            // Ensure the counter is correct.
+            Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(1));
+            Assert.That(targetAnalyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(0));
+        }
 
 
         [Test]
