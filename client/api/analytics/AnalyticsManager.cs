@@ -99,7 +99,6 @@ namespace io.harness.cfsdk.client.api.analytics
 
             if (target == null || target.IsPrivate)
             {
-                // Target is marked as private, so don't send it in analytics
                 return;
             }
             
