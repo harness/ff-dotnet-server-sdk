@@ -97,7 +97,7 @@ namespace io.harness.cfsdk.client.api.analytics
         private void PushToTargetAnalyticsCache(Target target)
         {
 
-            if (target == null || target.IsPrivate)
+            if (target?.Identifier == null || target.IsPrivate)
             {
                 return;
             }

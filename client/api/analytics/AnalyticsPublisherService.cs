@@ -124,9 +124,11 @@ namespace io.harness.cfsdk.client.api.analytics
             
             return metrics;
         }
-        
+
         public bool IsTargetSeen(string identifier)
         {
+            if (identifier == null) return false;
+
             return SeenTargetsCache.getIfPresent(identifier);
         }
 

@@ -27,8 +27,11 @@ namespace ff_server_sdk_test.api.analytics
                     targetAnalyticsCacheMock, new NullLoggerFactory(), new Config());
 
             var variation = new Variation();
-            var target = new Target();
-
+            var target = Target.builder()
+                .Identifier("identifier")
+                .Attributes(new Dictionary<string, string> { { "email", "demo@harness.io" } })
+                .build(); 
+            
             var featureConfig1 = CreateFeatureConfig("feature1");
             var evaluationAnalytics = new EvaluationAnalytics(featureConfig1, variation, target);
             var targetAnalytics = new TargetAnalytics(target);
@@ -50,7 +53,7 @@ namespace ff_server_sdk_test.api.analytics
 
             // Ensure the counter is correct.
             Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(1));
-            Assert.That(targetAnalyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(1));
+            Assert.That(targetAnalyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(true));
         }
         
         [Test]
@@ -86,7 +89,7 @@ namespace ff_server_sdk_test.api.analytics
 
             // Ensure the counter is correct.
             Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(1));
-            Assert.That(targetAnalyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(0));
+            Assert.That(targetAnalyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(false));
         }
 
 
@@ -100,8 +103,10 @@ namespace ff_server_sdk_test.api.analytics
                 new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock,
                     targetAnalyticsCacheMock, new NullLoggerFactory(), new Config());
 
-            var target = new Target();
-            var variation = new Variation();
+            var target = Target.builder()
+                .Identifier("identifier")
+                .Attributes(new Dictionary<string, string> { { "email", "demo@harness.io" } })
+                .build();             var variation = new Variation();
 
             // simulate multiple evaluations for a single feature
             var featureConfig = CreateFeatureConfig("feature1");
@@ -126,7 +131,7 @@ namespace ff_server_sdk_test.api.analytics
 
             // Correct count
             Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(5));
-            Assert.That(targetAnalyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(1));
+            Assert.That(targetAnalyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(true));
         }
 
         [Test]
@@ -140,8 +145,10 @@ namespace ff_server_sdk_test.api.analytics
                 new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock,
                     targetAnalyticsCacheMock, new NullLoggerFactory(), new Config());
 
-            var target = new Target();
-            var variation = new Variation();
+            var target = Target.builder()
+                .Identifier("identifier")
+                .Attributes(new Dictionary<string, string> { { "email", "demo@harness.io" } })
+                .build();             var variation = new Variation();
 
             // simulate an evaluation for multiple different features
             var featureConfig1 = CreateFeatureConfig("feature1");
@@ -165,7 +172,7 @@ namespace ff_server_sdk_test.api.analytics
             // Ensure the counter is correct
             Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(1));
             Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics2), Is.EqualTo(1));
-            Assert.That(targetAnalyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(1));
+            Assert.That(targetAnalyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(true));
         }
 
 
@@ -180,9 +187,10 @@ namespace ff_server_sdk_test.api.analytics
                 new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock,
                     targetAnalyticsCacheMock, new NullLoggerFactory(), new Config());
 
-            var target = new Target();
-            // var target = new Target(EvaluationAnalytics.GlobalTargetIdentifier, EvaluationAnalytics.GlobalTargetName,
-            //     null);
+            var target = Target.builder()
+                .Identifier("identifier")
+                .Attributes(new Dictionary<string, string> { { "email", "demo@harness.io" } })
+                .build(); 
             var variation = new Variation();
 
             // simulate an evaluation for multiple different features
@@ -389,7 +397,7 @@ namespace ff_server_sdk_test.api.analytics
             // Trigger the push to GlobalTargetSet
             analyticsPublisherService.SendDataAndResetCache();
             var count = analyticsPublisherService.SeenTargetsCache.Count();
-            Assert.IsTrue(analyticsPublisherService.SeenTargetsCache.Count() == 40);
+            Assert.IsTrue(analyticsPublisherService.SeenTargetsCache.Count() == 30);
         }
 
 
