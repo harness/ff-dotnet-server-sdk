@@ -24,7 +24,7 @@ namespace ff_server_sdk_test.api.analytics
             var connectorMock = new Mock<IConnector>();
             var analyticsPublisherServiceMock =
                 new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock,
-                    targetAnalyticsCacheMock, new NullLoggerFactory());
+                    targetAnalyticsCacheMock, new NullLoggerFactory(), new Config());
 
             var variation = new Variation();
             var target = new Target();
@@ -61,7 +61,7 @@ namespace ff_server_sdk_test.api.analytics
             var connectorMock = new Mock<IConnector>();
             var analyticsPublisherServiceMock =
                 new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock,
-                    targetAnalyticsCacheMock, new NullLoggerFactory());
+                    targetAnalyticsCacheMock, new NullLoggerFactory(), new Config());
 
             var variation = new Variation();
 
@@ -98,7 +98,7 @@ namespace ff_server_sdk_test.api.analytics
             var connectorMock = new Mock<IConnector>();
             var analyticsPublisherServiceMock =
                 new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock,
-                    targetAnalyticsCacheMock, new NullLoggerFactory());
+                    targetAnalyticsCacheMock, new NullLoggerFactory(), new Config());
 
             var target = new Target();
             var variation = new Variation();
@@ -138,7 +138,7 @@ namespace ff_server_sdk_test.api.analytics
             var connectorMock = new Mock<IConnector>();
             var analyticsPublisherServiceMock =
                 new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock,
-                    targetAnalyticsCacheMock, new NullLoggerFactory());
+                    targetAnalyticsCacheMock, new NullLoggerFactory(), new Config());
 
             var target = new Target();
             var variation = new Variation();
@@ -178,7 +178,7 @@ namespace ff_server_sdk_test.api.analytics
             var connectorMock = new Mock<IConnector>();
             var analyticsPublisherServiceMock =
                 new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock,
-                    targetAnalyticsCacheMock, new NullLoggerFactory());
+                    targetAnalyticsCacheMock, new NullLoggerFactory(), new Config());
 
             var target = new Target();
             // var target = new Target(EvaluationAnalytics.GlobalTargetIdentifier, EvaluationAnalytics.GlobalTargetName,
@@ -222,7 +222,7 @@ namespace ff_server_sdk_test.api.analytics
             var loggerFactory = new NullLoggerFactory();
             var analyticsPublisherService =
                 new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock,
-                    targetAnalyticsCacheMock, loggerFactory);
+                    targetAnalyticsCacheMock, loggerFactory, new Config());
 
             // Pass true for global target
             var metricsProcessor =
@@ -290,7 +290,7 @@ namespace ff_server_sdk_test.api.analytics
             var loggerFactory = new NullLoggerFactory();
             var analyticsPublisherService =
                 new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock,
-                    targetAnalyticsCacheMock, loggerFactory);
+                    targetAnalyticsCacheMock, loggerFactory, new Config());
             var metricsProcessor =
                 new MetricsProcessor(new Config(), evaluationAnalyticsCacheMock, targetAnalyticsCacheMock,
                     analyticsPublisherService, loggerFactory, false);
@@ -330,7 +330,7 @@ namespace ff_server_sdk_test.api.analytics
             var loggerFactory = new NullLoggerFactory();
             var analyticsPublisherService =
                 new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock,
-                    targetAnalyticsCacheMock, loggerFactory);
+                    targetAnalyticsCacheMock, loggerFactory, new Config());
             var metricsProcessor =
                 new MetricsProcessor(new Config(), evaluationAnalyticsCacheMock, targetAnalyticsCacheMock,
                     analyticsPublisherService, loggerFactory, false);
