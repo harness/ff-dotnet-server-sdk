@@ -118,12 +118,8 @@ namespace io.harness.cfsdk.client.api.analytics
             }
 
             TargetAnalytics targetAnalytics = new TargetAnalytics(target);
-
-            // We don't need to keep count of targets, so use a constant value, 1, for the count. 
-            // Since 1.4.2, the analytics cache was refactored to separate out Evaluation and Target metrics, but the 
-            // change did not go as far as to maintain two caches (due to effort involved), but differentiate them based on subclassing, so 
-            // the counter used for target metrics isn't needed, but causes no issue. 
-            targetAnalyticsCache.Put(targetAnalytics, 1);
+            
+            targetAnalyticsCache.Put(targetAnalytics);
 
             analyticsPublisherService.MarkTargetAsSeen(target);
         }

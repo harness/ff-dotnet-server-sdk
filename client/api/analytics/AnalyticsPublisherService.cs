@@ -20,7 +20,7 @@ namespace io.harness.cfsdk.client.api.analytics
         private static readonly string Server = "server";
         private static readonly string SdkLanguage = "SDK_LANGUAGE";
         private static readonly string SdkVersion = "SDK_VERSION";
-        internal readonly ConcurrentDictionary<Target, byte> SeenTargets = new();
+        internal readonly SeenTargetsCache SeenTargets = new();
         private readonly IConnector connector;
         private readonly EvaluationAnalyticsCache evaluationAnalyticsCache;
         private readonly ILogger<AnalyticsPublisherService> logger;
@@ -67,7 +67,7 @@ namespace io.harness.cfsdk.client.api.analytics
         }
 
         private Metrics PrepareMessageBody(IDictionary<EvaluationAnalytics, int> evaluationsCache,
-            IDictionary<TargetAnalytics, int> targetsCache)
+            IDictionary<TargetAnalytics, bool> targetsCache)
         {
             var metrics = new Metrics();
             metrics.TargetData = new List<TargetData>();
@@ -119,16 +119,16 @@ namespace io.harness.cfsdk.client.api.analytics
             return metrics;
         }
         
-        public bool IsTargetSeen(Target target)
+        public bool IsTargetSeen(string identifier)
         {
-            return SeenTargets.ContainsKey(target);
-        }
-        
-        public void MarkTargetAsSeen(Target target)
-        {
-            SeenTargets.TryAdd(target, 0);
+            return SeenTargets.getIfPresent(identifier);
         }
 
+        public void MarkTargetAsSeen(string identifier)
+
+        {
+            SeenTargets.Put(identifier);
+        }
 
         private void SetCommonSdkAttributes(MetricsData metricsData)
         {
