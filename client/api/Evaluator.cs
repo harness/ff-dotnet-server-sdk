@@ -154,7 +154,7 @@ namespace io.harness.cfsdk.client.api
         {
             if (parentFeatureConfig.Prerequisites != null && parentFeatureConfig.Prerequisites.Count > 0)
             {
-                var prerequisites = parentFeatureConfig.Prerequisites.();
+                var prerequisites = parentFeatureConfig.Prerequisites;
 
                 foreach (var pqs in prerequisites)
                 {
@@ -165,7 +165,7 @@ namespace io.harness.cfsdk.client.api
                     var preReqEvaluatedVariation = Evaluate(preReqFeatureConfig, target);
                     if (preReqEvaluatedVariation == null) return true;
 
-                    var validPreReqVariations = pqs.Variations();
+                    var validPreReqVariations = pqs.Variations;
                     if (!validPreReqVariations.Contains(preReqEvaluatedVariation.Identifier)) return false;
 
                     if (!CheckPreRequisite(preReqFeatureConfig, target)) return false;
