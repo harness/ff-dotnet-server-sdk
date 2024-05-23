@@ -131,15 +131,19 @@ namespace io.harness.cfsdk.client.api.analytics
             {
                 return;
             }
-            
-            logger.LogWarning(
-                "{cacheType} frequency map exceeded buffer size ({cacheSize} > {bufferSize}), not sending any further" +
-                " {cacheType} metrics for interval. Increase buffer size using client config option if required.", cacheType,
-                cacheSize,
-                bufferSize,
-                cacheType);
-            
-            warningLoggedForInterval = true;
+
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning(
+                    "{cacheType} frequency map exceeded buffer size ({cacheSize} > {bufferSize}), not sending any further" +
+                    " {cacheType} metrics for interval. Increase buffer size using client config option if required.",
+                    cacheType,
+                    cacheSize,
+                    bufferSize,
+                    cacheType);
+
+                warningLoggedForInterval = true;
+            }
         }
 
         internal void Timer_Elapsed(object sender, ElapsedEventArgs e)
