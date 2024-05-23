@@ -15,11 +15,16 @@ namespace io.harness.cfsdk.client.api.analytics
         private readonly AnalyticsPublisherService analyticsPublisherService;
         private readonly Config config;
         private readonly ILogger<MetricsProcessor> logger;
-        private int evaluationMetricsMaxSize;
-        private int targetMetricsMaxSize;
+        private readonly int evaluationMetricsMaxSize;
+        private readonly int targetMetricsMaxSize;
         private Timer timer;
-        private bool isGlobalTargetEnabled;
+        private Timer seenTargetsCacheResetTimer;
+
+        private readonly bool isGlobalTargetEnabled;
         private bool warningLoggedForInterval = false;
+        
+        private readonly Target globalTarget = new (EvaluationAnalytics.GlobalTargetIdentifier,
+            EvaluationAnalytics.GlobalTargetName, null);
 
         public MetricsProcessor(Config config, EvaluationAnalyticsCache evaluationAnalyticsCache, TargetAnalyticsCache targetAnalyticsCache,
             AnalyticsPublisherService analyticsPublisherService, ILoggerFactory loggerFactory, bool globalTargetEnabled)
@@ -43,7 +48,15 @@ namespace io.harness.cfsdk.client.api.analytics
                 timer.AutoReset = true;
                 timer.Enabled = true;
                 timer.Start();
+                
+                seenTargetsCacheResetTimer = new Timer(config.seenTargetsCacheTtlInSeconds);
+                seenTargetsCacheResetTimer.Elapsed += SeenTargetsCacheResetTimer_Elapsed;
+                seenTargetsCacheResetTimer.AutoReset = true;
+                seenTargetsCacheResetTimer.Enabled = true;
+                seenTargetsCacheResetTimer.Start();
+                
                 logger.LogInformation("SDKCODE(metric:7000): Metrics thread started");
+
             }
         }
 
@@ -62,8 +75,6 @@ namespace io.harness.cfsdk.client.api.analytics
         {
             if (isGlobalTargetEnabled)
             {
-                var globalTarget = new Target(EvaluationAnalytics.GlobalTargetIdentifier,
-                    EvaluationAnalytics.GlobalTargetName, null);
                 PushToEvaluationAnalyticsCache(featureConfig, variation, globalTarget);
             }
             else
@@ -151,6 +162,13 @@ namespace io.harness.cfsdk.client.api.analytics
             if (logger.IsEnabled(LogLevel.Debug))
                 logger.LogDebug("Timer Elapsed - Processing/Sending analytics data");
             SendMetrics();
+        }
+        
+        private void SeenTargetsCacheResetTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            analyticsPublisherService.ResetSeenTargetsCache();
+            if (logger.IsEnabled(LogLevel.Debug))
+                logger.LogDebug("SeenTargetsCache reset");
         }
 
         internal void SendMetrics()

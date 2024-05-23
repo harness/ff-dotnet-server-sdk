@@ -137,6 +137,11 @@ namespace io.harness.cfsdk.client.api.analytics
             if (SeenTargetsCache.Count() > seenTargetsCacheMaxSize) return;
             SeenTargetsCache.Put(identifier);
         }
+        
+        public void ResetSeenTargetsCache()
+        {
+            SeenTargetsCache.resetCache();
+        }
 
         private void SetCommonSdkAttributes(MetricsData metricsData)
         {
