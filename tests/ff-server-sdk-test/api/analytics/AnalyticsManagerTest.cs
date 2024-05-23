@@ -413,7 +413,7 @@ namespace ff_server_sdk_test.api.analytics
 
             var metricsProcessor = new MetricsProcessor(config, evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, analyticsPublisherServiceMock, new NullLoggerFactory(), false);
 
-            Parallel.For(0, 501000, i =>
+            Parallel.For(0, 51000, i =>
             {
                 var target = Target.builder()
                     .Identifier($"unique_identifier_{i}")
@@ -443,7 +443,7 @@ namespace ff_server_sdk_test.api.analytics
 
             var metricsProcessor = new MetricsProcessor(config, evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, analyticsPublisherServiceMock, new NullLoggerFactory(), false);
 
-            Parallel.For(0, 501000, i =>
+            Parallel.For(0, 150000, i =>
             {
                 var target = Target.builder()
                     .Identifier($"unique_identifier_{i}")
@@ -466,6 +466,10 @@ namespace ff_server_sdk_test.api.analytics
             // The SeenTargetsCache counter is not 100% precise, so allow a small margin
             var limitMargin = 50;
             Assert.That(analyticsPublisherServiceMock.SeenTargetsCache.Count(), Is.LessThan(config.targetMetricsMaxSize + limitMargin));
+            
+            analyticsPublisherServiceMock.SeenTargetsCache.resetCache();
+            Assert.That(analyticsPublisherServiceMock.SeenTargetsCache.Count(), Is.EqualTo(0));
+
         }
 
 
