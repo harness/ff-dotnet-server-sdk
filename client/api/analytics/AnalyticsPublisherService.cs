@@ -127,7 +127,7 @@ namespace io.harness.cfsdk.client.api.analytics
 
         public bool IsTargetSeen(string identifier)
         {
-            return SeenTargetsCache.getIfPresent(identifier);
+            return SeenTargetsCache.ContainsKey(identifier);
         }
 
         public void MarkTargetAsSeen(string identifier)
