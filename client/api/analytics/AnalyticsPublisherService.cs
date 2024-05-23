@@ -127,18 +127,13 @@ namespace io.harness.cfsdk.client.api.analytics
 
         public bool IsTargetSeen(string identifier)
         {
-            if (identifier == null) return false;
-
             return SeenTargetsCache.getIfPresent(identifier);
         }
 
         public void MarkTargetAsSeen(string identifier)
 
         {
-            if (SeenTargetsCache.Count() > seenTargetsCacheMaxSize)
-            {
-                return;
-            }
+            if (SeenTargetsCache.Count() > seenTargetsCacheMaxSize) return;
             SeenTargetsCache.Put(identifier);
         }
 
