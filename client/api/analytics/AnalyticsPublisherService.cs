@@ -20,9 +20,9 @@ namespace io.harness.cfsdk.client.api.analytics
         private static readonly string Server = "server";
         private static readonly string SdkLanguage = "SDK_LANGUAGE";
         private static readonly string SdkVersion = "SDK_VERSION";
-        internal readonly SeenTargetsCache seenTargetsCache = new();
+        private int seenTargetsCacheMaxSize;
 
-        public SeenTargetsCache SeenTargetsCache => seenTargetsCache;
+        public SeenTargetsCache SeenTargetsCache { get; } = new();
 
         private readonly IConnector connector;
         private readonly EvaluationAnalyticsCache evaluationAnalyticsCache;
@@ -39,6 +39,7 @@ namespace io.harness.cfsdk.client.api.analytics
             this.targetAnalyticsCache = targetAnalyticsCache;
             this.connector = connector;
             logger = loggerFactory.CreateLogger<AnalyticsPublisherService>();
+            seenTargetsCacheMaxSize = config.seenTargetsCacheLimit;
         }
 
         public void SendDataAndResetCache()
@@ -53,11 +54,14 @@ namespace io.harness.cfsdk.client.api.analytics
                     if ((metrics.MetricsData != null && metrics.MetricsData.Count > 0)
                         || (metrics.TargetData != null && metrics.TargetData.Count > 0))
                     {
-                        logger.LogDebug("Sending analytics data :{@a}", metrics);
+                        if (logger.IsEnabled(LogLevel.Debug))
+                            logger.LogDebug("Sending analytics data :{@a}", metrics);
                         connector.PostMetrics(metrics);
                     }
+
+                    if (logger.IsEnabled(LogLevel.Debug))
+                        logger.LogDebug("Successfully sent analytics data to the server");
                     
-                    logger.LogDebug("Successfully sent analytics data to the server");
                     evaluationAnalyticsCache.resetCache();
                     targetAnalyticsCache.resetCache();
                 }
@@ -108,17 +112,16 @@ namespace io.harness.cfsdk.client.api.analytics
                         Name = target.Name,
                         Attributes = new List<KeyValue>()
                     };
-                    
+
                     // Populate target attributes
                     foreach (var attribute in target.Attributes)
-                            targetData.Attributes.Add(new KeyValue
-                                { Key = attribute.Key, Value = attribute.Value });
+                        targetData.Attributes.Add(new KeyValue
+                            { Key = attribute.Key, Value = attribute.Value });
 
                     metrics.TargetData.Add(targetData);
                 }
             }
-
-
+            
             return metrics;
         }
         
@@ -130,6 +133,10 @@ namespace io.harness.cfsdk.client.api.analytics
         public void MarkTargetAsSeen(string identifier)
 
         {
+            if (SeenTargetsCache.Count() > seenTargetsCacheMaxSize)
+            {
+                return;
+            }
             SeenTargetsCache.Put(identifier);
         }
 
