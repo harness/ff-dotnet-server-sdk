@@ -55,6 +55,11 @@ namespace io.harness.cfsdk.client.cache
                 Put(item);
             }
         }
+        
+        public bool ContainsKey(TK key)
+        {
+            return CacheMap.ContainsKey(key);
+        }
     }
     
     internal class MemoryCacheWithCounter<TK, TV> : MemoryCache<TK, TV>
