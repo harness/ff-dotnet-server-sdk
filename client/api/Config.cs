@@ -224,10 +224,12 @@ namespace io.harness.cfsdk.client.api
 
         /**
          * <summary>
-         *     The SeenTargetsCache is used to reduce analytics payload size the SDK sends to the Feature Flags Service.
-         *     Set maximum number of unique targets that will be stored in the SeenTargets cache. Defaults to 500,000
-         *     unique targets.  You can increase or decrease this number depending on your memory requirements. 
+         *     The SeenTargetsCache helps to reduce the size of the analytics payload that the SDK sends to the Feature Flags Service.
+         *     This method allows you to set the maximum number of unique targets that will be stored in the SeenTargets cache.
+         *     By default, the limit is set to 500,000 unique targets. You can increase this number if you need to handle more than
+         *     500,000 targets, which will reduce the payload size but will also increase memory usage.
          * </summary>
+         * <param name="seenTargetsCacheLimit">The maximum number of unique targets to store in the cache.</param>
          */
         public ConfigBuilder SeenTargetsCacheLimit(int seenTargetsCacheLimit)
         {
@@ -237,11 +239,12 @@ namespace io.harness.cfsdk.client.api
 
         /**
          * <summary>
-         *     Set custom TTL for SeenTargets map keys. The default value is 43200 seconds, or 12 hours.  If you have
-         *     a large number of targets and would prefer to clear this map sooner, decrease this TTL to free up memory.
-         *     SeenTargets is used to reduce payload size to the Feature Flags Analytics service, so clearing it more frequently
-         *     could result in larger payload sizes.
+         *     Sets a custom Time-To-Live (TTL) for keys in the SeenTargets map. The default TTL is 43,200 seconds (12 hours).
+         *     If you have a large number of targets and want to clear the map more frequently to free up memory, you can decrease this TTL.
+         *     However, be aware that reducing the TTL will lead to more frequent cache clears, which can result in larger payload sizes
+         *     being sent to the Feature Flags Analytics service.
          * </summary>
+         * <param name="seenTargetsCacheTtlInSeconds">The TTL for keys in the SeenTargets map, in seconds.</param>
          */
         public ConfigBuilder SeenTargetsCacheTtlInSeconds(int seenTargetsCacheTtlInSeconds)
         {
