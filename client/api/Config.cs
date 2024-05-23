@@ -24,10 +24,12 @@ namespace io.harness.cfsdk.client.api
         internal int targetMetricsMaxSize = 100000;
         internal int cacheRecoveryTimeoutInMs = 5000;
         internal bool useMapForInClause = false;
+        internal int seenTargetsCacheTtlInSeconds = 43200;
+        internal int seenTargetsCacheLimit = 500000;
 
         public Config(string configUrl, string eventUrl, bool streamEnabled, int pollIntervalInSeconds,
             bool analyticsEnabled, int frequency, int targetMetricsMaxSize, int connectionTimeout, int readTimeout,
-            int writeTimeout, bool debug, long metricsServiceAcceptableDuration, int cacheRecoveryTimeoutInMs, bool useMapForInClause)
+            int writeTimeout, bool debug, long metricsServiceAcceptableDuration, int cacheRecoveryTimeoutInMs, bool useMapForInClause, int seenTargetsCacheLimit, int seenTargetsCacheTtlInSeconds)
         {
             this.configUrl = configUrl;
             this.eventUrl = eventUrl;
@@ -43,6 +45,8 @@ namespace io.harness.cfsdk.client.api
             this.metricsServiceAcceptableDuration = metricsServiceAcceptableDuration;
             this.cacheRecoveryTimeoutInMs = cacheRecoveryTimeoutInMs;
             this.useMapForInClause = useMapForInClause;
+            this.seenTargetsCacheLimit = seenTargetsCacheLimit;
+            this.seenTargetsCacheTtlInSeconds = seenTargetsCacheTtlInSeconds;
         }
 
         public Config()
@@ -71,6 +75,9 @@ namespace io.harness.cfsdk.client.api
         public int CacheRecoveryTimeoutInMs => cacheRecoveryTimeoutInMs;
 
         public bool UseMapForInClause => useMapForInClause;
+        public int SeenTargetsCacheLimit => seenTargetsCacheLimit;
+
+        public int SeenTargetsCacheTtlInSeconds => seenTargetsCacheTtlInSeconds;
 
         /**
          * timeout in milliseconds to connect to CF Server
@@ -214,6 +221,37 @@ namespace io.harness.cfsdk.client.api
             configtobuild.useMapForInClause = useMapForInClause;
             return this;
         }
+
+        /**
+         * <summary>
+         *     The SeenTargetsCache helps to reduce the size of the analytics payload that the SDK sends to the Feature Flags Service.
+         *     This method allows you to set the maximum number of unique targets that will be stored in the SeenTargets cache.
+         *     By default, the limit is set to 500,000 unique targets. You can increase this number if you need to handle more than
+         *     500,000 targets, which will reduce the payload size but will also increase memory usage.
+         * </summary>
+         * <param name="seenTargetsCacheLimit">The maximum number of unique targets to store in the cache.</param>
+         */
+        public ConfigBuilder SeenTargetsCacheLimit(int seenTargetsCacheLimit)
+        {
+            configtobuild.seenTargetsCacheLimit = seenTargetsCacheLimit;
+            return this;
+        }
+
+        /**
+         * <summary>
+         *     Sets a custom Time-To-Live (TTL) for keys in the SeenTargets map. The default TTL is 43,200 seconds (12 hours).
+         *     If you have a large number of targets and want to clear the map more frequently to free up memory, you can decrease this TTL.
+         *     However, be aware that reducing the TTL will lead to more frequent cache clears, which can result in larger payload sizes
+         *     being sent to the Feature Flags Analytics service.
+         * </summary>
+         * <param name="seenTargetsCacheTtlInSeconds">The TTL for keys in the SeenTargets map, in seconds.</param>
+         */
+        public ConfigBuilder SeenTargetsCacheTtlInSeconds(int seenTargetsCacheTtlInSeconds)
+        {
+            configtobuild.seenTargetsCacheTtlInSeconds = seenTargetsCacheTtlInSeconds;
+            return this;
+        }
+
 
         /// <summary>
         /// <para>

@@ -55,6 +55,11 @@ namespace io.harness.cfsdk.client.cache
                 Put(item);
             }
         }
+        
+        public bool ContainsKey(TK key)
+        {
+            return CacheMap.ContainsKey(key);
+        }
     }
     
     internal class MemoryCacheWithCounter<TK, TV> : MemoryCache<TK, TV>
@@ -72,6 +77,16 @@ namespace io.harness.cfsdk.client.cache
                 _ = CacheMap.AddOrUpdate(key, value, (_, _) => value);
             }
         }
+        
+        // Calls TryAdd instead of AddOrUpdate for caches that don't need a value counter
+        public void PutIfAbsent(TK key, TV value)
+        {
+            if (CacheMap.TryAdd(key, value))
+            {
+                Interlocked.Increment(ref itemCount);
+            }
+        }
+
 
         public new void Delete(TK key)
         {
@@ -83,22 +98,34 @@ namespace io.harness.cfsdk.client.cache
 
         public int Count()
         {
-            return itemCount;
+            return Interlocked.CompareExchange(ref itemCount, 0, 0);
         }
 
         public new void resetCache()
         {
             CacheMap = new ConcurrentDictionary<TK, TV>();
-            itemCount = 0; 
+            Interlocked.Exchange(ref itemCount, 0); 
         }
     }
 
     internal class EvaluationAnalyticsCache : MemoryCacheWithCounter<EvaluationAnalytics, int>
     {
     }
-    
-    internal class TargetAnalyticsCache : MemoryCacheWithCounter<TargetAnalytics, int>
+
+    internal class TargetAnalyticsCache : MemoryCacheWithCounter<TargetAnalytics, bool>
     {
+        public new void Put(TargetAnalytics key, bool value = true)
+        {
+            PutIfAbsent(key, value);
+        }
+    }
+
+    internal class SeenTargetsCache : MemoryCacheWithCounter<string, bool>
+    {
+        public new void Put(string key, bool value = true)
+        {
+            PutIfAbsent(key, value);
+        }
     }
 
 

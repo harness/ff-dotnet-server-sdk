@@ -20,7 +20,10 @@ namespace io.harness.cfsdk.client.api.analytics
         private static readonly string Server = "server";
         private static readonly string SdkLanguage = "SDK_LANGUAGE";
         private static readonly string SdkVersion = "SDK_VERSION";
-        internal readonly ConcurrentDictionary<Target, byte> SeenTargets = new();
+        private int seenTargetsCacheMaxSize;
+
+        public SeenTargetsCache SeenTargetsCache { get; } = new();
+
         private readonly IConnector connector;
         private readonly EvaluationAnalyticsCache evaluationAnalyticsCache;
         private readonly ILogger<AnalyticsPublisherService> logger;
@@ -30,12 +33,13 @@ namespace io.harness.cfsdk.client.api.analytics
 
         public AnalyticsPublisherService(IConnector connector, EvaluationAnalyticsCache evaluationAnalyticsCache,
             TargetAnalyticsCache targetAnalyticsCache,
-            ILoggerFactory loggerFactory)
+            ILoggerFactory loggerFactory, Config config)
         {
             this.evaluationAnalyticsCache = evaluationAnalyticsCache;
             this.targetAnalyticsCache = targetAnalyticsCache;
             this.connector = connector;
             logger = loggerFactory.CreateLogger<AnalyticsPublisherService>();
+            seenTargetsCacheMaxSize = config.seenTargetsCacheLimit;
         }
 
         public void SendDataAndResetCache()
@@ -50,11 +54,14 @@ namespace io.harness.cfsdk.client.api.analytics
                     if ((metrics.MetricsData != null && metrics.MetricsData.Count > 0)
                         || (metrics.TargetData != null && metrics.TargetData.Count > 0))
                     {
-                        logger.LogDebug("Sending analytics data :{@a}", metrics);
+                        if (logger.IsEnabled(LogLevel.Debug))
+                            logger.LogDebug("Sending analytics data :{@a}", metrics);
                         connector.PostMetrics(metrics);
                     }
+
+                    if (logger.IsEnabled(LogLevel.Debug))
+                        logger.LogDebug("Successfully sent analytics data to the server");
                     
-                    logger.LogDebug("Successfully sent analytics data to the server");
                     evaluationAnalyticsCache.resetCache();
                     targetAnalyticsCache.resetCache();
                 }
@@ -62,12 +69,13 @@ namespace io.harness.cfsdk.client.api.analytics
                 {
                     // Clear the set because the cache is only invalidated when there is no
                     // exception, so the targets will reappear in the next iteration
-                    logger.LogError("SDKCODE(stream:7002): Posting metrics failed, reason: {reason}", ex.Message);
+                    if (logger.IsEnabled(LogLevel.Error))
+                        logger.LogError("SDKCODE(stream:7002): Posting metrics failed, reason: {reason}", ex.Message);
                 }
         }
 
         private Metrics PrepareMessageBody(IDictionary<EvaluationAnalytics, int> evaluationsCache,
-            IDictionary<TargetAnalytics, int> targetsCache)
+            IDictionary<TargetAnalytics, bool> targetsCache)
         {
             var metrics = new Metrics();
             metrics.TargetData = new List<TargetData>();
@@ -105,30 +113,35 @@ namespace io.harness.cfsdk.client.api.analytics
                         Name = target.Name,
                         Attributes = new List<KeyValue>()
                     };
-                    
+
                     // Populate target attributes
                     foreach (var attribute in target.Attributes)
-                            targetData.Attributes.Add(new KeyValue
-                                { Key = attribute.Key, Value = attribute.Value });
+                        targetData.Attributes.Add(new KeyValue
+                            { Key = attribute.Key, Value = attribute.Value });
 
                     metrics.TargetData.Add(targetData);
                 }
             }
-
-
+            
             return metrics;
         }
-        
-        public bool IsTargetSeen(Target target)
+
+        public bool IsTargetSeen(string identifier)
         {
-            return SeenTargets.ContainsKey(target);
-        }
-        
-        public void MarkTargetAsSeen(Target target)
-        {
-            SeenTargets.TryAdd(target, 0);
+            return SeenTargetsCache.ContainsKey(identifier);
         }
 
+        public void MarkTargetAsSeen(string identifier)
+
+        {
+            if (SeenTargetsCache.Count() > seenTargetsCacheMaxSize) return;
+            SeenTargetsCache.Put(identifier);
+        }
+        
+        public void ResetSeenTargetsCache()
+        {
+            SeenTargetsCache.resetCache();
+        }
 
         private void SetCommonSdkAttributes(MetricsData metricsData)
         {

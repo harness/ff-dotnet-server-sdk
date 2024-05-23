@@ -4,6 +4,7 @@ using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using Microsoft.Extensions.Logging;
 using Target = io.harness.cfsdk.client.dto.Target;
+using Timer = System.Timers.Timer;
 
 namespace io.harness.cfsdk.client.api.analytics
 {
@@ -14,11 +15,16 @@ namespace io.harness.cfsdk.client.api.analytics
         private readonly AnalyticsPublisherService analyticsPublisherService;
         private readonly Config config;
         private readonly ILogger<MetricsProcessor> logger;
-        private int evaluationMetricsMaxSize;
-        private int targetMetricsMaxSize;
+        private readonly int evaluationMetricsMaxSize;
+        private readonly int targetMetricsMaxSize;
         private Timer timer;
-        private bool isGlobalTargetEnabled;
+        private Timer seenTargetsCacheResetTimer;
+
+        private readonly bool isGlobalTargetEnabled;
         private bool warningLoggedForInterval = false;
+        
+        private readonly Target globalTarget = new (EvaluationAnalytics.GlobalTargetIdentifier,
+            EvaluationAnalytics.GlobalTargetName, null);
 
         public MetricsProcessor(Config config, EvaluationAnalyticsCache evaluationAnalyticsCache, TargetAnalyticsCache targetAnalyticsCache,
             AnalyticsPublisherService analyticsPublisherService, ILoggerFactory loggerFactory, bool globalTargetEnabled)
@@ -37,12 +43,22 @@ namespace io.harness.cfsdk.client.api.analytics
         {
             if (config.analyticsEnabled)
             {
+                // Metrics thread timer
                 timer = new Timer((long)config.Frequency * 1000);
                 timer.Elapsed += Timer_Elapsed;
                 timer.AutoReset = true;
                 timer.Enabled = true;
                 timer.Start();
+                
+                // SeenTargetsCache timer
+                seenTargetsCacheResetTimer = new Timer(config.seenTargetsCacheTtlInSeconds);
+                seenTargetsCacheResetTimer.Elapsed += SeenTargetsCacheResetTimer_Elapsed;
+                seenTargetsCacheResetTimer.AutoReset = true;
+                seenTargetsCacheResetTimer.Enabled = true;
+                seenTargetsCacheResetTimer.Start();
+                
                 logger.LogInformation("SDKCODE(metric:7000): Metrics thread started");
+
             }
         }
 
@@ -61,8 +77,6 @@ namespace io.harness.cfsdk.client.api.analytics
         {
             if (isGlobalTargetEnabled)
             {
-                var globalTarget = new Target(EvaluationAnalytics.GlobalTargetIdentifier,
-                    EvaluationAnalytics.GlobalTargetName, null);
                 PushToEvaluationAnalyticsCache(featureConfig, variation, globalTarget);
             }
             else
@@ -97,12 +111,12 @@ namespace io.harness.cfsdk.client.api.analytics
         private void PushToTargetAnalyticsCache(Target target)
         {
 
-            if (target == null || target.IsPrivate)
+            if (target?.Identifier == null || target.IsPrivate)
             {
                 return;
             }
             
-            if (analyticsPublisherService.IsTargetSeen(target))
+            if (analyticsPublisherService.IsTargetSeen(target.Identifier))
             {
                 // Target has already been processed in a previous interval, so ignore it.
                 return;
@@ -118,38 +132,45 @@ namespace io.harness.cfsdk.client.api.analytics
             }
 
             TargetAnalytics targetAnalytics = new TargetAnalytics(target);
+            
+            targetAnalyticsCache.Put(targetAnalytics);
 
-            // We don't need to keep count of targets, so use a constant value, 1, for the count. 
-            // Since 1.4.2, the analytics cache was refactored to separate out Evaluation and Target metrics, but the 
-            // change did not go as far as to maintain two caches (due to effort involved), but differentiate them based on subclassing, so 
-            // the counter used for target metrics isn't needed, but causes no issue. 
-            targetAnalyticsCache.Put(targetAnalytics, 1);
-
-            analyticsPublisherService.MarkTargetAsSeen(target);
+            analyticsPublisherService.MarkTargetAsSeen(target.Identifier);
         }
 
         private void LogMetricsIgnoredWarning(string cacheType, int cacheSize, int bufferSize)
         {
             // Only log this once per interval
-            if (warningLoggedForInterval)
+            if (warningLoggedForInterval || !logger.IsEnabled(LogLevel.Warning))
             {
                 return;
             }
-            
-            logger.LogWarning(
-                "{cacheType} frequency map exceeded buffer size ({cacheSize} > {bufferSize}), not sending any further" +
-                " {cacheType} metrics for interval. Increase buffer size using client config option if required.", cacheType,
-                cacheSize,
-                bufferSize,
-                cacheType);
-            
-            warningLoggedForInterval = true;
+
+            {
+                logger.LogWarning(
+                    "{cacheType} frequency map exceeded buffer size ({cacheSize} > {bufferSize}), not sending any further" +
+                    " {cacheType} metrics for interval. Increase buffer size using client config option if required.",
+                    cacheType,
+                    cacheSize,
+                    bufferSize,
+                    cacheType);
+
+                warningLoggedForInterval = true;
+            }
         }
 
         internal void Timer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            logger.LogDebug("Timer Elapsed - Processing/Sending analytics data");
+            if (logger.IsEnabled(LogLevel.Debug))
+                logger.LogDebug("Timer Elapsed - Processing/Sending analytics data");
             SendMetrics();
+        }
+        
+        private void SeenTargetsCacheResetTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            analyticsPublisherService.ResetSeenTargetsCache();
+            if (logger.IsEnabled(LogLevel.Debug))
+                logger.LogDebug("SeenTargetsCache reset");
         }
 
         internal void SendMetrics()
@@ -161,7 +182,8 @@ namespace io.harness.cfsdk.client.api.analytics
             }
             catch (CfClientException ex)
             {
-                logger.LogError(ex, "Failed to send analytics data to server");
+                if (logger.IsEnabled(LogLevel.Error))
+                    logger.LogError(ex, "Failed to send analytics data to server");
             }
         }
     }
