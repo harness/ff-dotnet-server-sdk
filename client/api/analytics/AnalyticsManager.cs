@@ -102,7 +102,7 @@ namespace io.harness.cfsdk.client.api.analytics
                 return;
             }
             
-            if (analyticsPublisherService.IsTargetSeen(target))
+            if (analyticsPublisherService.IsTargetSeen(target.Identifier))
             {
                 // Target has already been processed in a previous interval, so ignore it.
                 return;
@@ -121,7 +121,7 @@ namespace io.harness.cfsdk.client.api.analytics
             
             targetAnalyticsCache.Put(targetAnalytics);
 
-            analyticsPublisherService.MarkTargetAsSeen(target);
+            analyticsPublisherService.MarkTargetAsSeen(target.Identifier);
         }
 
         private void LogMetricsIgnoredWarning(string cacheType, int cacheSize, int bufferSize)
