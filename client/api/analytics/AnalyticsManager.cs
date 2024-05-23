@@ -43,12 +43,14 @@ namespace io.harness.cfsdk.client.api.analytics
         {
             if (config.analyticsEnabled)
             {
+                // Metrics thread timer
                 timer = new Timer((long)config.Frequency * 1000);
                 timer.Elapsed += Timer_Elapsed;
                 timer.AutoReset = true;
                 timer.Enabled = true;
                 timer.Start();
                 
+                // SeenTargetsCache timer
                 seenTargetsCacheResetTimer = new Timer(config.seenTargetsCacheTtlInSeconds);
                 seenTargetsCacheResetTimer.Elapsed += SeenTargetsCacheResetTimer_Elapsed;
                 seenTargetsCacheResetTimer.AutoReset = true;
