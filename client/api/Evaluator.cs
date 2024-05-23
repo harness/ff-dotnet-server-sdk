@@ -154,7 +154,7 @@ namespace io.harness.cfsdk.client.api
         {
             if (parentFeatureConfig.Prerequisites != null && parentFeatureConfig.Prerequisites.Count > 0)
             {
-                var prerequisites = parentFeatureConfig.Prerequisites.ToList();
+                var prerequisites = parentFeatureConfig.Prerequisites.();
 
                 foreach (var pqs in prerequisites)
                 {
@@ -165,7 +165,7 @@ namespace io.harness.cfsdk.client.api
                     var preReqEvaluatedVariation = Evaluate(preReqFeatureConfig, target);
                     if (preReqEvaluatedVariation == null) return true;
 
-                    var validPreReqVariations = pqs.Variations.ToList();
+                    var validPreReqVariations = pqs.Variations();
                     if (!validPreReqVariations.Contains(preReqEvaluatedVariation.Identifier)) return false;
 
                     if (!CheckPreRequisite(preReqFeatureConfig, target)) return false;
@@ -240,12 +240,12 @@ namespace io.harness.cfsdk.client.api
             if (target == null) return null;
             foreach (var variationMap in variationMaps)
             {
-                if (variationMap.Targets != null && variationMap.Targets.ToList()
+                if (variationMap.Targets != null && variationMap.Targets
                         .Any(t => t != null && t.Identifier.Equals(target.Identifier))) return variationMap.Variation;
                 // Legacy: the variation to target map no longer contains TargetSegments. These are stored in group rules.
 
                 if (variationMap.TargetSegments != null &&
-                    IsTargetIncludedOrExcludedInSegment(variationMap.TargetSegments.ToList(), target))
+                    IsTargetIncludedOrExcludedInSegment(variationMap.TargetSegments, target))
                     return variationMap.Variation;
             }
 
@@ -310,7 +310,7 @@ namespace io.harness.cfsdk.client.api
             return null;
         }
         
-        private bool IsTargetIncludedOrExcludedInSegment(List<string> segmentList, Target target) 
+        private bool IsTargetIncludedOrExcludedInSegment(ICollection<string> segmentList, Target target)
         {
             foreach (var segmentIdentifier in segmentList)
             {
@@ -389,7 +389,7 @@ namespace io.harness.cfsdk.client.api
 
 
             if (clause.Op == "segmentMatch")
-                return IsTargetIncludedOrExcludedInSegment(clause.Values.ToList(), target);
+                return IsTargetIncludedOrExcludedInSegment(clause.Values, target);
 
             object attrValue = GetAttrValue(target, clause.Attribute);
             if (attrValue == null) return false;
