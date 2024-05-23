@@ -399,6 +399,74 @@ namespace ff_server_sdk_test.api.analytics
             var count = analyticsPublisherService.SeenTargetsCache.Count();
             Assert.IsTrue(analyticsPublisherService.SeenTargetsCache.Count() == 30);
         }
+        
+        [Test]
+        public void Should_limit_seen_targets_cache_to_50K_unique_targets()
+        {
+            // Set limit to below 100K target metrics limit so we can easily test it
+            var seenTargetsCacheLimit = 50000;
+            var config = Config.Builder().SeenTargetsCacheLimit(seenTargetsCacheLimit).Build();
+            var evaluationAnalyticsCacheMock = new EvaluationAnalyticsCache();
+            var targetAnalyticsCacheMock = new TargetAnalyticsCache();
+            var connectorMock = new Mock<IConnector>();
+            var analyticsPublisherServiceMock = new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, new NullLoggerFactory(), config);
+
+            var metricsProcessor = new MetricsProcessor(config, evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, analyticsPublisherServiceMock, new NullLoggerFactory(), false);
+
+            Parallel.For(0, 501000, i =>
+            {
+                var target = Target.builder()
+                    .Identifier($"unique_identifier_{i}")
+                    .Attributes(new Dictionary<string, string> { { "email", $"demo{i}@harness.io" } })
+                    .build();
+                var featureConfig = CreateFeatureConfig("feature");
+                var variation = new Variation();
+                metricsProcessor.PushToCache(target, featureConfig, variation);
+            });
+
+            // Trigger the push to GlobalTargetSet
+            analyticsPublisherServiceMock.SendDataAndResetCache();
+
+            // The SeenTargetsCache counter is not 100% precise, so allow a small margin
+            var limitMargin = 50;
+            Assert.That(analyticsPublisherServiceMock.SeenTargetsCache.Count(), Is.LessThan(seenTargetsCacheLimit + limitMargin));
+        }
+        
+        [Test]
+        public void Should_limit_seen_targets_cache_to_target_metrics_max_buffer_size()
+        {
+            var config = Config.Builder().Build();
+            var evaluationAnalyticsCacheMock = new EvaluationAnalyticsCache();
+            var targetAnalyticsCacheMock = new TargetAnalyticsCache();
+            var connectorMock = new Mock<IConnector>();
+            var analyticsPublisherServiceMock = new AnalyticsPublisherService(connectorMock.Object, evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, new NullLoggerFactory(), config);
+
+            var metricsProcessor = new MetricsProcessor(config, evaluationAnalyticsCacheMock, targetAnalyticsCacheMock, analyticsPublisherServiceMock, new NullLoggerFactory(), false);
+
+            Parallel.For(0, 501000, i =>
+            {
+                var target = Target.builder()
+                    .Identifier($"unique_identifier_{i}")
+                    .Attributes(new Dictionary<string, string> { { "email", $"demo{i}@harness.io" } })
+                    .build();
+                var featureConfig = CreateFeatureConfig("feature");
+                var variation = new Variation();
+                metricsProcessor.PushToCache(target, featureConfig, variation);
+                
+                // Target without identifier to test null safety for seen targets cache
+                var target2 = Target.builder()
+                    .Attributes(new Dictionary<string, string> { { "email", $"demo{i}@harness.io" } })
+                    .build();
+                metricsProcessor.PushToCache(target2, featureConfig, variation);
+            });
+
+            // Trigger the push to GlobalTargetSet
+            analyticsPublisherServiceMock.SendDataAndResetCache();
+
+            // The SeenTargetsCache counter is not 100% precise, so allow a small margin
+            var limitMargin = 50;
+            Assert.That(analyticsPublisherServiceMock.SeenTargetsCache.Count(), Is.LessThan(config.targetMetricsMaxSize + limitMargin));
+        }
 
 
         private FeatureConfig CreateFeatureConfig(string feature)

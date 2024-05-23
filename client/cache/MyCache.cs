@@ -98,13 +98,13 @@ namespace io.harness.cfsdk.client.cache
 
         public int Count()
         {
-            return itemCount;
+            return Interlocked.CompareExchange(ref itemCount, 0, 0);
         }
 
         public new void resetCache()
         {
             CacheMap = new ConcurrentDictionary<TK, TV>();
-            itemCount = 0; 
+            Interlocked.Exchange(ref itemCount, 0); 
         }
     }
 
