@@ -93,9 +93,10 @@ namespace io.harness.cfsdk.client.api
             var featureConfig = repository.GetFlag(key);
             if (featureConfig == null)
             {
-                logger.LogWarning(
+                if (logger.IsEnabled(LogLevel.Warning))
+                    logger.LogWarning(
                     "Unable to find flag {Key} in cache, refreshing flag cache and retrying evaluation ",
-                    key);
+                     key);
 
                 if (poller != null)
                 {
@@ -111,16 +112,16 @@ namespace io.harness.cfsdk.client.api
                 // If still not found or doesn't match the kind, return null to indicate failure
                 if (featureConfig == null)
                 {
-                    logger.LogError(
-                        "Failed to find flag {Key} in cache even after attempting a refresh. Check flag exists in project",
-                        key);
+                    if (logger.IsEnabled(LogLevel.Error))
+                        logger.LogError("Failed to find flag {Key} in cache even after attempting a refresh. Check flag exists in project", key);
                     return null;
                 }
             }
 
             if (featureConfig.Kind != kind)
             {
-                logger.LogWarning(
+                if (logger.IsEnabled(LogLevel.Warning))
+                    logger.LogWarning(
                     "Requested variation {Kind} does not match flag {Key} which is of type {featureConfigKind}",
                     kind,  key, featureConfig.Kind);
                 return null;
@@ -194,12 +195,15 @@ namespace io.harness.cfsdk.client.api
                 logger.LogDebug(
                     "Evaluating specific targeting: Flag({@Flag})",
                     new { FeatureFlag = featureConfig});
+
             var specificTargetingVariation =
                 EvaluateVariationMap(target, featureConfig.VariationToTargetMap, featureConfig.Feature);
             if (specificTargetingVariation != null)
             {
-                logger.LogDebug("Specific targeting matched: Flag({@Flag}) Target({@Target})",
-                    new { FeatureFlag = featureConfig}, new { Target = target});
+                if (logger.IsEnabled(LogLevel.Debug))
+                    logger.LogDebug("Specific targeting matched: Flag({@Flag}) Target({@Target})",
+                        new { FeatureFlag = featureConfig}, new { Target = target});
+
                 return GetVariation(featureConfig.Variations, specificTargetingVariation);
             }
 
@@ -211,13 +215,16 @@ namespace io.harness.cfsdk.client.api
             var defaultVariation = featureConfig.DefaultServe.Variation;
             if (defaultVariation == null)
             {
-                logger.LogWarning("Default serve variation not found: Flag({@Flag})",
+                if (logger.IsEnabled(LogLevel.Warning))
+                    logger.LogWarning("Default serve variation not found: Flag({@Flag})",
                     new { Flag = featureConfig});
                 return null;
             }
 
-            logger.LogDebug("Default on rule matched: Target({@Target}) Flag({@Flag})",
-                new { Target = target}, new { Flag = featureConfig});
+            if (logger.IsEnabled(LogLevel.Debug))
+                logger.LogDebug("Default on rule matched: Target({@Target}) Flag({@Flag})",
+                    new { Target = target}, new { Flag = featureConfig});
+
             return GetVariation(featureConfig.Variations, defaultVariation);
         }
 
@@ -262,8 +269,10 @@ namespace io.harness.cfsdk.client.api
                 // Invalid state: Log if Clauses are null 
                 if (servingRule.Clauses == null)
                 {
-                    logger.LogWarning("Clauses are null for servingRule {RuleId} in FeatureConfig {@FeatureConfigId}",
+                    if (logger.IsEnabled(LogLevel.Warning))
+                        logger.LogWarning("Clauses are null for servingRule {RuleId} in FeatureConfig {@FeatureConfigId}",
                         servingRule.RuleId, new { Flag = featureConfig});
+
                     return null;
                 }
 
@@ -273,8 +282,10 @@ namespace io.harness.cfsdk.client.api
                 // Invalid state: Log if Serve is null
                 if (servingRule.Serve == null)
                 {
-                    logger.LogWarning("Serve is null for rule ID {Rule} in FeatureConfig {@FeatureConfig}",
+                    if (logger.IsEnabled(LogLevel.Warning))
+                        logger.LogWarning("Serve is null for rule ID {Rule} in FeatureConfig {@FeatureConfig}",
                         servingRule.RuleId, new { Flag = featureConfig});
+
                     return null;
                 }
 
@@ -294,7 +305,8 @@ namespace io.harness.cfsdk.client.api
                 // Invalid state: Log if the variation is null
                 if (servingRule.Serve.Variation == null)
                 {
-                    logger.LogWarning("Serve.Variation is null for a rule in Flag({@FeatureConfig})",
+                    if (logger.IsEnabled(LogLevel.Warning))
+                        logger.LogWarning("Serve.Variation is null for a rule in Flag({@FeatureConfig})",
                              new { Flag = featureConfig});
                         
                     return null;
@@ -319,8 +331,9 @@ namespace io.harness.cfsdk.client.api
                     throw new InvalidCacheStateException(
                         $"Segment with identifier {segmentIdentifier} could not be found in the cache despite belonging to the flag.");
 
-                logger.LogDebug("Evaluating group rule: Group({@Segment} Target({@Target}))",
-                    new { Segment = segment}, new { Target = target});
+                if (logger.IsEnabled(LogLevel.Debug))
+                    logger.LogDebug("Evaluating group rule: Group({@Segment} Target({@Target}))",
+            new { Segment = segment}, new { Target = target});
 
                 // check exclude list
                 if (segment.Excluded != null && segment.Excluded.Any(t => t.Identifier.Equals(target.Identifier)))
