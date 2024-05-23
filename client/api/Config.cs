@@ -24,12 +24,12 @@ namespace io.harness.cfsdk.client.api
         internal int targetMetricsMaxSize = 100000;
         internal int cacheRecoveryTimeoutInMs = 5000;
         internal bool useMapForInClause = false;
-        internal int seenTargetsTtlInSeconds = 43200;
-        internal int seenTargetsLimit = 500000;
+        internal int seenTargetsCacheTtlInSeconds = 43200;
+        internal int seenTargetsCacheLimit = 500000;
 
         public Config(string configUrl, string eventUrl, bool streamEnabled, int pollIntervalInSeconds,
             bool analyticsEnabled, int frequency, int targetMetricsMaxSize, int connectionTimeout, int readTimeout,
-            int writeTimeout, bool debug, long metricsServiceAcceptableDuration, int cacheRecoveryTimeoutInMs, bool useMapForInClause, int seenTargetsLimit, int seenTargetsTtlInSeconds)
+            int writeTimeout, bool debug, long metricsServiceAcceptableDuration, int cacheRecoveryTimeoutInMs, bool useMapForInClause, int seenTargetsCacheLimit, int seenTargetsCacheTtlInSeconds)
         {
             this.configUrl = configUrl;
             this.eventUrl = eventUrl;
@@ -45,8 +45,8 @@ namespace io.harness.cfsdk.client.api
             this.metricsServiceAcceptableDuration = metricsServiceAcceptableDuration;
             this.cacheRecoveryTimeoutInMs = cacheRecoveryTimeoutInMs;
             this.useMapForInClause = useMapForInClause;
-            this.seenTargetsLimit = seenTargetsLimit;
-            this.seenTargetsTtlInSeconds = seenTargetsTtlInSeconds;
+            this.seenTargetsCacheLimit = seenTargetsCacheLimit;
+            this.seenTargetsCacheTtlInSeconds = seenTargetsCacheTtlInSeconds;
         }
 
         public Config()
@@ -75,9 +75,9 @@ namespace io.harness.cfsdk.client.api
         public int CacheRecoveryTimeoutInMs => cacheRecoveryTimeoutInMs;
 
         public bool UseMapForInClause => useMapForInClause;
-        public int SeenTargetsLimit => seenTargetsLimit;
+        public int SeenTargetsCacheLimit => seenTargetsCacheLimit;
 
-        public int SeenTargetsTtlInSeconds => seenTargetsTtlInSeconds;
+        public int SeenTargetsCacheTtlInSeconds => seenTargetsCacheTtlInSeconds;
 
         /**
          * timeout in milliseconds to connect to CF Server
@@ -229,9 +229,9 @@ namespace io.harness.cfsdk.client.api
          *     unique targets.  You can increase or decrease this number depending on your memory requirements. 
          * </summary>
          */
-        public ConfigBuilder SeenTargetsLimit(int seenTargetsLimit)
+        public ConfigBuilder SeenTargetsCacheLimit(int seenTargetsCacheLimit)
         {
-            configtobuild.seenTargetsLimit = seenTargetsLimit;
+            configtobuild.seenTargetsCacheLimit = seenTargetsCacheLimit;
             return this;
         }
 
@@ -243,9 +243,9 @@ namespace io.harness.cfsdk.client.api
          *     could result in larger payload sizes.
          * </summary>
          */
-        public ConfigBuilder SeenTargetsTtlInSeconds(int seenTargetsTtlInSeconds)
+        public ConfigBuilder SeenTargetsCacheTtlInSeconds(int seenTargetsCacheTtlInSeconds)
         {
-            configtobuild.seenTargetsTtlInSeconds = seenTargetsTtlInSeconds;
+            configtobuild.seenTargetsCacheTtlInSeconds = seenTargetsCacheTtlInSeconds;
             return this;
         }
 
