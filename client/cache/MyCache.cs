@@ -72,6 +72,16 @@ namespace io.harness.cfsdk.client.cache
                 _ = CacheMap.AddOrUpdate(key, value, (_, _) => value);
             }
         }
+        
+        // Calls TryAdd instead of AddOrUpdate for caches that don't need a value counter
+        public void PutIfAbsent(TK key, TV value)
+        {
+            if (CacheMap.TryAdd(key, value))
+            {
+                Interlocked.Increment(ref itemCount);
+            }
+        }
+
 
         public new void Delete(TK key)
         {
@@ -96,9 +106,21 @@ namespace io.harness.cfsdk.client.cache
     internal class EvaluationAnalyticsCache : MemoryCacheWithCounter<EvaluationAnalytics, int>
     {
     }
-    
-    internal class TargetAnalyticsCache : MemoryCacheWithCounter<TargetAnalytics, int>
+
+    internal class TargetAnalyticsCache : MemoryCacheWithCounter<TargetAnalytics, bool>
     {
+        public new void Put(TargetAnalytics key, bool value = true)
+        {
+            PutIfAbsent(key, value);
+        }
+    }
+
+    internal class SeenTargetsCache : MemoryCacheWithCounter<string, bool>
+    {
+        public new void Put(string key, bool value = true)
+        {
+            PutIfAbsent(key, value);
+        }
     }
 
 
