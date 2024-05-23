@@ -4,6 +4,7 @@ using io.harness.cfsdk.client.dto;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using Microsoft.Extensions.Logging;
 using Target = io.harness.cfsdk.client.dto.Target;
+using Timer = System.Timers.Timer;
 
 namespace io.harness.cfsdk.client.api.analytics
 {
@@ -127,12 +128,11 @@ namespace io.harness.cfsdk.client.api.analytics
         private void LogMetricsIgnoredWarning(string cacheType, int cacheSize, int bufferSize)
         {
             // Only log this once per interval
-            if (warningLoggedForInterval)
+            if (warningLoggedForInterval || !logger.IsEnabled(LogLevel.Warning))
             {
                 return;
             }
 
-            if (logger.IsEnabled(LogLevel.Warning))
             {
                 logger.LogWarning(
                     "{cacheType} frequency map exceeded buffer size ({cacheSize} > {bufferSize}), not sending any further" +
@@ -148,7 +148,8 @@ namespace io.harness.cfsdk.client.api.analytics
 
         internal void Timer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            logger.LogDebug("Timer Elapsed - Processing/Sending analytics data");
+            if (logger.IsEnabled(LogLevel.Debug))
+                logger.LogDebug("Timer Elapsed - Processing/Sending analytics data");
             SendMetrics();
         }
 
@@ -161,7 +162,8 @@ namespace io.harness.cfsdk.client.api.analytics
             }
             catch (CfClientException ex)
             {
-                logger.LogError(ex, "Failed to send analytics data to server");
+                if (logger.IsEnabled(LogLevel.Error))
+                    logger.LogError(ex, "Failed to send analytics data to server");
             }
         }
     }
