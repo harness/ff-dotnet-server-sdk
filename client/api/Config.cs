@@ -25,10 +25,11 @@ namespace io.harness.cfsdk.client.api
         internal int cacheRecoveryTimeoutInMs = 5000;
         internal bool useMapForInClause = false;
         internal int seenTargetsTtlInSeconds = 43200;
+        internal int seenTargetsLimit = 500000;
 
         public Config(string configUrl, string eventUrl, bool streamEnabled, int pollIntervalInSeconds,
             bool analyticsEnabled, int frequency, int targetMetricsMaxSize, int connectionTimeout, int readTimeout,
-            int writeTimeout, bool debug, long metricsServiceAcceptableDuration, int cacheRecoveryTimeoutInMs, bool useMapForInClause, int seenTargetsTtlInSeconds)
+            int writeTimeout, bool debug, long metricsServiceAcceptableDuration, int cacheRecoveryTimeoutInMs, bool useMapForInClause, int seenTargetsLimit, int seenTargetsTtlInSeconds)
         {
             this.configUrl = configUrl;
             this.eventUrl = eventUrl;
@@ -44,6 +45,7 @@ namespace io.harness.cfsdk.client.api
             this.metricsServiceAcceptableDuration = metricsServiceAcceptableDuration;
             this.cacheRecoveryTimeoutInMs = cacheRecoveryTimeoutInMs;
             this.useMapForInClause = useMapForInClause;
+            this.seenTargetsLimit = seenTargetsLimit;
             this.seenTargetsTtlInSeconds = seenTargetsTtlInSeconds;
         }
 
@@ -73,6 +75,8 @@ namespace io.harness.cfsdk.client.api
         public int CacheRecoveryTimeoutInMs => cacheRecoveryTimeoutInMs;
 
         public bool UseMapForInClause => useMapForInClause;
+        public int SeenTargetsLimit => seenTargetsLimit;
+
         public int SeenTargetsTtlInSeconds => seenTargetsTtlInSeconds;
 
         /**
@@ -220,10 +224,23 @@ namespace io.harness.cfsdk.client.api
 
         /**
          * <summary>
+         *     The SeenTargetsCache is used to reduce analytics payload size the SDK sends to the Feature Flags Service.
+         *     Set maximum number of unique targets that will be stored in the SeenTargets cache. Defaults to 500,000
+         *     unique targets.  You can increase or decrease this number depending on your memory requirements. 
+         * </summary>
+         */
+        public ConfigBuilder SeenTargetsLimit(int seenTargetsLimit)
+        {
+            configtobuild.seenTargetsLimit = seenTargetsLimit;
+            return this;
+        }
+
+        /**
+         * <summary>
          *     Set custom TTL for SeenTargets map keys. The default value is 43200 seconds, or 12 hours.  If you have
          *     a large number of targets and would prefer to clear this map sooner, decrease this TTL to free up memory.
          *     SeenTargets is used to reduce payload size to the Feature Flags Analytics service, so clearing it more frequently
-         *     could result in larger payload sizes. 
+         *     could result in larger payload sizes.
          * </summary>
          */
         public ConfigBuilder SeenTargetsTtlInSeconds(int seenTargetsTtlInSeconds)
