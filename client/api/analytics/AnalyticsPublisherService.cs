@@ -30,7 +30,7 @@ namespace io.harness.cfsdk.client.api.analytics
 
         public AnalyticsPublisherService(IConnector connector, EvaluationAnalyticsCache evaluationAnalyticsCache,
             TargetAnalyticsCache targetAnalyticsCache,
-            ILoggerFactory loggerFactory)
+            ILoggerFactory loggerFactory, Config config)
         {
             this.evaluationAnalyticsCache = evaluationAnalyticsCache;
             this.targetAnalyticsCache = targetAnalyticsCache;
