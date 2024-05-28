@@ -214,9 +214,20 @@ namespace io.harness.cfsdk.client.api
             }
         }
 
+        private void SortServingGroups(Segment segment)
+        {
+            if (segment == null || segment.ServingRules == null || segment.ServingRules.Count <= 1)
+            {
+                return;
+            }
+            // Keep the ServingRules sorted by priority, we will always short-circuit on the first true
+            segment.ServingRules = segment.ServingRules.OrderBy(r => r.Priority).ToList();
+        }
+
         void IRepository.SetSegment(string identifier, Segment segment)
         {
             rwLock.EnterWriteLock();
+            SortServingGroups(segment);
             try
             {
                 Segment current = GetSegment(identifier, false);
@@ -263,6 +274,7 @@ namespace io.harness.cfsdk.client.api
                 foreach (var item in segments)
                 {
                     CacheClauseValues(item);
+                    SortServingGroups(item);
                     Update(item.Identifier, SegmentKey(item.Identifier), item);
                 }
             }
