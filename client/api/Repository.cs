@@ -206,14 +206,30 @@ namespace io.harness.cfsdk.client.api
 
             // The generated API code uses a List which can be inefficient if a lot of values are used
             // This function will cache values as a HashSet in AdditionalProperties
-            foreach (var clause in segment.Rules)
+
+            if (segment.ServingRules != null)
             {
-                if (!clause.Op.Equals("in")) continue;
-                HashSet<string> set = new();
-                set.UnionWith(clause.Values);
-                clause.AdditionalProperties.Remove(AdditionalPropertyValueAsSet);
-                clause.AdditionalProperties.Add(AdditionalPropertyValueAsSet, set);
+                // new style rules
+                foreach (var gsr in segment.ServingRules)
+                    foreach (var clause in gsr.Clauses)
+                        CacheInClauseValues(clause);
             }
+
+            if (segment.Rules != null)
+            {
+                // legacy style rules
+                foreach (var clause in segment.Rules)
+                    CacheInClauseValues(clause);
+            }
+        }
+
+        private void CacheInClauseValues(Clause clause)
+        {
+            if (!clause.Op.Equals("in") || clause.Values.Count <= 1) return;
+            HashSet<string> set = new();
+            set.UnionWith(clause.Values);
+            clause.AdditionalProperties.Remove(AdditionalPropertyValueAsSet);
+            clause.AdditionalProperties.Add(AdditionalPropertyValueAsSet, set);
         }
 
         private void SortSegmentServingGroups(Segment segment)
