@@ -8,9 +8,9 @@
         <PackageId>ff-dotnet-server-sdk</PackageId>
         <RootNamespace>io.harness.cfsdk</RootNamespace>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-        <Version>1.7.0-rc2</Version>
+        <Version>1.7.0-rc3</Version>
         <PackOnBuild>true</PackOnBuild>
-        <PackageVersion>1.7.0-rc2</PackageVersion>
+        <PackageVersion>1.7.0-rc3</PackageVersion>
         <AssemblyVersion>1.7.0</AssemblyVersion>
         <Authors>support@harness.io</Authors>
         <Copyright>Copyright © 2024</Copyright>
