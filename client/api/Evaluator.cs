@@ -264,7 +264,7 @@ namespace io.harness.cfsdk.client.api
             // No rules to evaluate or target is not supplied
             if (featureConfig.Rules == null || target == null) return null;
 
-            foreach (var servingRule in featureConfig.Rules.OrderBy(sr => sr.Priority))
+            foreach (var servingRule in featureConfig.Rules)
             {
                 // Invalid state: Log if Clauses are null 
                 if (servingRule.Clauses == null)

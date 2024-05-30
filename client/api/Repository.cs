@@ -178,6 +178,8 @@ namespace io.harness.cfsdk.client.api
             rwLock.EnterWriteLock();
             try
             {
+                SortFlagRules(featureConfig);
+
                 FeatureConfig current = GetFlag(identifier, false);
                 // Update stored value in case if server returned newer version,
                 // or if version is equal 0 (or doesn't exist)
@@ -204,32 +206,55 @@ namespace io.harness.cfsdk.client.api
 
             // The generated API code uses a List which can be inefficient if a lot of values are used
             // This function will cache values as a HashSet in AdditionalProperties
-            foreach (var clause in segment.Rules)
+
+            if (segment.ServingRules != null)
             {
-                if (!clause.Op.Equals("in")) continue;
-                HashSet<string> set = new();
-                set.UnionWith(clause.Values);
-                clause.AdditionalProperties.Remove(AdditionalPropertyValueAsSet);
-                clause.AdditionalProperties.Add(AdditionalPropertyValueAsSet, set);
+                // new style rules
+                foreach (var gsr in segment.ServingRules)
+                    foreach (var clause in gsr.Clauses)
+                        CacheInClauseValues(clause);
+            }
+
+            if (segment.Rules != null)
+            {
+                // legacy style rules
+                foreach (var clause in segment.Rules)
+                    CacheInClauseValues(clause);
             }
         }
 
-        private void SortServingGroups(Segment segment)
+        private void CacheInClauseValues(Clause clause)
+        {
+            if (!clause.Op.Equals("in") || clause.Values.Count <= 1) return;
+            HashSet<string> set = new();
+            set.UnionWith(clause.Values);
+            clause.AdditionalProperties.Remove(AdditionalPropertyValueAsSet);
+            clause.AdditionalProperties.Add(AdditionalPropertyValueAsSet, set);
+        }
+
+        private void SortSegmentServingGroups(Segment segment)
         {
             if (segment == null || segment.ServingRules == null || segment.ServingRules.Count <= 1)
-            {
                 return;
-            }
+
             // Keep the ServingRules sorted by priority, we will always short-circuit on the first true
             segment.ServingRules = segment.ServingRules.OrderBy(r => r.Priority).ToList();
+        }
+
+        private void SortFlagRules(FeatureConfig featureConfig)
+        {
+            if (featureConfig == null || featureConfig.Rules == null || featureConfig.Rules.Count <= 1)
+                return;
+
+            featureConfig.Rules = featureConfig.Rules.OrderBy(sr => sr.Priority).ToList();
         }
 
         void IRepository.SetSegment(string identifier, Segment segment)
         {
             rwLock.EnterWriteLock();
-            SortServingGroups(segment);
             try
             {
+                SortSegmentServingGroups(segment);
                 Segment current = GetSegment(identifier, false);
                 // Update stored value in case if server returned newer version,
                 // or if version is equal 0 (or doesn't exist)
@@ -257,6 +282,7 @@ namespace io.harness.cfsdk.client.api
             {
                 foreach (var item in flags)
                 {
+                    SortFlagRules(item);
                     Update(item.Feature, FlagKey(item.Feature), item);
                 }
             }
@@ -274,7 +300,7 @@ namespace io.harness.cfsdk.client.api
                 foreach (var item in segments)
                 {
                     CacheClauseValues(item);
-                    SortServingGroups(item);
+                    SortSegmentServingGroups(item);
                     Update(item.Identifier, SegmentKey(item.Identifier), item);
                 }
             }
