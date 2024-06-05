@@ -21,7 +21,7 @@ namespace io.harness.cfsdk.client.connector
         private const int ReadTimeoutMs = 35_000;
         private const int BaseDelayMs = 200; 
         private const int MaxDelayMs = 5000; 
-        private static readonly Random random = new Random();
+        private static readonly Random Random = new();
 
         public EventSource(HttpClient httpClient, string url, Config config, IUpdateCallback callback, ILoggerFactory loggerFactory)
         {
@@ -118,7 +118,7 @@ namespace io.harness.cfsdk.client.connector
                     // Calculate the delay with exponential backoff
                     int delay = Math.Min(BaseDelayMs * (int)Math.Pow(2, retryCount), MaxDelayMs);
                     // Introduce jitter by adding a random amount of time, and ensure it doesn't exceed MaxDelayMs
-                    var jitter = random.Next(0, BaseDelayMs);
+                    var jitter = Random.Next(0, BaseDelayMs);
                     delay += jitter;
 
 
