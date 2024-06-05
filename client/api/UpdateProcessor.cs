@@ -87,7 +87,7 @@ namespace io.harness.cfsdk.client.api
                 catch (Exception ex)
                 {
                     retryCount++;
-                    logger.LogWarning(ex, "Failed to start the stream. Retry attempt {Attempt} in {Delay} seconds", retryCount, Math.Pow(2, retryCount) * initialDelaySeconds);
+                    logger.LogWarning(ex, "Failed to restart the stream on attempt {Attempt}. Waiting {Delay} seconds before next retry. Exception: {ExceptionMessage}", retryCount, Math.Pow(2, retryCount) * initialDelaySeconds, ex.Message);
                     
                 }
             }
