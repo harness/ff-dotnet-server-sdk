@@ -19,6 +19,9 @@ namespace io.harness.cfsdk.client.connector
         private readonly HttpClient httpClient;
         private readonly IUpdateCallback callback;
         private const int ReadTimeoutMs = 60_000;
+        private const int BaseDelayMs = 200; 
+        private const int MaxDelayMs = 5000; 
+        private static readonly Random random = new Random();
 
         public EventSource(HttpClient httpClient, string url, Config config, IUpdateCallback callback, ILoggerFactory loggerFactory)
         {
@@ -68,8 +71,6 @@ namespace io.harness.cfsdk.client.connector
 
         private async Task StartStreaming()
         {
-            const int baseDelayMs = 1000;
-            const int maxDelayMs = 5000;
             var retryCount = 0;
             while (true)
             {
@@ -80,6 +81,7 @@ namespace io.harness.cfsdk.client.connector
                     logger.LogDebug("Starting EventSource service.");
                     using (Stream stream = await this.httpClient.GetStreamAsync(url))
                     {
+                        retryCount = 0;
                         callback.OnStreamConnected();
 
                         string message;
@@ -108,16 +110,20 @@ namespace io.harness.cfsdk.client.connector
                         }
                     }
 
-                    retryCount = 0;
                 }
                 catch (Exception e)
                 {
-
-
                     retryCount++;
 
-                    var delay = Math.Min(baseDelayMs * (int)Math.Pow(2, retryCount), maxDelayMs);
-                    logger.LogError(e, "EventSource service threw an error: {Reason}. Retrying in {Delay} seconds",
+                    // Calculate the delay with exponential backoff
+                    int delay = Math.Min(BaseDelayMs * (int)Math.Pow(2, retryCount), MaxDelayMs);
+                    // Introduce jitter by adding a random amount of time, and ensure it doesn't exceed MaxDelayMs
+                    var jitter = random.Next(0, BaseDelayMs);
+                    delay += jitter;
+
+
+                    logger.LogError(e,
+                        "EventSource service threw an error: {Reason}. Retrying in {Delay} seconds",
                         e.Message, delay / 1000.0);
                     Debug.WriteLine(e.ToString());
                     await Task.Delay(delay);
