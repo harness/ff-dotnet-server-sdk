@@ -15,7 +15,6 @@ namespace io.harness.cfsdk.client.connector
     {
         private readonly ILogger<EventSource> logger;
         private readonly string url;
-        private readonly Config config;
         private readonly HttpClient httpClient;
         private readonly IUpdateCallback callback;
         private const int ReadTimeoutMs = 35_000;
@@ -23,11 +22,10 @@ namespace io.harness.cfsdk.client.connector
         private const int MaxDelayMs = 5000; 
         private static readonly Random Random = new();
 
-        public EventSource(HttpClient httpClient, string url, Config config, IUpdateCallback callback, ILoggerFactory loggerFactory)
+        public EventSource(HttpClient httpClient, string url, IUpdateCallback callback, ILoggerFactory loggerFactory)
         {
             this.httpClient = httpClient;
             this.url = url;
-            this.config = config;
             this.callback = callback;
             this.logger = loggerFactory.CreateLogger<EventSource>();
         }

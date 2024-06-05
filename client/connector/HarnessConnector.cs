@@ -281,7 +281,7 @@ namespace io.harness.cfsdk.client.connector
         {
             currentStream?.Close();
             var url = $"stream?cluster={cluster}";
-            currentStream = new EventSource(sseHttpClient, url, config, updater, loggerFactory);
+            currentStream = new EventSource(sseHttpClient, url, updater, loggerFactory);
             return currentStream;
         }
         public async Task PostMetrics(HarnessOpenMetricsAPIService.Metrics metrics)
