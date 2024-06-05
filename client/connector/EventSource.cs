@@ -125,7 +125,6 @@ namespace io.harness.cfsdk.client.connector
                     logger.LogError(e,
                         "EventSource service threw an error: {Reason}. Retrying in {Delay} seconds",
                         e.Message, delay / 1000.0);
-                    Debug.WriteLine(e.ToString());
                     await Task.Delay(delay);
                 }
                 finally
