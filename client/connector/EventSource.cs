@@ -18,7 +18,7 @@ namespace io.harness.cfsdk.client.connector
         private readonly Config config;
         private readonly HttpClient httpClient;
         private readonly IUpdateCallback callback;
-        private const int ReadTimeoutMs = 60_000;
+        private const int ReadTimeoutMs = 35_000;
         private const int BaseDelayMs = 200; 
         private const int MaxDelayMs = 5000; 
         private static readonly Random random = new Random();
