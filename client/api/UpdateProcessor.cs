@@ -73,8 +73,24 @@ namespace io.harness.cfsdk.client.api
 
         private async Task StartAfterInterval()
         {
-            await Task.Delay(TimeSpan.FromSeconds(this.config.pollIntervalInSeconds));
-            Start();
+            const int initialDelaySeconds = 1;
+
+            int retryCount = 0;
+            while (true)
+            {
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, retryCount) * initialDelaySeconds));
+                    Start();
+                    break; 
+                }
+                catch (Exception ex)
+                {
+                    retryCount++;
+                    logger.LogWarning(ex, "Failed to start the stream. Retry attempt {Attempt} in {Delay} seconds", retryCount, Math.Pow(2, retryCount) * initialDelaySeconds);
+                    
+                }
+            }
         }
         public void OnStreamDisconnected()
         {

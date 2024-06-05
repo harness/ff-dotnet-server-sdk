@@ -110,7 +110,6 @@ namespace io.harness.cfsdk.client.connector
             }
             finally
             {
-                Thread.Sleep(TimeSpan.FromSeconds(10));
                 callback.OnStreamDisconnected();
             }
 
