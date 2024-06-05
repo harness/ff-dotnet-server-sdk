@@ -71,32 +71,11 @@ namespace io.harness.cfsdk.client.api
             this.callback.OnStreamConnected();
         }
 
-        private async Task StartAfterInterval()
-        {
-            const int initialDelaySeconds = 1;
 
-            int retryCount = 0;
-            while (true)
-            {
-                try
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, retryCount) * initialDelaySeconds));
-                    Start();
-                    break; 
-                }
-                catch (Exception ex)
-                {
-                    retryCount++;
-                    logger.LogWarning(ex, "Failed to restart the stream on attempt {Attempt}. Waiting {Delay} seconds before next retry. Exception: {ExceptionMessage}", retryCount, Math.Pow(2, retryCount) * initialDelaySeconds, ex.Message);
-                    
-                }
-            }
-        }
         public void OnStreamDisconnected()
         {
             this.callback.OnStreamDisconnected();
-            Stop();
-            _ = StartAfterInterval();
+
         }
         private async Task ProcessMessage(Message message)
         {

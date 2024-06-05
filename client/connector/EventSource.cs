@@ -68,51 +68,65 @@ namespace io.harness.cfsdk.client.connector
 
         private async Task StartStreaming()
         {
-            try
+            const int baseDelayMs = 1000;
+            const int maxDelayMs = 5000;
+            var retryCount = 0;
+            while (true)
             {
-                Debug.Assert(httpClient != null);
-
-                logger.LogDebug("Starting EventSource service.");
-                using (Stream stream = await this.httpClient.GetStreamAsync(url))
+                try
                 {
-                    callback.OnStreamConnected();
+                    Debug.Assert(httpClient != null);
 
-                    string message;
-                    while ((message = ReadLine(stream, ReadTimeoutMs)) != null)
+                    logger.LogDebug("Starting EventSource service.");
+                    using (Stream stream = await this.httpClient.GetStreamAsync(url))
                     {
-                        if (!message.Contains("domain"))
+                        callback.OnStreamConnected();
+
+                        string message;
+                        while ((message = ReadLine(stream, ReadTimeoutMs)) != null)
                         {
-                            logger.LogTrace("Received event source heartbeat");
-                            continue;
+                            if (!message.Contains("domain"))
+                            {
+                                logger.LogTrace("Received event source heartbeat");
+                                continue;
+                            }
+
+                            logger.LogInformation("SDKCODE(stream:5002): SSE event received {message}", message);
+
+                            // parse message
+                            var jsonMessage = JObject.Parse("{" + message + "}");
+                            var data = jsonMessage["data"];
+                            var msg = new Message
+                            {
+                                Domain = (string)data["domain"],
+                                Event = (string)data["event"],
+                                Identifier = (string)data["identifier"],
+                                Version = long.Parse((string)data["version"])
+                            };
+
+                            callback.Update(msg, false);
                         }
-
-                        logger.LogInformation("SDKCODE(stream:5002): SSE event received {message}", message);
-
-                        // parse message
-                        var jsonMessage = JObject.Parse("{" + message + "}");
-                        var data = jsonMessage["data"];
-                        var msg = new Message
-                        {
-                            Domain = (string) data["domain"],
-                            Event = (string) data["event"],
-                            Identifier = (string) data["identifier"],
-                            Version = long.Parse((string) data["version"])
-                        };
-                        
-                        callback.Update(msg, false);
                     }
+
+                    retryCount = 0;
+                }
+                catch (Exception e)
+                {
+
+
+                    retryCount++;
+
+                    var delay = Math.Min(baseDelayMs * (int)Math.Pow(2, retryCount), maxDelayMs);
+                    logger.LogError(e, "EventSource service threw an error: {Reason}. Retrying in {Delay} seconds",
+                        e.Message, delay / 1000.0);
+                    Debug.WriteLine(e.ToString());
+                    await Task.Delay(delay);
+                }
+                finally
+                {
+                    callback.OnStreamDisconnected();
                 }
             }
-            catch (Exception e)
-            {
-                logger.LogError(e, "EventSource service threw an error: {reason} Retrying in {pollIntervalInSeconds}", e.Message, config.pollIntervalInSeconds);
-                Debug.WriteLine(e.ToString());
-            }
-            finally
-            {
-                callback.OnStreamDisconnected();
-            }
-
         }
     }
 }
