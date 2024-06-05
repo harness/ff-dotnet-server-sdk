@@ -51,7 +51,7 @@ namespace io.harness.cfsdk.client.api.analytics
                 timer.Start();
                 
                 // SeenTargetsCache timer
-                seenTargetsCacheResetTimer = new Timer(config.seenTargetsCacheTtlInSeconds);
+                seenTargetsCacheResetTimer = new Timer((long)config.seenTargetsCacheTtlInSeconds * 1000);
                 seenTargetsCacheResetTimer.Elapsed += SeenTargetsCacheResetTimer_Elapsed;
                 seenTargetsCacheResetTimer.AutoReset = true;
                 seenTargetsCacheResetTimer.Enabled = true;
