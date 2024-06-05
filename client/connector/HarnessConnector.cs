@@ -160,6 +160,10 @@ namespace io.harness.cfsdk.client.connector
         private static HttpClient SseHttpClient(Config config, string apiKey, ILoggerFactory loggerFactory)
         {
             HttpClient client = CreateHttpClientWithTls(config, loggerFactory);
+            // Don't rely on the http client timeout to kill dead streams, as behaviour can be different
+            // depending on the .NET version.  Instead, we use custom logic to kill a stream if a heartbeat hasn't
+            // been received in a given period. 
+            client.Timeout = Timeout.InfiniteTimeSpan;;
             client.BaseAddress = new Uri(config.ConfigUrl.EndsWith("/") ? config.ConfigUrl : config.ConfigUrl + "/" );
             client.DefaultRequestHeaders.Add("API-Key", apiKey);
             client.DefaultRequestHeaders.Add("Accept", "text /event-stream");
@@ -169,7 +173,6 @@ namespace io.harness.cfsdk.client.connector
             {
                 client.DefaultRequestHeaders.Add("Harness-AccountID", _accountId);
             }
-            client.Timeout = TimeSpan.FromMinutes(1);
             return client;
         }
         
