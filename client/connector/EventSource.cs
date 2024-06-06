@@ -17,6 +17,7 @@ namespace io.harness.cfsdk.client.connector
         private readonly string url;
         private readonly HttpClient httpClient;
         private readonly IUpdateCallback callback;
+        private const int InitialConnectionTimeoutMs = 10000;
         private const int ReadTimeoutMs = 35_000;
         private const int BaseDelayMs = 200; 
         private const int MaxDelayMs = 5000; 
@@ -76,7 +77,28 @@ namespace io.harness.cfsdk.client.connector
                 {
                     Debug.Assert(httpClient != null);
 
-                    logger.LogDebug("Starting EventSource service.");
+                    logger.LogDebug("Starting EventSource service");
+                    
+                    var initialTask = Task.Run(async () =>
+                    {
+                        await Task.Delay(InitialConnectionTimeoutMs);
+                        throw new TimeoutException("Initial connection timeout");
+                    });
+
+                    var requestTask = Task.Run(async () =>
+                    {
+                        var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+                        response.EnsureSuccessStatusCode();
+                        return response;
+                    });
+
+                    var completedTask = await Task.WhenAny(initialTask, requestTask);
+
+                    if (completedTask == initialTask)
+                    {
+                        await initialTask; // This will throw the timeout exception
+                    }
+                    
                     using (Stream stream = await this.httpClient.GetStreamAsync(url))
                     {
                         retryCount = 0;
