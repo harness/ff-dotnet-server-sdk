@@ -17,9 +17,11 @@ namespace io.harness.cfsdk.client.connector
         private readonly string url;
         private readonly HttpClient httpClient;
         private readonly IUpdateCallback callback;
+        private const int InitialConnectionTimeoutMs = 10000; 
         private const int ReadTimeoutMs = 35_000;
         private const int BaseDelayMs = 200; 
         private const int MaxDelayMs = 5000; 
+
         private static readonly Random Random = new();
 
         public EventSource(HttpClient httpClient, string url, IUpdateCallback callback, ILoggerFactory loggerFactory)
@@ -71,49 +73,49 @@ namespace io.harness.cfsdk.client.connector
         {
             var retryCount = 0;
             while (true)
-            {
                 try
                 {
-                    Debug.Assert(httpClient != null);
+                    logger.LogDebug("Starting EventSource service");
+                    using var initialRequestToken = new CancellationTokenSource(InitialConnectionTimeoutMs);
+                    var request = new HttpRequestMessage(HttpMethod.Get, url);
+                    var response =
+                    await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, initialRequestToken.Token);
+                    response.EnsureSuccessStatusCode();
+                    using var stream = await response.Content.ReadAsStreamAsync();
+                    retryCount = 0;
+                    callback.OnStreamConnected();
 
-                    logger.LogDebug("Starting EventSource service.");
-                    using (Stream stream = await this.httpClient.GetStreamAsync(url))
+                    string message;
+                    while ((message = ReadLine(stream, ReadTimeoutMs)) != null)
                     {
-                        retryCount = 0;
-                        callback.OnStreamConnected();
-
-                        string message;
-                        while ((message = ReadLine(stream, ReadTimeoutMs)) != null)
+                        if (!message.Contains("domain"))
                         {
-                            if (!message.Contains("domain"))
-                            {
-                                logger.LogTrace("Received event source heartbeat");
-                                continue;
-                            }
-
-                            logger.LogInformation("SDKCODE(stream:5002): SSE event received {message}", message);
-
-                            // parse message
-                            var jsonMessage = JObject.Parse("{" + message + "}");
-                            var data = jsonMessage["data"];
-                            var msg = new Message
-                            {
-                                Domain = (string)data["domain"],
-                                Event = (string)data["event"],
-                                Identifier = (string)data["identifier"],
-                                Version = long.Parse((string)data["version"])
-                            };
-
-                            callback.Update(msg, false);
+                            logger.LogTrace("Received event source heartbeat");
+                            continue;
                         }
-                    }
 
+                        logger.LogInformation("SDKCODE(stream:5002): SSE event received {message}",
+                            message);
+
+                        // parse message
+                        var jsonMessage = JObject.Parse("{" + message + "}");
+                        var data = jsonMessage["data"];
+                        var msg = new Message
+                        {
+                            Domain = (string)data["domain"],
+                            Event = (string)data["event"],
+                            Identifier = (string)data["identifier"],
+                            Version = long.Parse((string)data["version"])
+                        };
+
+                        callback.Update(msg, false);
+                    }
                 }
                 catch (Exception e)
                 {
                     retryCount++;
 
-                    int delay = Math.Min(BaseDelayMs * (int)Math.Pow(2, retryCount), MaxDelayMs);
+                    var delay = Math.Min(BaseDelayMs * (int)Math.Pow(2, retryCount), MaxDelayMs);
                     var jitter = Random.Next(0, BaseDelayMs);
                     delay += jitter;
 
@@ -127,7 +129,6 @@ namespace io.harness.cfsdk.client.connector
                 {
                     callback.OnStreamDisconnected();
                 }
-            }
         }
     }
 }
