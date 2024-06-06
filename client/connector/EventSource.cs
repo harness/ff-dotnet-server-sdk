@@ -79,6 +79,9 @@ namespace io.harness.cfsdk.client.connector
 
                     logger.LogDebug("Starting EventSource service");
                     
+                    // In .NET 4.8, we can't use a traditional HTTP Client timeout, or cacncellation token, 
+                    // as the HTTP client interprets reading from the stream as the connection is still open. 
+                    // We use this workaround instead to simulate a timeout for the initial request.
                     var initialTask = Task.Run(async () =>
                     {
                         await Task.Delay(InitialConnectionTimeoutMs);
@@ -96,7 +99,7 @@ namespace io.harness.cfsdk.client.connector
 
                     if (completedTask == initialTask)
                     {
-                        await initialTask; // This will throw the timeout exception
+                        await initialTask; 
                     }
                     
                     using (Stream stream = await this.httpClient.GetStreamAsync(url))
