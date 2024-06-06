@@ -113,9 +113,7 @@ namespace io.harness.cfsdk.client.connector
                 {
                     retryCount++;
 
-                    // Calculate the delay with exponential backoff
                     int delay = Math.Min(BaseDelayMs * (int)Math.Pow(2, retryCount), MaxDelayMs);
-                    // Introduce jitter by adding a random amount of time, and ensure it doesn't exceed MaxDelayMs
                     var jitter = Random.Next(0, BaseDelayMs);
                     delay += jitter;
 
