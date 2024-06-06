@@ -15,16 +15,18 @@ namespace io.harness.cfsdk.client.connector
     {
         private readonly ILogger<EventSource> logger;
         private readonly string url;
-        private readonly Config config;
         private readonly HttpClient httpClient;
         private readonly IUpdateCallback callback;
-        private const int ReadTimeoutMs = 60_000;
+        private const int InitialConnectionTimeoutMs = 10000;
+        private const int ReadTimeoutMs = 35_000;
+        private const int BaseDelayMs = 200; 
+        private const int MaxDelayMs = 5000; 
+        private static readonly Random Random = new();
 
-        public EventSource(HttpClient httpClient, string url, Config config, IUpdateCallback callback, ILoggerFactory loggerFactory)
+        public EventSource(HttpClient httpClient, string url, IUpdateCallback callback, ILoggerFactory loggerFactory)
         {
             this.httpClient = httpClient;
             this.url = url;
-            this.config = config;
             this.callback = callback;
             this.logger = loggerFactory.CreateLogger<EventSource>();
         }
@@ -68,52 +70,89 @@ namespace io.harness.cfsdk.client.connector
 
         private async Task StartStreaming()
         {
-            try
+            var retryCount = 0;
+            while (true)
             {
-                Debug.Assert(httpClient != null);
-
-                logger.LogDebug("Starting EventSource service.");
-                using (Stream stream = await this.httpClient.GetStreamAsync(url))
+                try
                 {
-                    callback.OnStreamConnected();
+                    Debug.Assert(httpClient != null);
 
-                    string message;
-                    while ((message = ReadLine(stream, ReadTimeoutMs)) != null)
+                    logger.LogDebug("Starting EventSource service");
+                    
+                    // In .NET 4.8, we can't use a traditional HTTP Client timeout, or cacncellation token, 
+                    // as the HTTP client interprets reading from the stream as the connection is still open. 
+                    // We use this workaround instead to simulate a timeout for the initial request.
+                    var initialTask = Task.Run(async () =>
                     {
-                        if (!message.Contains("domain"))
-                        {
-                            logger.LogTrace("Received event source heartbeat");
-                            continue;
-                        }
+                        await Task.Delay(InitialConnectionTimeoutMs);
+                        throw new TimeoutException("Initial connection timeout");
+                    });
 
-                        logger.LogInformation("SDKCODE(stream:5002): SSE event received {message}", message);
+                    var requestTask = Task.Run(async () =>
+                    {
+                        var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+                        response.EnsureSuccessStatusCode();
+                        return response;
+                    });
 
-                        // parse message
-                        var jsonMessage = JObject.Parse("{" + message + "}");
-                        var data = jsonMessage["data"];
-                        var msg = new Message
-                        {
-                            Domain = (string) data["domain"],
-                            Event = (string) data["event"],
-                            Identifier = (string) data["identifier"],
-                            Version = long.Parse((string) data["version"])
-                        };
-                        
-                        callback.Update(msg, false);
+                    var completedTask = await Task.WhenAny(initialTask, requestTask);
+
+                    if (completedTask == initialTask)
+                    {
+                        await initialTask; 
                     }
+                    
+                    using (Stream stream = await this.httpClient.GetStreamAsync(url))
+                    {
+                        retryCount = 0;
+                        callback.OnStreamConnected();
+
+                        string message;
+                        while ((message = ReadLine(stream, ReadTimeoutMs)) != null)
+                        {
+                            if (!message.Contains("domain"))
+                            {
+                                logger.LogTrace("Received event source heartbeat");
+                                continue;
+                            }
+
+                            logger.LogInformation("SDKCODE(stream:5002): SSE event received {message}", message);
+
+                            // parse message
+                            var jsonMessage = JObject.Parse("{" + message + "}");
+                            var data = jsonMessage["data"];
+                            var msg = new Message
+                            {
+                                Domain = (string)data["domain"],
+                                Event = (string)data["event"],
+                                Identifier = (string)data["identifier"],
+                                Version = long.Parse((string)data["version"])
+                            };
+
+                            callback.Update(msg, false);
+                        }
+                    }
+
+                }
+                catch (Exception e)
+                {
+                    retryCount++;
+
+                    int delay = Math.Min(BaseDelayMs * (int)Math.Pow(2, retryCount), MaxDelayMs);
+                    var jitter = Random.Next(0, BaseDelayMs);
+                    delay += jitter;
+
+
+                    logger.LogError(e,
+                        "EventSource service threw an error: {Reason}. Retrying in {Delay} seconds",
+                        e.Message, delay / 1000.0);
+                    await Task.Delay(delay);
+                }
+                finally
+                {
+                    callback.OnStreamDisconnected();
                 }
             }
-            catch (Exception e)
-            {
-                logger.LogError(e, "EventSource service threw an error: {reason} Retrying in {pollIntervalInSeconds}", e.Message, config.pollIntervalInSeconds);
-                Debug.WriteLine(e.ToString());
-            }
-            finally
-            {
-                Thread.Sleep(TimeSpan.FromSeconds(10));
-                callback.OnStreamDisconnected();
-            }
-
         }
     }
 }

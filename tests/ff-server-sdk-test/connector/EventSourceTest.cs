@@ -84,7 +84,7 @@ namespace ff_server_sdk_test.connector
             var callback = new TestCallback();
             Config config = new ConfigBuilder().ConfigUrl(server.Url + "/api/1.0").Build();
             var httpClient = SseHttpClient(config, "dummyapikey");
-            var eventSource = new EventSource(httpClient, "stream", config, callback, new NullLoggerFactory());
+            var eventSource = new EventSource(httpClient, "stream", callback, new NullLoggerFactory());
             eventSource.Start();
 
             callback.WaitForDisconnect();
@@ -125,7 +125,7 @@ namespace ff_server_sdk_test.connector
             var callback = new TestCallback();
             Config config = new ConfigBuilder().ConfigUrl(server.Url + "/api/1.0").Build();
             var httpClient = SseHttpClient(config, "dummyapikey");
-            var eventSource = new EventSource(httpClient, "stream", config, callback, new NullLoggerFactory());
+            var eventSource = new EventSource(httpClient, "stream", callback, new NullLoggerFactory());
             eventSource.Start();
 
             callback.WaitForDisconnect();

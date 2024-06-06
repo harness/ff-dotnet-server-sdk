@@ -71,16 +71,11 @@ namespace io.harness.cfsdk.client.api
             this.callback.OnStreamConnected();
         }
 
-        private async Task StartAfterInterval()
-        {
-            await Task.Delay(TimeSpan.FromSeconds(this.config.pollIntervalInSeconds));
-            Start();
-        }
+
         public void OnStreamDisconnected()
         {
             this.callback.OnStreamDisconnected();
-            Stop();
-            _ = StartAfterInterval();
+
         }
         private async Task ProcessMessage(Message message)
         {

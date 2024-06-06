@@ -96,13 +96,13 @@ namespace io.harness.cfsdk.client.api
                 logger.LogWarning(ex, "First poll failed: {Reason}", ex.Message);
             }
 
-            logger.LogDebug("SDKCODE(poll:4000): Polling started, intervalMs: {intervalMs}", intervalMs);
+            logger.LogInformation("SDKCODE(poll:4000): Polling started, intervalMs: {intervalMs}", intervalMs);
             // start timer which will initiate periodic reading of flags and segments
             pollTimer = new Timer(OnTimedEventAsync, null, intervalMs, intervalMs);
         }
         public void Stop()
         {
-            logger.LogDebug("SDKCODE(poll:4001): Polling stopped");
+            logger.LogInformation("SDKCODE(poll:4001): Polling stopped");
             // stop timer
             if (pollTimer == null) return;
             pollTimer.Dispose();

@@ -56,7 +56,7 @@ namespace io.harness.cfsdk.client.connector
                 return new HttpClient();
             }
 
-#if (NETSTANDARD || NET461)
+#if (NETSTANDARD || NET461 || NET48)
             throw new NotSupportedException("Custom TLS certificates require .net5.0 target or greater");
 #else
             var logger = loggerFactory.CreateLogger<HarnessConnector>();
@@ -160,6 +160,10 @@ namespace io.harness.cfsdk.client.connector
         private static HttpClient SseHttpClient(Config config, string apiKey, ILoggerFactory loggerFactory)
         {
             HttpClient client = CreateHttpClientWithTls(config, loggerFactory);
+            // Don't rely on the http client timeout to kill dead streams, as behaviour can be different
+            // depending on the .NET version.  Instead, we use custom logic to kill a stream if a heartbeat hasn't
+            // been received in a given period. 
+            client.Timeout = Timeout.InfiniteTimeSpan;;
             client.BaseAddress = new Uri(config.ConfigUrl.EndsWith("/") ? config.ConfigUrl : config.ConfigUrl + "/" );
             client.DefaultRequestHeaders.Add("API-Key", apiKey);
             client.DefaultRequestHeaders.Add("Accept", "text /event-stream");
@@ -169,7 +173,6 @@ namespace io.harness.cfsdk.client.connector
             {
                 client.DefaultRequestHeaders.Add("Harness-AccountID", _accountId);
             }
-            client.Timeout = TimeSpan.FromMinutes(1);
             return client;
         }
         
@@ -278,7 +281,7 @@ namespace io.harness.cfsdk.client.connector
         {
             currentStream?.Close();
             var url = $"stream?cluster={cluster}";
-            currentStream = new EventSource(sseHttpClient, url, config, updater, loggerFactory);
+            currentStream = new EventSource(sseHttpClient, url, updater, loggerFactory);
             return currentStream;
         }
         public async Task PostMetrics(HarnessOpenMetricsAPIService.Metrics metrics)
