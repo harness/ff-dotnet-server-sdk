@@ -51,18 +51,19 @@ namespace io.harness.cfsdk.client.dto
         public override bool Equals(Analytics other)
         {
             return other is EvaluationAnalytics otherEvaluation
-                   // && EqualityComparer<Target>.Default.Equals(target, otherEvaluation.target)
-                   && EqualityComparer<Target>.Default.Equals(target, otherEvaluation.target)
-                   && EqualityComparer<FeatureConfig>.Default.Equals(FeatureConfig, otherEvaluation.FeatureConfig)
-                   && EqualityComparer<Variation>.Default.Equals(Variation, otherEvaluation.Variation);
+                   && EqualityComparer<string>.Default.Equals(target?.Identifier, otherEvaluation.target?.Identifier)
+                   && EqualityComparer<string>.Default.Equals(FeatureConfig?.Feature, otherEvaluation.FeatureConfig?.Feature)
+                   && EqualityComparer<string>.Default.Equals(Variation?.Identifier, otherEvaluation.Variation?.Identifier)
+                   && EqualityComparer<string>.Default.Equals(Variation?.Value, otherEvaluation.Variation?.Value);
         }
 
         public override int GetHashCode()
         {
             var hashCode = -1526478203;
-            hashCode = hashCode * -1521134295 + EqualityComparer<FeatureConfig>.Default.GetHashCode(FeatureConfig);
-            hashCode = hashCode * -1521134295 + EqualityComparer<Target>.Default.GetHashCode(target);
-            hashCode = hashCode * -1521134295 + EqualityComparer<Variation>.Default.GetHashCode(Variation);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Target?.Identifier ?? string.Empty);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(FeatureConfig?.Feature ?? string.Empty);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Variation?.Identifier ?? string.Empty);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Variation?.Value ?? string.Empty);
             return hashCode;
         }
     }
