@@ -65,21 +65,19 @@ namespace io.harness.cfsdk.client.cache
     internal class MemoryCacheWithCounter<TK, TV> : MemoryCache<TK, TV>
     {
         private int itemCount = 0;
-        
-public new void Put(TK key, TV value)
-{
-    bool added = false;
-    CacheMap.AddOrUpdate(key, value, (_, _) =>
-    {
-        added = true; 
-        return value;
-    });
 
-    if (!added) // If it was added, increment the count
-    {
-        Interlocked.Increment(ref itemCount);
-    }
-}
+        public new void Put(TK key, TV value)
+        {
+            var added = false;
+            CacheMap.AddOrUpdate(key, value, (_, _) =>
+            {
+                added = true;
+                return value;
+            });
+
+            if (!added) // If it was added, increment the count
+                Interlocked.Increment(ref itemCount);
+        }
         
         // Calls TryAdd instead of AddOrUpdate for caches that don't need a value counter
         public void PutIfAbsent(TK key, TV value)
