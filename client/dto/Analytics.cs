@@ -7,29 +7,8 @@ namespace io.harness.cfsdk.client.dto
     // We send two types of analytics to the metrics service
     // 1. Evaluation metrics.
     // 2. Target metrics.
-    // Both types inherit from this base class.
-    public abstract class Analytics : IEquatable<Analytics>
-    {
-        protected readonly Target target;
 
-        protected Analytics(Target target)
-        {
-            this.target = target;
-        }
-
-        public Target Target => target;
-        public abstract bool Equals(Analytics other);
-
-        public override bool Equals(object obj)
-        {
-            return Equals(obj as Analytics);
-        }
-
-        public abstract override int GetHashCode();
-    }
-
-    // EvaluationAnalytics subclass
-    public class EvaluationAnalytics : Analytics
+    public class EvaluationAnalytics : IEquatable<EvaluationAnalytics>
     {
         // The global target is used when we don't want to use the actual target in the evaluation metrics
         // payload. 
@@ -37,27 +16,28 @@ namespace io.harness.cfsdk.client.dto
         public static readonly string GlobalTargetName = "Global Target";
 
         public EvaluationAnalytics(FeatureConfig featureConfig, Variation variation, Target target)
-            : base(target)
         {
             FeatureConfig = featureConfig;
             Variation = variation;
+            Target = target;
         }
 
         public FeatureConfig FeatureConfig { get; }
 
         public Variation Variation { get; }
+        public Target Target { get; }
 
 
-        public override bool Equals(Analytics other)
+        public bool Equals(EvaluationAnalytics other)
         {
-            return other is EvaluationAnalytics otherEvaluation
-                   && EqualityComparer<string>.Default.Equals(target?.Identifier, otherEvaluation.target?.Identifier)
-                   && EqualityComparer<string>.Default.Equals(FeatureConfig?.Feature,
-                       otherEvaluation.FeatureConfig?.Feature)
-                   && EqualityComparer<string>.Default.Equals(Variation?.Identifier,
-                       otherEvaluation.Variation?.Identifier)
-                   && EqualityComparer<string>.Default.Equals(Variation?.Value, otherEvaluation.Variation?.Value);
+            if (other == null) return false;
+
+            return EqualityComparer<string>.Default.Equals(Target?.Identifier, other.Target?.Identifier)
+                   && EqualityComparer<string>.Default.Equals(FeatureConfig?.Feature, other.FeatureConfig?.Feature)
+                   && EqualityComparer<string>.Default.Equals(Variation?.Identifier, other.Variation?.Identifier)
+                   && EqualityComparer<string>.Default.Equals(Variation?.Value, other.Variation?.Value);
         }
+
 
         public override int GetHashCode()
         {
@@ -72,26 +52,36 @@ namespace io.harness.cfsdk.client.dto
                        EqualityComparer<string>.Default.GetHashCode(Variation?.Value ?? string.Empty);
             return hashCode;
         }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as EvaluationAnalytics);
+        }
     }
 
-    // TargetAnalytics subclass
-    public class TargetAnalytics : Analytics
+    public class TargetAnalytics : IEquatable<TargetAnalytics>
     {
         public TargetAnalytics(Target target)
-            : base(target)
         {
+            Target = target;
         }
 
-        public override bool Equals(Analytics other)
+        public Target Target { get; }
+
+        public bool Equals(TargetAnalytics other)
         {
-            if (other is TargetAnalytics otherTarget)
-                return EqualityComparer<string>.Default.Equals(Target?.Identifier, otherTarget.Target?.Identifier);
-            return false;
+            return other != null &&
+                   EqualityComparer<string>.Default.Equals(Target?.Identifier, other.Target?.Identifier);
         }
 
         public override int GetHashCode()
         {
             return EqualityComparer<string>.Default.GetHashCode(Target?.Identifier ?? string.Empty);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as TargetAnalytics);
         }
     }
 }
