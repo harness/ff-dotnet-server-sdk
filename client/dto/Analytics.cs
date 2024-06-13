@@ -78,13 +78,16 @@ namespace io.harness.cfsdk.client.dto
 
         public override bool Equals(Analytics other)
         {
-            return other is TargetAnalytics otherTarget
-                   && EqualityComparer<Target>.Default.Equals(target, otherTarget.target);
+            if (other is TargetAnalytics otherTarget)
+            {
+                return EqualityComparer<string>.Default.Equals(Target?.Identifier, otherTarget.Target?.Identifier);
+            }
+            return false;
         }
 
         public override int GetHashCode()
         {
-            return EqualityComparer<Target>.Default.GetHashCode(target);
+            return EqualityComparer<string>.Default.GetHashCode(Target?.Identifier ?? string.Empty);
         }
     }
 }
