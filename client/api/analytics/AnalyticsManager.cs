@@ -133,7 +133,7 @@ namespace io.harness.cfsdk.client.api.analytics
 
             TargetAnalytics targetAnalytics = new TargetAnalytics(target);
             
-            targetAnalyticsCache.Put(targetAnalytics);
+            targetAnalyticsCache.Put(target.Identifier, targetAnalytics);
 
             analyticsPublisherService.MarkTargetAsSeen(target.Identifier);
         }

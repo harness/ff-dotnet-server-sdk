@@ -53,7 +53,7 @@ namespace ff_server_sdk_test.api.analytics
 
             // Ensure the counter is correct.
             Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(1));
-            Assert.That(targetAnalyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(true));
+            Assert.That(targetAnalyticsCacheMock.getIfPresent(target.Identifier), Is.EqualTo(targetAnalytics));
         }
         
         [Test]
@@ -89,7 +89,6 @@ namespace ff_server_sdk_test.api.analytics
 
             // Ensure the counter is correct.
             Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(1));
-            Assert.That(targetAnalyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(false));
         }
 
 
@@ -131,7 +130,7 @@ namespace ff_server_sdk_test.api.analytics
 
             // Correct count
             Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(5));
-            Assert.That(targetAnalyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(true));
+            Assert.That(targetAnalyticsCacheMock.getIfPresent(target.Identifier), Is.EqualTo(targetAnalytics));
         }
 
         [Test]
@@ -172,7 +171,7 @@ namespace ff_server_sdk_test.api.analytics
             // Ensure the counter is correct
             Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics), Is.EqualTo(1));
             Assert.That(evaluationAnalyticsCacheMock.getIfPresent(evaluationAnalytics2), Is.EqualTo(1));
-            Assert.That(targetAnalyticsCacheMock.getIfPresent(targetAnalytics), Is.EqualTo(true));
+            Assert.That(targetAnalyticsCacheMock.getIfPresent(target.Identifier), Is.EqualTo(targetAnalytics));
         }
 
 

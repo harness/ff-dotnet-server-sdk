@@ -112,9 +112,9 @@ namespace io.harness.cfsdk.client.cache
     {
     }
 
-    internal class TargetAnalyticsCache : MemoryCacheWithCounter<TargetAnalytics, bool>
+    internal class TargetAnalyticsCache : MemoryCacheWithCounter<string, TargetAnalytics>
     {
-        public new void Put(TargetAnalytics key, bool value = true)
+        public new void Put(string key, TargetAnalytics value)
         {
             PutIfAbsent(key, value);
         }
