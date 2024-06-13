@@ -80,7 +80,7 @@ namespace io.harness.cfsdk.client.cache
         }
         
         // Calls TryAdd instead of AddOrUpdate for caches that don't need a value counter
-        public void PutIfAbsent(TK key, TV value)
+        protected void PutIfAbsent(TK key, TV value)
         {
             if (CacheMap.TryAdd(key, value))
             {
