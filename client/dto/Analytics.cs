@@ -52,18 +52,24 @@ namespace io.harness.cfsdk.client.dto
         {
             return other is EvaluationAnalytics otherEvaluation
                    && EqualityComparer<string>.Default.Equals(target?.Identifier, otherEvaluation.target?.Identifier)
-                   && EqualityComparer<string>.Default.Equals(FeatureConfig?.Feature, otherEvaluation.FeatureConfig?.Feature)
-                   && EqualityComparer<string>.Default.Equals(Variation?.Identifier, otherEvaluation.Variation?.Identifier)
+                   && EqualityComparer<string>.Default.Equals(FeatureConfig?.Feature,
+                       otherEvaluation.FeatureConfig?.Feature)
+                   && EqualityComparer<string>.Default.Equals(Variation?.Identifier,
+                       otherEvaluation.Variation?.Identifier)
                    && EqualityComparer<string>.Default.Equals(Variation?.Value, otherEvaluation.Variation?.Value);
         }
 
         public override int GetHashCode()
         {
             var hashCode = -1526478203;
-            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Target?.Identifier ?? string.Empty);
-            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(FeatureConfig?.Feature ?? string.Empty);
-            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Variation?.Identifier ?? string.Empty);
-            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Variation?.Value ?? string.Empty);
+            hashCode = hashCode * -1521134295 +
+                       EqualityComparer<string>.Default.GetHashCode(Target?.Identifier ?? string.Empty);
+            hashCode = hashCode * -1521134295 +
+                       EqualityComparer<string>.Default.GetHashCode(FeatureConfig?.Feature ?? string.Empty);
+            hashCode = hashCode * -1521134295 +
+                       EqualityComparer<string>.Default.GetHashCode(Variation?.Identifier ?? string.Empty);
+            hashCode = hashCode * -1521134295 +
+                       EqualityComparer<string>.Default.GetHashCode(Variation?.Value ?? string.Empty);
             return hashCode;
         }
     }
@@ -79,9 +85,7 @@ namespace io.harness.cfsdk.client.dto
         public override bool Equals(Analytics other)
         {
             if (other is TargetAnalytics otherTarget)
-            {
                 return EqualityComparer<string>.Default.Equals(Target?.Identifier, otherTarget.Target?.Identifier);
-            }
             return false;
         }
 
