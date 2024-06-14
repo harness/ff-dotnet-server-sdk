@@ -23,7 +23,7 @@ namespace io.harness.cfsdk.client.api
         internal int evaluationMetricsMaxSize = 10000;
         internal int targetMetricsMaxSize = 100000;
         internal int cacheRecoveryTimeoutInMs = 5000;
-        internal bool useMapForInClause = false;
+        internal bool useMapForInClause = true;
         internal int seenTargetsCacheTtlInSeconds = 43200;
         internal int seenTargetsCacheLimit = 500000;
 
