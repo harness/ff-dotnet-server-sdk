@@ -21,7 +21,9 @@ namespace io.harness.cfsdk.client.api
         bool boolVariation(string key, dto.Target target, bool defaultValue);
         string stringVariation(string key, dto.Target target, string defaultValue);
         double numberVariation(string key, dto.Target target, double defaultValue);
-        JToken jsonVariation(string key, dto.Target target, JToken defaultValue);
+        JToken jsonVariationToken(string key, dto.Target target, JToken defaultValue);
+        JObject jsonVariation(string key, dto.Target target, JObject defaultValue);
+
 
         event EventHandler InitializationCompleted;
         event EventHandler<string> EvaluationChanged;
@@ -210,7 +212,10 @@ namespace io.harness.cfsdk.client.api
         public bool boolVariation(string key, dto.Target target, bool defaultValue) { return client.BoolVariation(key, target, defaultValue);  }
         public string stringVariation(string key, dto.Target target, string defaultValue) { return client.StringVariation(key, target, defaultValue); }
         public double numberVariation(string key, dto.Target target, double defaultValue) { return client.NumberVariation(key, target, defaultValue); }
-        public JToken jsonVariation(string key, dto.Target target, JToken defaultValue) {  return client.JsonVariation(key, target, defaultValue); }
+        public JToken jsonVariationToken(string key, dto.Target target, JToken defaultValue) {  return client.JsonVariationToken(key, target, defaultValue); }
+        [Obsolete("This method only supports JSON objects. If a JSON array variation is returned it will result in a warning being logged and the default variation being returned. Use jsonVariationToken(string key, Target target, JToken defaultValue) since version 1.7.0 for support of both JSON objects and arrays.")]
+        public JObject jsonVariation(string key, dto.Target target, JObject defaultValue) {  return client.JsonVariation(key, target, defaultValue); }
+
 
         // force message
         public void Update(Message msg) { client.Update(msg, true);  }

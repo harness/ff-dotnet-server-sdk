@@ -337,7 +337,47 @@ namespace io.harness.cfsdk.client.api
             }
         }
 
-        public JToken JsonVariation(string key, Target target, JToken defaultValue)
+        public JToken JsonVariationToken(string key, Target target, JToken defaultValue)
+        {
+            try
+            {
+                return evaluator.JsonVariationToken(key, target, defaultValue);
+            }
+            catch (InvalidCacheStateException ex)
+            {
+                if (logger.IsEnabled(LogLevel.Warning))
+                    logger.LogWarning(ex,
+                        "Invalid cache state detected when evaluating json variation for flag {Key}, refreshing cache and retrying evaluation",
+                        key);
+                var result = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
+                if (result != RefreshOutcome.Success)
+                {
+                    if (logger.IsEnabled(LogLevel.Error))
+                        logger.LogError(
+                            "Refreshing cache for json variation for flag {Key} failed, returning default variation",
+                            key);
+                    LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
+                    return defaultValue;
+                }
+
+                try
+                {
+                    return evaluator.JsonVariationToken(key, target, defaultValue);
+                }
+                catch (InvalidCacheStateException)
+                {
+                    if (logger.IsEnabled(LogLevel.Warning))
+                        logger.LogWarning(
+                            "Attempted re-evaluation of json variation for flag {Key} after refreshing cache failed due to invalid cache state, returning default variation",
+                            key);
+                    LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
+                    return defaultValue;
+                }
+            }
+        }
+        
+
+        public JObject JsonVariation(string key, Target target, JObject defaultValue)
         {
             try
             {
@@ -375,6 +415,7 @@ namespace io.harness.cfsdk.client.api
                 }
             }
         }
+
 
 
         public void Close()
