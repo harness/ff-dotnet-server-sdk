@@ -161,6 +161,7 @@ namespace ff_server_sdk_test
             }
 
             object got = null;
+            object gotJsonTokenMethod = null;
             
             switch (kind)
             {
@@ -175,6 +176,7 @@ namespace ff_server_sdk_test
                     break;
                 case FeatureConfigKind.Json:
                     got = evaluator.JsonVariation(featureFlag, target, JObject.Parse("{val: 'default value'}"));
+                    gotJsonTokenMethod = evaluator.JsonVariationToken(featureFlag, target, JObject.Parse("{val: 'default value'}"));
                     break;
             }
 
@@ -188,6 +190,7 @@ namespace ff_server_sdk_test
             {
                 var expectedJson = JObject.Parse((string)expected);
                 Assert.AreEqual(expectedJson, got, $"Expected result for {featureFlag} was {expected}");
+                Assert.AreEqual(expectedJson, gotJsonTokenMethod, $"Expected result for {featureFlag} was {expected}");
             }
             else
             {
