@@ -72,7 +72,7 @@ namespace io.harness.cfsdk.client.api
                 catch (JsonReaderException ex)
                 {
                     logger.LogWarning("Failed to parse JSON variation");
-                    LogEvaluationFailureError(FeatureConfigKind.Json, key, target, ex.Message);
+                    LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
                 }
             }
 
