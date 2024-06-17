@@ -60,7 +60,6 @@ namespace io.harness.cfsdk.client.api
             LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
             return defaultValue;
         }
-        
         public JToken JsonVariation(string key, Target target, JToken defaultValue)
         {
             var variation = EvaluateVariation(key, target, FeatureConfigKind.Json);
