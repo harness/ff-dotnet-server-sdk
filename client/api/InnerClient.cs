@@ -337,8 +337,7 @@ namespace io.harness.cfsdk.client.api
             }
         }
 
-
-        public JObject JsonVariation(string key, Target target, JObject defaultValue)
+        public JToken JsonVariation(string key, Target target, JToken defaultValue)
         {
             try
             {

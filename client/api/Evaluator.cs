@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using Target = io.harness.cfsdk.client.dto.Target;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 [assembly: InternalsVisibleToAttribute("ff-server-sdk-test")]
 
@@ -24,7 +25,7 @@ namespace io.harness.cfsdk.client.api
         bool BoolVariation(string key, Target target, bool defaultValue);
         string StringVariation(string key, Target target, string defaultValue);
         double NumberVariation(string key, Target target, double defaultValue);
-        JObject JsonVariation(string key, Target target, JObject defaultValue);
+        JToken JsonVariation(string key, Target target, JToken defaultValue); 
     }
 
     internal class Evaluator : IEvaluator
@@ -59,11 +60,22 @@ namespace io.harness.cfsdk.client.api
             LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
             return defaultValue;
         }
-
-        public JObject JsonVariation(string key, Target target, JObject defaultValue)
+        
+        public JToken JsonVariation(string key, Target target, JToken defaultValue)
         {
             var variation = EvaluateVariation(key, target, FeatureConfigKind.Json);
-            if (variation != null) return JObject.Parse(variation.Value);
+            if (variation != null)
+            {
+                try
+                {
+                    return JToken.Parse(variation.Value);
+                }
+                catch (JsonReaderException ex)
+                {
+                    logger.LogWarning("Failed to parse JSON variation");
+                    LogEvaluationFailureError(FeatureConfigKind.Json, key, target, ex.Message);
+                }
+            }
 
             LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
             return defaultValue;
