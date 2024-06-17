@@ -62,24 +62,28 @@ namespace io.harness.cfsdk.client.api
             LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
             return defaultValue;
         }
+
         public JToken JsonVariationToken(string key, Target target, JToken defaultValue)
         {
             var variation = EvaluateVariation(key, target, FeatureConfigKind.Json);
-            if (variation != null)
+            if (variation == null)
             {
-                try
-                {
-                    return JToken.Parse(variation.Value);
-                }
-                catch (JsonReaderException ex)
-                {
-                    logger.LogWarning("Failed to parse JSON variation");
-                    LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
-                }
+                LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
+                return defaultValue;
+            }
+            
+            try
+            {
+                return JToken.Parse(variation.Value);
+            }
+            catch (JsonReaderException ex)
+            {
+                if (!logger.IsEnabled(LogLevel.Warning)) return defaultValue;
+
+                LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
+                return defaultValue;
             }
 
-            LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
-            return defaultValue;
         }
         
         public JObject JsonVariation(string key, Target target, JObject defaultValue)
@@ -91,17 +95,18 @@ namespace io.harness.cfsdk.client.api
                 {
                     var token = JToken.Parse(variation.Value);
                     if (token.Type == JTokenType.Object) return (JObject)token;
-                    if (logger.IsEnabled(LogLevel.Warning))
-                    {
-                        logger.LogWarning("JSON variation is not an object. Returning default value. Use JsonVariationToken(string key, Target target, JToken defaultValue) which is available since version 1.7.0");
-                        LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
-                    }
+                    
+                    if (!logger.IsEnabled(LogLevel.Warning)) return defaultValue;
+                    
+                    logger.LogWarning("JSON variation is not an object. Returning default value. Use JsonVariationToken(string key, Target target, JToken defaultValue) which is available since version 1.7.0");
+                    LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
                     return defaultValue;
                 }
                 catch (JsonReaderException ex)
                 {
                     // Log the error if parsing fails
                     LogEvaluationFailureError(FeatureConfigKind.Json, key, target, ex.Message);
+                    return defaultValue;
                 }
             }
 
