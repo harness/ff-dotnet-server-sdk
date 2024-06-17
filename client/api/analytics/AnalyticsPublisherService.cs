@@ -75,7 +75,7 @@ namespace io.harness.cfsdk.client.api.analytics
         }
 
         private Metrics PrepareMessageBody(IDictionary<EvaluationAnalytics, int> evaluationsCache,
-            IDictionary<TargetAnalytics, bool> targetsCache)
+            IDictionary<string, TargetAnalytics> targetsCache)
         {
             var metrics = new Metrics();
             metrics.TargetData = new List<TargetData>();
@@ -104,7 +104,7 @@ namespace io.harness.cfsdk.client.api.analytics
             // Handle TargetAnalytics
             foreach (var targetAnalytic in targetsCache)
             {
-                var target = targetAnalytic.Key.Target;
+                var target = targetAnalytic.Value.Target;
                 if (target != null)
                 {
                     var targetData = new TargetData
