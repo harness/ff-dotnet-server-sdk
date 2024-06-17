@@ -93,7 +93,7 @@ namespace io.harness.cfsdk.client.api
                     if (token.Type == JTokenType.Object) return (JObject)token;
                     if (logger.IsEnabled(LogLevel.Warning))
                     {
-                        logger.LogWarning("JSON variation is not an object. Returning default value. Use JsonVariation(string key, Target target, JToken defaultValue) which is available since version 1.7.0");
+                        logger.LogWarning("JSON variation is not an object. Returning default value. Use JsonVariationToken(string key, Target target, JToken defaultValue) which is available since version 1.7.0");
                         LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
                     }
                     return defaultValue;
