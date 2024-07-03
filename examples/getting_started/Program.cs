@@ -23,7 +23,11 @@ namespace getting_started
 
             // Create a feature flag client
             var client = new CfClient(apiKey, Config.Builder().LoggerFactory(loggerFactory).Build());
-            client.WaitForInitialization();
+            var isInit = client.WaitForInitialization(30000);
+            if (!isInit)
+            {
+                Console.WriteLine("Failed to init the SDK within 30seconds");
+            }
 
             // Create a target (different targets can get different results based on rules)
             Target target = Target.builder()
