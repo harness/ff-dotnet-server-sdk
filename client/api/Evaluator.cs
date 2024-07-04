@@ -120,7 +120,7 @@ namespace io.harness.cfsdk.client.api
             double res;
             if (variation != null && double.TryParse(variation.Value, out res)) return res;
 
-            LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue.ToString());
+            LogEvaluationFailureError(FeatureConfigKind.Int, key, target, defaultValue.ToString());
             return defaultValue;
         }
 
