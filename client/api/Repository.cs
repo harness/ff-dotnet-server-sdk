@@ -277,6 +277,9 @@ namespace io.harness.cfsdk.client.api
 
         public void SetFlags(IEnumerable<FeatureConfig> flags)
         {
+            // Collect updated flag IDs to notify onFlagStored callback outside the rw lock
+            List<string> updatedIdentifiers = new List<string>();
+            
             rwLock.EnterWriteLock();
             try
             {
@@ -284,11 +287,17 @@ namespace io.harness.cfsdk.client.api
                 {
                     SortFlagRules(item);
                     Update(item.Feature, FlagKey(item.Feature), item);
+                    updatedIdentifiers.Add(item.Feature);
                 }
             }
             finally
             {
                 rwLock.ExitWriteLock();
+            }
+            
+            foreach (var identifier in updatedIdentifiers)
+            {
+                this.callback?.OnFlagStored(identifier);
             }
         }
 
