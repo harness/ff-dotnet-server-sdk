@@ -14,6 +14,7 @@ namespace io.harness.cfsdk.client.api
     internal interface IRepositoryCallback
     {
         void OnFlagStored(string identifier);
+        void OnFlagsLoaded(string[] identifiers);
         void OnFlagDeleted(string identifier);
         void OnSegmentStored(string identifier);
         void OnSegmentDeleted(string identifier);
@@ -278,7 +279,7 @@ namespace io.harness.cfsdk.client.api
         public void SetFlags(IEnumerable<FeatureConfig> flags)
         {
             // Collect updated flag IDs to notify onFlagStored callback outside the rw lock
-            List<string> updatedIdentifiers = new List<string>();
+            // List<string> updatedIdentifiers = new List<string>();
             
             rwLock.EnterWriteLock();
             try
@@ -287,7 +288,7 @@ namespace io.harness.cfsdk.client.api
                 {
                     SortFlagRules(item);
                     Update(item.Feature, FlagKey(item.Feature), item);
-                    updatedIdentifiers.Add(item.Feature);
+                    // updatedIdentifiers.Add(item.Feature);
                 }
             }
             finally
@@ -295,10 +296,10 @@ namespace io.harness.cfsdk.client.api
                 rwLock.ExitWriteLock();
             }
             
-            foreach (var identifier in updatedIdentifiers)
-            {
-                this.callback?.OnFlagStored(identifier);
-            }
+            // foreach (var identifier in updatedIdentifiers)
+            // {
+            //     this.callback?.OnFlagStored(identifier);
+            // }
         }
 
         public void SetSegments(IEnumerable<Segment> segments)
