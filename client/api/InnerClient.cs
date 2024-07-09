@@ -193,9 +193,7 @@ namespace io.harness.cfsdk.client.api
         
         public void OnFlagsLoaded(string[] identifiers)
         {
-            // TODO implement me
-            // OnNotifyEvaluationChanged(identifier);
-            
+            OnNotifyFlagsLoaded(identifiers);
         }
         
         public void OnFlagDeleted(string identifier)
