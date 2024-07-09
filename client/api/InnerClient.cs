@@ -4,6 +4,7 @@ using io.harness.cfsdk.client.connector;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -36,7 +37,7 @@ namespace io.harness.cfsdk.client.api
 
         public event EventHandler InitializationCompleted;
         public event EventHandler<string> EvaluationChanged;
-        public event EventHandler<string[]> FlagsLoaded;
+        public event EventHandler<List<string>> FlagsLoaded;
 
         private readonly CfClient parent;
         private readonly CountdownEvent sdkReadyLatch = new(1);
@@ -135,6 +136,8 @@ namespace io.harness.cfsdk.client.api
             logger.LogTrace("Signal sdkReadyLatch to release");
             sdkReadyLatch.Signal();
             OnNotifyInitializationCompleted();
+            var flagIDs = repository.GetFlags();
+            OnNotifyFlagsLoaded(flagIDs);
             SetSdkInitialized(true);
             logger.LogInformation("SDKCODE(init:1000): The SDK has successfully initialized");
             logger.LogInformation("SDK version: " + Assembly.GetExecutingAssembly().GetName().Version);
@@ -191,7 +194,7 @@ namespace io.harness.cfsdk.client.api
             OnNotifyEvaluationChanged(identifier);
         }
         
-        public void OnFlagsLoaded(string[] identifiers)
+        public void OnFlagsLoaded(List<string> identifiers)
         {
             OnNotifyFlagsLoaded(identifiers);
         }
@@ -225,7 +228,7 @@ namespace io.harness.cfsdk.client.api
             EvaluationChanged?.Invoke(parent, identifier);
         }
         
-        private void OnNotifyFlagsLoaded(string[] identifiers)
+        private void OnNotifyFlagsLoaded(List<string> identifiers)
         {
             FlagsLoaded?.Invoke(parent, identifiers);
         }
