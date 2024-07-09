@@ -227,7 +227,7 @@ namespace io.harness.cfsdk.client.api
 
                 if (logger.IsEnabled(LogLevel.Warning))
                     logger.LogWarning(
-                        "SDK not initialized, returning default variation");
+                        "SDK not initialized, returning default variation for {Flag}", key);
                 LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
                 return defaultValue;
 
