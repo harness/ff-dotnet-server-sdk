@@ -133,10 +133,10 @@ namespace io.harness.cfsdk.client.api
 
             logger.LogTrace("Signal sdkReadyLatch to release");
             sdkReadyLatch.Signal();
-            logger.LogInformation("SDKCODE(init:1000): The SDK has successfully initialized");
-            logger.LogInformation("SDK version: " + Assembly.GetExecutingAssembly().GetName().Version);
             OnNotifyInitializationCompleted();
             SetSdkInitialized(true);
+            logger.LogInformation("SDKCODE(init:1000): The SDK has successfully initialized");
+            logger.LogInformation("SDK version: " + Assembly.GetExecutingAssembly().GetName().Version);
         }
 
         /// <summary>
@@ -478,6 +478,7 @@ namespace io.harness.cfsdk.client.api
             this.polling?.Stop();
             this.update?.Stop();
             this.metric?.Stop();
+            this.SetSdkInitialized(false);
             logger.LogDebug("InnerClient was closed");
         }
 
