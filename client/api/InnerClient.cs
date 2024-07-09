@@ -39,6 +39,10 @@ namespace io.harness.cfsdk.client.api
 
         private readonly CfClient parent;
         private readonly CountdownEvent sdkReadyLatch = new(1);
+        
+        // Use property SdkInitialized for thread safe access 
+        private int sdkInitialized; 
+        public bool SdkInitialized => Interlocked.CompareExchange(ref sdkInitialized, 0, 0) == 1;
 
         public InnerClient(CfClient parent, ILoggerFactory loggerFactory) { this.parent = parent;
             this.loggerFactory = loggerFactory;
@@ -132,6 +136,7 @@ namespace io.harness.cfsdk.client.api
             logger.LogInformation("SDKCODE(init:1000): The SDK has successfully initialized");
             logger.LogInformation("SDK version: " + Assembly.GetExecutingAssembly().GetName().Version);
             OnNotifyInitializationCompleted();
+            SetSdkInitialized(true);
         }
 
         /// <summary>
@@ -218,7 +223,14 @@ namespace io.harness.cfsdk.client.api
         {
             try
             {
-                return evaluator.BoolVariation(key, target, defaultValue);
+                if (SdkInitialized) return evaluator.BoolVariation(key, target, defaultValue);
+
+                if (logger.IsEnabled(LogLevel.Warning))
+                    logger.LogWarning(
+                        "SDK not initialized, returning default variation");
+                LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
+                return defaultValue;
+
             }
             catch (InvalidCacheStateException ex)
             {
@@ -246,9 +258,8 @@ namespace io.harness.cfsdk.client.api
                 catch (InvalidCacheStateException)
                 {
                     if (logger.IsEnabled(LogLevel.Error))
-                        logger.LogError(ex,
-                            "Attempted re-evaluation of boolean variation for flag {Key} after refreshing cache failed due to invalid cache state, returning default variation",
-                            key);
+                        logger.LogWarning(
+                            "SDK not initialized, returning default variation for {Flag}", key);
 
                     LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
                     return defaultValue;
@@ -260,7 +271,14 @@ namespace io.harness.cfsdk.client.api
         {
             try
             {
-                return evaluator.StringVariation(key, target, defaultValue);
+                if (SdkInitialized) return evaluator.StringVariation(key, target, defaultValue);
+
+                if (logger.IsEnabled(LogLevel.Warning))
+                    logger.LogWarning(
+                        "SDK not initialized, returning default variation for {Flag}", key);
+                
+                LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
+                return defaultValue;
             }
             catch (InvalidCacheStateException ex)
             {
@@ -301,7 +319,14 @@ namespace io.harness.cfsdk.client.api
         {
             try
             {
-                return evaluator.NumberVariation(key, target, defaultValue);
+                if (SdkInitialized) return evaluator.NumberVariation(key, target, defaultValue);
+
+                if (logger.IsEnabled(LogLevel.Warning))
+                    logger.LogWarning(
+                        "SDK not initialized, returning default variation for {Flag}", key);
+                
+                LogEvaluationFailureError(FeatureConfigKind.Int, key, target, defaultValue.ToString());
+                return defaultValue;
             }
             catch (InvalidCacheStateException ex)
             {
@@ -341,7 +366,14 @@ namespace io.harness.cfsdk.client.api
         {
             try
             {
-                return evaluator.JsonVariationToken(key, target, defaultValue);
+                if (SdkInitialized) return evaluator.JsonVariationToken(key, target, defaultValue);
+
+                if (logger.IsEnabled(LogLevel.Warning))
+                    logger.LogWarning(
+                        "SDK not initialized, returning default variation for {Flag}", key);
+                
+                LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
+                return defaultValue;
             }
             catch (InvalidCacheStateException ex)
             {
@@ -381,7 +413,14 @@ namespace io.harness.cfsdk.client.api
         {
             try
             {
-                return evaluator.JsonVariation(key, target, defaultValue);
+                if (SdkInitialized) return evaluator.JsonVariation(key, target, defaultValue);
+
+                if (logger.IsEnabled(LogLevel.Warning))
+                    logger.LogWarning(
+                        "SDK not initialized, returning default variation for {Flag}", key);
+                
+                LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
+                return defaultValue;
             }
             catch (InvalidCacheStateException ex)
             {
@@ -414,6 +453,12 @@ namespace io.harness.cfsdk.client.api
                     return defaultValue;
                 }
             }
+        }
+        
+        // Method to encapsulate setting the sdkInitialized variable
+        private void SetSdkInitialized(bool value)
+        {
+            Interlocked.Exchange(ref sdkInitialized, value ? 1 : 0);
         }
 
 
