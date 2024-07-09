@@ -230,8 +230,8 @@ namespace io.harness.cfsdk.client.api
                         "SDK not initialized, returning default variation for {Flag}", key);
                 LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
                 return defaultValue;
-
             }
+
             catch (InvalidCacheStateException ex)
             {
                 if (logger.IsEnabled(LogLevel.Warning))
@@ -255,6 +255,7 @@ namespace io.harness.cfsdk.client.api
                 {
                     return evaluator.BoolVariation(key, target, defaultValue);
                 }
+                
                 catch (InvalidCacheStateException)
                 {
                     if (logger.IsEnabled(LogLevel.Error))
@@ -280,6 +281,7 @@ namespace io.harness.cfsdk.client.api
                 LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
                 return defaultValue;
             }
+            
             catch (InvalidCacheStateException ex)
             {
                 if (logger.IsEnabled(LogLevel.Warning))
@@ -302,6 +304,7 @@ namespace io.harness.cfsdk.client.api
                 {
                     return evaluator.StringVariation(key, target, defaultValue);
                 }
+                
                 catch (InvalidCacheStateException)
                 {
                     if (logger.IsEnabled(LogLevel.Warning))
@@ -328,6 +331,7 @@ namespace io.harness.cfsdk.client.api
                 LogEvaluationFailureError(FeatureConfigKind.Int, key, target, defaultValue.ToString());
                 return defaultValue;
             }
+            
             catch (InvalidCacheStateException ex)
             {
                 if (logger.IsEnabled(LogLevel.Warning))
@@ -350,6 +354,7 @@ namespace io.harness.cfsdk.client.api
                 {
                     return evaluator.NumberVariation(key, target, defaultValue);
                 }
+                
                 catch (InvalidCacheStateException)
                 {
                     if (logger.IsEnabled(LogLevel.Warning))
@@ -375,6 +380,7 @@ namespace io.harness.cfsdk.client.api
                 LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
                 return defaultValue;
             }
+            
             catch (InvalidCacheStateException ex)
             {
                 if (logger.IsEnabled(LogLevel.Warning))
@@ -396,6 +402,7 @@ namespace io.harness.cfsdk.client.api
                 {
                     return evaluator.JsonVariationToken(key, target, defaultValue);
                 }
+                
                 catch (InvalidCacheStateException)
                 {
                     if (logger.IsEnabled(LogLevel.Warning))
