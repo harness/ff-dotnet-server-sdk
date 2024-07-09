@@ -89,7 +89,7 @@ namespace io.harness.cfsdk.client.api
 
             try
             {
-                Task.WhenAll(new List<Task> { ProcessFlags(), ProcessSegments() }).Wait();
+                Task.WhenAll(new List<Task> { ProcessFlags(false), ProcessSegments() }).Wait();
             }
             catch (Exception ex)
             {
@@ -109,14 +109,14 @@ namespace io.harness.cfsdk.client.api
             pollTimer = null;
 
         }
-        private async Task ProcessFlags()
+        private async Task ProcessFlags(bool isPollingCall)
         {
             try
             {
                 logger.LogDebug("Fetching flags started");
                 var flags = await this.connector.GetFlags();
                 logger.LogDebug("Fetching flags finished");
-                repository.SetFlags(flags);
+                repository.SetFlags(flags, isPollingCall);
                 logger.LogDebug("Loaded {SegmentRuleCount} flags", flags.Count());
 
             }
@@ -154,7 +154,7 @@ namespace io.harness.cfsdk.client.api
                 }
 
                 var processSegmentsTask = Task.Run(async () => await ProcessSegments());
-                var processFlagsTask = Task.Run(async () => await ProcessFlags());
+                var processFlagsTask = Task.Run(async () => await ProcessFlags(false));
 
                 try
                 {
@@ -219,7 +219,7 @@ namespace io.harness.cfsdk.client.api
                 }
                 try
                 {
-                    var task = Task.Run(async () => await ProcessFlags());
+                    var task = Task.Run(async () => await ProcessFlags(false));
                     var refreshSuccessful = task.Wait(timeout);
                     if (refreshSuccessful)
                     {
@@ -254,7 +254,7 @@ namespace io.harness.cfsdk.client.api
             try
             {
                 logger.LogDebug("Running polling iteration");
-                await Task.WhenAll(new List<Task> { ProcessFlags(), ProcessSegments() });
+                await Task.WhenAll(new List<Task> { ProcessFlags(true), ProcessSegments() });
 
                 if (isInitialized) return;
                 isInitialized = true;

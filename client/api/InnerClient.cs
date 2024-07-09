@@ -193,7 +193,7 @@ namespace io.harness.cfsdk.client.api
         {
             OnNotifyEvaluationChanged(identifier);
         }
-        
+
         public void OnFlagsLoaded(List<string> identifiers)
         {
             OnNotifyFlagsLoaded(identifiers);

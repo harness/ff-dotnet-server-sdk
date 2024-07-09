@@ -14,6 +14,7 @@ namespace io.harness.cfsdk.client.api
     internal interface IRepositoryCallback
     {
         void OnFlagStored(string identifier);
+        void OnFlagsLoaded(List<string> identifiers);
         void OnFlagDeleted(string identifier);
         void OnSegmentStored(string identifier);
         void OnSegmentDeleted(string identifier);
@@ -23,7 +24,7 @@ namespace io.harness.cfsdk.client.api
         void SetFlag(string identifier, FeatureConfig featureConfig);
         void SetSegment(string identifier, Segment segment);
 
-        void SetFlags(IEnumerable<FeatureConfig> flags);
+        void SetFlags(IEnumerable<FeatureConfig> flags, bool isPollingCall);
         void SetSegments(IEnumerable<Segment> segments);
 
         FeatureConfig GetFlag(string identifier);
@@ -66,8 +67,7 @@ namespace io.harness.cfsdk.client.api
         {
             return GetFlag(identifier, true);
         }
-
-
+        
         public List<string> GetFlags()
         {
             return GetFlagIdentifiers();
@@ -309,10 +309,10 @@ namespace io.harness.cfsdk.client.api
             this.callback?.OnSegmentStored(identifier);
         }
 
-        public void SetFlags(IEnumerable<FeatureConfig> flags)
+        public void SetFlags(IEnumerable<FeatureConfig> flags, bool isPollingCall)
         {
             // Collect updated flag IDs to notify onFlagStored callback outside the rw lock
-            // List<string> updatedIdentifiers = new List<string>();
+            List<string> identifiers = new List<string>();
             
             rwLock.EnterWriteLock();
             try
@@ -321,7 +321,8 @@ namespace io.harness.cfsdk.client.api
                 {
                     SortFlagRules(item);
                     Update(item.Feature, FlagKey(item.Feature), item);
-                    // updatedIdentifiers.Add(item.Feature);
+                    if (isPollingCall)
+                        identifiers.Add(item.Feature);
                 }
             }
             finally
@@ -333,6 +334,8 @@ namespace io.harness.cfsdk.client.api
             // {
             //     this.callback?.OnFlagStored(identifier);
             // }
+            if (isPollingCall)
+                this.callback?.OnFlagsLoaded(identifiers);
         }
 
         public void SetSegments(IEnumerable<Segment> segments)
