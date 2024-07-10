@@ -312,7 +312,7 @@ namespace io.harness.cfsdk.client.api
         public void SetFlags(IEnumerable<FeatureConfig> flags, bool isPollingCall)
         {
             // Collect updated flag IDs to notify onFlagStored callback outside the rw lock
-            List<string> identifiers = new List<string>();
+            var identifiers = new List<string>();
             
             rwLock.EnterWriteLock();
             try
@@ -329,11 +329,10 @@ namespace io.harness.cfsdk.client.api
             {
                 rwLock.ExitWriteLock();
             }
-            
-            // foreach (var identifier in updatedIdentifiers)
-            // {
-            //     this.callback?.OnFlagStored(identifier);
-            // }
+
+            // We don't want to send this callback on init, only polling, because
+            // groups will not be loaded
+            // TODO - actually, should we not send after flags/group loaded?
             if (isPollingCall)
                 this.callback?.OnFlagsLoaded(identifiers);
         }
