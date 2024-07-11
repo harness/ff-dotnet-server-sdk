@@ -136,10 +136,20 @@ client.InitializationCompleted += (sender, e) =>
     // fired when authentication is completed and recent configuration is fetched from server
     Console.WriteLine("Notification Initialization Completed");
 };
-client.EvaluationChanged += (sender, identifier) =>
+client.EvaluationChanged += (sender, flagIdentifier) =>
 {
-    // Fired when flag value changes.
-    Console.WriteLine($"Flag changed for {identifier}");
+    // Fired when flag value changes from streaming events.
+    Console.WriteLine($"Flag changed for {flagIdentifier}");
+};
+
+client.FlagsLoaded += (sender, flagIdentifiers) =>
+{
+    // Fired once when the SDK has initiailized, and subsquently on each poll if streaming is disabled or has disconnected
+    // and fallen back to polling
+    foreach (var flagIdentifier in flagIdentifiers)
+    {
+        Console.WriteLine($"Flags loaded: Flag '{flagIdentifier}");
+    }
 };
 ```
 
