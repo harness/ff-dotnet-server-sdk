@@ -24,7 +24,7 @@ namespace io.harness.cfsdk.client.api
         void SetFlag(string identifier, FeatureConfig featureConfig);
         void SetSegment(string identifier, Segment segment);
 
-        void SetFlags(IEnumerable<FeatureConfig> flags, bool isPollingCall);
+        void SetFlags(IEnumerable<FeatureConfig> flags);
         void SetSegments(IEnumerable<Segment> segments);
 
         FeatureConfig GetFlag(string identifier);
@@ -309,11 +309,8 @@ namespace io.harness.cfsdk.client.api
             this.callback?.OnSegmentStored(identifier);
         }
 
-        public void SetFlags(IEnumerable<FeatureConfig> flags, bool isPollingCall)
+        public void SetFlags(IEnumerable<FeatureConfig> flags)
         {
-            // Collect updated flag IDs to notify onFlagStored callback outside the rw lock
-            var identifiers = new List<string>();
-            
             rwLock.EnterWriteLock();
             try
             {
@@ -321,20 +318,12 @@ namespace io.harness.cfsdk.client.api
                 {
                     SortFlagRules(item);
                     Update(item.Feature, FlagKey(item.Feature), item);
-                    if (isPollingCall)
-                        identifiers.Add(item.Feature);
                 }
             }
             finally
             {
                 rwLock.ExitWriteLock();
             }
-
-            // We don't want to send this callback on init, only polling, because
-            // groups will not be loaded
-            // TODO - actually, should we not send after flags/group loaded?
-            if (isPollingCall)
-                this.callback?.OnFlagsLoaded(identifiers);
         }
 
         public void SetSegments(IEnumerable<Segment> segments)

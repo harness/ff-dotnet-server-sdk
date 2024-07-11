@@ -24,6 +24,8 @@ namespace io.harness.cfsdk.client.api
         void OnPollerReady();
 
         void OnPollError(string message);
+
+        void OnPollRan(List<string> identifiers);
     }
 
     internal interface IPollingProcessor
@@ -89,7 +91,7 @@ namespace io.harness.cfsdk.client.api
 
             try
             {
-                Task.WhenAll(new List<Task> { ProcessFlags(false), ProcessSegments() }).Wait();
+                Task.WhenAll(new List<Task> { ProcessFlags(), ProcessSegments() }).Wait();
             }
             catch (Exception ex)
             {
@@ -109,14 +111,14 @@ namespace io.harness.cfsdk.client.api
             pollTimer = null;
 
         }
-        private async Task ProcessFlags(bool isPollingCall)
+        private async Task ProcessFlags()
         {
             try
             {
                 logger.LogDebug("Fetching flags started");
                 var flags = await this.connector.GetFlags();
                 logger.LogDebug("Fetching flags finished");
-                repository.SetFlags(flags, isPollingCall);
+                repository.SetFlags(flags);
                 logger.LogDebug("Loaded {SegmentRuleCount} flags", flags.Count());
 
             }
@@ -154,7 +156,7 @@ namespace io.harness.cfsdk.client.api
                 }
 
                 var processSegmentsTask = Task.Run(async () => await ProcessSegments());
-                var processFlagsTask = Task.Run(async () => await ProcessFlags(false));
+                var processFlagsTask = Task.Run(async () => await ProcessFlags());
 
                 try
                 {
@@ -219,7 +221,7 @@ namespace io.harness.cfsdk.client.api
                 }
                 try
                 {
-                    var task = Task.Run(async () => await ProcessFlags(false));
+                    var task = Task.Run(async () => await ProcessFlags());
                     var refreshSuccessful = task.Wait(timeout);
                     if (refreshSuccessful)
                     {
@@ -254,8 +256,9 @@ namespace io.harness.cfsdk.client.api
             try
             {
                 logger.LogDebug("Running polling iteration");
-                await Task.WhenAll(new List<Task> { ProcessFlags(true), ProcessSegments() });
-
+                await Task.WhenAll(new List<Task> { ProcessFlags(), ProcessSegments() });
+                var flagIDs = repository.GetFlags();
+                callback.OnPollRan(flagIDs);
                 if (isInitialized) return;
                 isInitialized = true;
                 callback?.OnPollerReady();

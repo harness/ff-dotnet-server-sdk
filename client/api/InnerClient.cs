@@ -185,6 +185,12 @@ namespace io.harness.cfsdk.client.api
         {
 
         }
+
+        public void OnPollRan(List<string> identifiers)
+        {
+            OnNotifyFlagsLoaded(identifiers);
+        }
+
         #endregion
 
         #region Repository callback
