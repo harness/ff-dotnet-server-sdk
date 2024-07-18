@@ -139,11 +139,15 @@ namespace io.harness.cfsdk.client.api
             metric.Start();
 
             logger.LogTrace("Signal sdkReadyLatch to release");
-            SdkInitialized = false;
+            SdkInitialized = true;
             sdkReadyLatch.Signal();
             OnNotifyInitializationCompleted();
-            var flagIDs = repository.GetFlags();
-            OnNotifyFlagsLoaded(flagIDs);
+            // Check if there are any subscribers to the FlagsLoaded event before calling repository.GetFlags()
+            if (FlagsLoaded != null)
+            {
+                var flagIDs = repository.GetFlags();
+                OnNotifyFlagsLoaded(flagIDs);
+            }
             logger.LogInformation("SDKCODE(init:1000): The SDK has successfully initialized");
             logger.LogInformation("SDK version: " + Assembly.GetExecutingAssembly().GetName().Version);
         }
