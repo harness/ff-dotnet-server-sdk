@@ -25,7 +25,7 @@ namespace io.harness.cfsdk.client.api
 
         void OnPollError(string message);
 
-        void OnPollCompleted(IList<string> identifiers);
+        void OnPollCompleted();
     }
 
     internal interface IPollingProcessor
@@ -257,8 +257,7 @@ namespace io.harness.cfsdk.client.api
             {
                 logger.LogDebug("Running polling iteration");
                 await Task.WhenAll(new List<Task> { ProcessFlags(), ProcessSegments() });
-                var flagIDs = repository.GetFlags();
-                callback.OnPollCompleted(flagIDs);
+                callback.OnPollCompleted();
                 if (isInitialized) return;
                 isInitialized = true;
                 callback?.OnPollerReady();

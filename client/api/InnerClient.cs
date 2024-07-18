@@ -195,9 +195,12 @@ namespace io.harness.cfsdk.client.api
 
         }
 
-        public void OnPollCompleted(IList<string> identifiers)
+        public void OnPollCompleted()
         {
-            OnNotifyFlagsLoaded(identifiers);
+            // Check if there are any subscribers to the FlagsLoaded event before calling repository.GetFlags()
+            if (FlagsLoaded == null) return;
+            var flagIDs = repository.GetFlags();
+            OnNotifyFlagsLoaded(flagIDs);
         }
 
         #endregion
