@@ -179,12 +179,12 @@ namespace io.harness.cfsdk.client.api
         }
         
         
-        private List<string> GetFlagIdentifiers()
+        private IList<string> GetFlagIdentifiers()
         {
             rwLock.EnterReadLock();
             try
             {
-                List<string> flagIdentifiers = new List<string>();
+                IList<string> flagIdentifiers = new List<string>();
                 ICollection<string> keys = this.store != null ? this.store.Keys() : this.cache.Keys();
                 foreach (string key in keys)
                 {
