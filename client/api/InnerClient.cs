@@ -254,18 +254,17 @@ namespace io.harness.cfsdk.client.api
             {
                 if (SdkInitialized) return evaluator.BoolVariation(key, target, defaultValue);
 
-                if (logger.IsEnabled(LogLevel.Warning))
-                    logger.LogWarning(
-                        "SDK not initialized, returning default variation for {Flag}", key);
+                logger.LogWarning(
+                    "SDK not initialized, returning default variation for {Flag}", key);
                 LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
                 return defaultValue;
             }
 
             catch (InvalidCacheStateException ex)
             {
-                if (logger.IsEnabled(LogLevel.Warning))
-                    logger.LogWarning(ex,
-                    "Invalid cache state detected when evaluating boolean variation for flag {Key}, refreshing cache and retrying evaluation ", key);
+                logger.LogWarning(ex,
+                    "Invalid cache state detected when evaluating boolean variation for flag {Key}, refreshing cache and retrying evaluation ",
+                    key);
 
                 // Attempt to refresh cache
                 var result = polling.RefreshFlagsAndSegments(TimeSpan.FromMilliseconds(2000));
@@ -273,8 +272,9 @@ namespace io.harness.cfsdk.client.api
                 // If the refresh has failed or exceeded the timout, return default variation
                 if (result != RefreshOutcome.Success)
                 {
-                    if (logger.IsEnabled(LogLevel.Error))
-                        logger.LogError(ex, "Refreshing cache for boolean variation for flag {Key} failed, returning default variation ", key);
+                    logger.LogError(ex,
+                        "Refreshing cache for boolean variation for flag {Key} failed, returning default variation ",
+                        key);
 
                     LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
                     return defaultValue;
@@ -287,9 +287,8 @@ namespace io.harness.cfsdk.client.api
                 
                 catch (InvalidCacheStateException)
                 {
-                    if (logger.IsEnabled(LogLevel.Warning))
-                        logger.LogWarning(
-                            "SDK not initialized, returning default variation for {Flag}", key);
+                    logger.LogWarning(
+                        "SDK not initialized, returning default variation for {Flag}", key);
 
                     LogEvaluationFailureError(FeatureConfigKind.Boolean, key, target, defaultValue.ToString());
                     return defaultValue;
@@ -303,9 +302,8 @@ namespace io.harness.cfsdk.client.api
             {
                 if (SdkInitialized) return evaluator.StringVariation(key, target, defaultValue);
 
-                if (logger.IsEnabled(LogLevel.Warning))
-                    logger.LogWarning(
-                        "SDK not initialized, returning default variation for {Flag}", key);
+                logger.LogWarning(
+                    "SDK not initialized, returning default variation for {Flag}", key);
                 
                 LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
                 return defaultValue;
@@ -313,18 +311,16 @@ namespace io.harness.cfsdk.client.api
             
             catch (InvalidCacheStateException ex)
             {
-                if (logger.IsEnabled(LogLevel.Warning))
-                    logger.LogWarning(ex,
-                        "Invalid cache state detected when evaluating string variation for flag {Key}, refreshing cache and retrying evaluation",
-                        key);
+                logger.LogWarning(ex,
+                    "Invalid cache state detected when evaluating string variation for flag {Key}, refreshing cache and retrying evaluation",
+                    key);
 
                 var result = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
                 if (result != RefreshOutcome.Success)
                 {
-                    if (logger.IsEnabled(LogLevel.Error))
-                        logger.LogError(
-                            "Refreshing cache for string variation for flag {Key} failed, returning default variation",
-                            key);
+                    logger.LogError(
+                        "Refreshing cache for string variation for flag {Key} failed, returning default variation",
+                        key);
                     LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
                     return defaultValue;
                 }
@@ -336,10 +332,9 @@ namespace io.harness.cfsdk.client.api
                 
                 catch (InvalidCacheStateException)
                 {
-                    if (logger.IsEnabled(LogLevel.Warning))
-                        logger.LogWarning(
-                            "Attempted re-evaluation of string variation for flag {Key} after refreshing cache failed due to invalid cache state, returning default variation",
-                            key);
+                    logger.LogWarning(
+                        "Attempted re-evaluation of string variation for flag {Key} after refreshing cache failed due to invalid cache state, returning default variation",
+                        key);
                     LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
                     return defaultValue;
                 }
@@ -353,9 +348,8 @@ namespace io.harness.cfsdk.client.api
             {
                 if (SdkInitialized) return evaluator.NumberVariation(key, target, defaultValue);
 
-                if (logger.IsEnabled(LogLevel.Warning))
-                    logger.LogWarning(
-                        "SDK not initialized, returning default variation for {Flag}", key);
+                logger.LogWarning(
+                    "SDK not initialized, returning default variation for {Flag}", key);
                 
                 LogEvaluationFailureError(FeatureConfigKind.Int, key, target, defaultValue.ToString());
                 return defaultValue;
@@ -363,17 +357,15 @@ namespace io.harness.cfsdk.client.api
             
             catch (InvalidCacheStateException ex)
             {
-                if (logger.IsEnabled(LogLevel.Warning))
-                    logger.LogWarning(ex,
-                        "Invalid cache state detected when evaluating number variation for flag {Key}, refreshing cache and retrying evaluation",
-                        key);
+                logger.LogWarning(ex,
+                    "Invalid cache state detected when evaluating number variation for flag {Key}, refreshing cache and retrying evaluation",
+                    key);
                 var result = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
                 if (result != RefreshOutcome.Success)
                 {
-                    if (logger.IsEnabled(LogLevel.Error))
-                        logger.LogError(
-                            "Refreshing cache for number variation for flag {Key} failed, returning default variation",
-                            key);
+                    logger.LogError(
+                        "Refreshing cache for number variation for flag {Key} failed, returning default variation",
+                        key);
 
                     LogEvaluationFailureError(FeatureConfigKind.Int, key, target, defaultValue.ToString());
                     return defaultValue;
@@ -386,10 +378,9 @@ namespace io.harness.cfsdk.client.api
                 
                 catch (InvalidCacheStateException)
                 {
-                    if (logger.IsEnabled(LogLevel.Warning))
-                        logger.LogWarning(
-                            "Attempted re-evaluation of number variation for flag {Key} after refreshing cache failed due to invalid cache state, returning default variation",
-                            key);
+                    logger.LogWarning(
+                        "Attempted re-evaluation of number variation for flag {Key} after refreshing cache failed due to invalid cache state, returning default variation",
+                        key);
                     LogEvaluationFailureError(FeatureConfigKind.Int, key, target, defaultValue.ToString());
                     return defaultValue;
                 }
@@ -402,9 +393,8 @@ namespace io.harness.cfsdk.client.api
             {
                 if (SdkInitialized) return evaluator.JsonVariationToken(key, target, defaultValue);
 
-                if (logger.IsEnabled(LogLevel.Warning))
-                    logger.LogWarning(
-                        "SDK not initialized, returning default variation for {Flag}", key);
+                logger.LogWarning(
+                    "SDK not initialized, returning default variation for {Flag}", key);
                 
                 LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
                 return defaultValue;
@@ -412,17 +402,15 @@ namespace io.harness.cfsdk.client.api
             
             catch (InvalidCacheStateException ex)
             {
-                if (logger.IsEnabled(LogLevel.Warning))
-                    logger.LogWarning(ex,
-                        "Invalid cache state detected when evaluating json variation for flag {Key}, refreshing cache and retrying evaluation",
-                        key);
+                logger.LogWarning(ex,
+                    "Invalid cache state detected when evaluating json variation for flag {Key}, refreshing cache and retrying evaluation",
+                    key);
                 var result = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
                 if (result != RefreshOutcome.Success)
                 {
-                    if (logger.IsEnabled(LogLevel.Error))
-                        logger.LogError(
-                            "Refreshing cache for json variation for flag {Key} failed, returning default variation",
-                            key);
+                    logger.LogError(
+                        "Refreshing cache for json variation for flag {Key} failed, returning default variation",
+                        key);
                     LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
                     return defaultValue;
                 }
@@ -431,13 +419,12 @@ namespace io.harness.cfsdk.client.api
                 {
                     return evaluator.JsonVariationToken(key, target, defaultValue);
                 }
-                
+
                 catch (InvalidCacheStateException)
                 {
-                    if (logger.IsEnabled(LogLevel.Warning))
-                        logger.LogWarning(
-                            "Attempted re-evaluation of json variation for flag {Key} after refreshing cache failed due to invalid cache state, returning default variation",
-                            key);
+                    logger.LogWarning(
+                        "Attempted re-evaluation of json variation for flag {Key} after refreshing cache failed due to invalid cache state, returning default variation",
+                        key);
                     LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
                     return defaultValue;
                 }
@@ -451,26 +438,23 @@ namespace io.harness.cfsdk.client.api
             {
                 if (SdkInitialized) return evaluator.JsonVariation(key, target, defaultValue);
 
-                if (logger.IsEnabled(LogLevel.Warning))
-                    logger.LogWarning(
-                        "SDK not initialized, returning default variation for {Flag}", key);
+                logger.LogWarning(
+                    "SDK not initialized, returning default variation for {Flag}", key);
                 
                 LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
                 return defaultValue;
             }
             catch (InvalidCacheStateException ex)
             {
-                if (logger.IsEnabled(LogLevel.Warning))
-                    logger.LogWarning(ex,
-                        "Invalid cache state detected when evaluating json variation for flag {Key}, refreshing cache and retrying evaluation",
-                        key);
+                logger.LogWarning(ex,
+                    "Invalid cache state detected when evaluating json variation for flag {Key}, refreshing cache and retrying evaluation",
+                    key);
                 var result = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
                 if (result != RefreshOutcome.Success)
                 {
-                    if (logger.IsEnabled(LogLevel.Error))
-                        logger.LogError(
-                            "Refreshing cache for json variation for flag {Key} failed, returning default variation",
-                            key);
+                    logger.LogError(
+                        "Refreshing cache for json variation for flag {Key} failed, returning default variation",
+                        key);
                     LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
                     return defaultValue;
                 }
@@ -481,10 +465,9 @@ namespace io.harness.cfsdk.client.api
                 }
                 catch (InvalidCacheStateException)
                 {
-                    if (logger.IsEnabled(LogLevel.Warning))
-                        logger.LogWarning(
-                            "Attempted re-evaluation of json variation for flag {Key} after refreshing cache failed due to invalid cache state, returning default variation",
-                            key);
+                    logger.LogWarning(
+                        "Attempted re-evaluation of json variation for flag {Key} after refreshing cache failed due to invalid cache state, returning default variation",
+                        key);
                     LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue.ToString());
                     return defaultValue;
                 }
