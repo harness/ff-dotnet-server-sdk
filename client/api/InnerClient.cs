@@ -195,7 +195,8 @@ namespace io.harness.cfsdk.client.api
 
         }
 
-        public void OnPollCompleted(IList<string> identifiers)
+        public void OnPollCompleted(IList<string> identifiers) =>
+            OnNotifyFlagsLoaded(identifiers);
         {
             OnNotifyFlagsLoaded(identifiers);
         }
