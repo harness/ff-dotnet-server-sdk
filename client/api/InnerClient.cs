@@ -37,7 +37,7 @@ namespace io.harness.cfsdk.client.api
 
         public event EventHandler InitializationCompleted;
         public event EventHandler<string> EvaluationChanged;
-        public event EventHandler<List<string>> FlagsLoaded;
+        public event EventHandler<IList<string>> FlagsLoaded;
 
         private readonly CfClient parent;
         private readonly CountdownEvent sdkReadyLatch = new(1);
@@ -186,7 +186,7 @@ namespace io.harness.cfsdk.client.api
 
         }
 
-        public void OnPollCompleted(List<string> identifiers)
+        public void OnPollCompleted(IList<string> identifiers)
         {
             OnNotifyFlagsLoaded(identifiers);
         }
@@ -200,7 +200,7 @@ namespace io.harness.cfsdk.client.api
             OnNotifyEvaluationChanged(identifier);
         }
 
-        public void OnFlagsLoaded(List<string> identifiers)
+        public void OnFlagsLoaded(IList<string> identifiers)
         {
             OnNotifyFlagsLoaded(identifiers);
         }
@@ -234,7 +234,7 @@ namespace io.harness.cfsdk.client.api
             EvaluationChanged?.Invoke(parent, identifier);
         }
         
-        private void OnNotifyFlagsLoaded(List<string> identifiers)
+        private void OnNotifyFlagsLoaded(IList<string> identifiers)
         {
             FlagsLoaded?.Invoke(parent, identifiers);
         }

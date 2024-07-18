@@ -14,7 +14,7 @@ namespace io.harness.cfsdk.client.api
     internal interface IRepositoryCallback
     {
         void OnFlagStored(string identifier);
-        void OnFlagsLoaded(List<string> identifiers);
+        void OnFlagsLoaded(IList<string> identifiers);
         void OnFlagDeleted(string identifier);
         void OnSegmentStored(string identifier);
         void OnSegmentDeleted(string identifier);
@@ -28,7 +28,7 @@ namespace io.harness.cfsdk.client.api
         void SetSegments(IEnumerable<Segment> segments);
 
         FeatureConfig GetFlag(string identifier);
-        List<string> GetFlags();
+        IList<string> GetFlags();
 
         Segment GetSegment(string identifier);
         IEnumerable<string> FindFlagsBySegment(string identifier);
@@ -68,7 +68,7 @@ namespace io.harness.cfsdk.client.api
             return GetFlag(identifier, true);
         }
         
-        public List<string> GetFlags()
+        public IList<string> GetFlags()
         {
             return GetFlagIdentifiers();
         }

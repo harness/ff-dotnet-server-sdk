@@ -25,7 +25,7 @@ namespace io.harness.cfsdk.client.api
 
         void OnPollError(string message);
 
-        void OnPollCompleted(List<string> identifiers);
+        void OnPollCompleted(IList<string> identifiers);
     }
 
     internal interface IPollingProcessor

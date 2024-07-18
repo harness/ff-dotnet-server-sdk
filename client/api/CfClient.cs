@@ -67,7 +67,7 @@ namespace io.harness.cfsdk.client.api
             remove { client.EvaluationChanged -= value; }
         }
         
-        public event EventHandler<List<string>> FlagsLoaded
+        public event EventHandler<IList<string>> FlagsLoaded
         {
             add { client.FlagsLoaded += value; }
             remove { client.FlagsLoaded -= value; }
