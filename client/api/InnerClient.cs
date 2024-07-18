@@ -42,11 +42,6 @@ namespace io.harness.cfsdk.client.api
         private readonly CfClient parent;
         private readonly CountdownEvent sdkReadyLatch = new(1);
         
-        // Use property SdkInitialized for thread safe access 
-        // private int sdkInitialized; 
-        // public bool SdkInitialized => Interlocked.CompareExchange(ref sdkInitialized, 0, 0) == 1;
-        // private void SdkInitialized(bool value) => Interlocked.Exchange(ref sdkInitialized, value ? 1 : 0);
-        //
         // Use property SdkInitialized for thread-safe access 
         private int sdkInitialized; 
     
