@@ -287,7 +287,7 @@ namespace io.harness.cfsdk.client.api
                 
                 catch (InvalidCacheStateException)
                 {
-                    if (logger.IsEnabled(LogLevel.Error))
+                    if (logger.IsEnabled(LogLevel.Warning))
                         logger.LogWarning(
                             "SDK not initialized, returning default variation for {Flag}", key);
 
