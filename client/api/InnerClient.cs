@@ -43,8 +43,18 @@ namespace io.harness.cfsdk.client.api
         private readonly CountdownEvent sdkReadyLatch = new(1);
         
         // Use property SdkInitialized for thread safe access 
+        // private int sdkInitialized; 
+        // public bool SdkInitialized => Interlocked.CompareExchange(ref sdkInitialized, 0, 0) == 1;
+        // private void SdkInitialized(bool value) => Interlocked.Exchange(ref sdkInitialized, value ? 1 : 0);
+        //
+        // Use property SdkInitialized for thread-safe access 
         private int sdkInitialized; 
-        public bool SdkInitialized => Interlocked.CompareExchange(ref sdkInitialized, 0, 0) == 1;
+    
+        public bool SdkInitialized 
+        { 
+            get => Interlocked.CompareExchange(ref sdkInitialized, 0, 0) == 1;
+            set => Interlocked.Exchange(ref sdkInitialized, value ? 1 : 0);
+        }
 
         public InnerClient(CfClient parent, ILoggerFactory loggerFactory) { this.parent = parent;
             this.loggerFactory = loggerFactory;
@@ -134,7 +144,7 @@ namespace io.harness.cfsdk.client.api
             metric.Start();
 
             logger.LogTrace("Signal sdkReadyLatch to release");
-            SetSdkInitialized(true);
+            SdkInitialized = false;
             sdkReadyLatch.Signal();
             OnNotifyInitializationCompleted();
             var flagIDs = repository.GetFlags();
@@ -481,14 +491,6 @@ namespace io.harness.cfsdk.client.api
                 }
             }
         }
-        
-        // Method to encapsulate setting the sdkInitialized variable
-        private void SetSdkInitialized(bool value)
-        {
-            Interlocked.Exchange(ref sdkInitialized, value ? 1 : 0);
-        }
-
-
 
         public void Close()
         {
@@ -498,7 +500,7 @@ namespace io.harness.cfsdk.client.api
             this.polling?.Stop();
             this.update?.Stop();
             this.metric?.Stop();
-            this.SetSdkInitialized(false);
+            this.SdkInitialized = false;
             logger.LogDebug("InnerClient was closed");
         }
 
