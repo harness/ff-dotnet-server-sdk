@@ -34,7 +34,7 @@ namespace getting_started
                 .Attributes(new Dictionary<string, string> { { "email", "demo@harness.io" } })
                 .build();
 
-            // Add some sample events
+            // Events need to be created **before** calling WaitForInitialization
             client.InitializationCompleted += (sender, e) =>
             {
                 Console.WriteLine("NOTIFICATION: Initialization Completed");
