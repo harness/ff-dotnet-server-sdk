@@ -1,6 +1,8 @@
 echo ".NET version installed:"
 dotnet --version
 
+git submodule update --init --recursive
+
 DOTNET_VERSION=$(dotnet --version | cut -d. -f1)
 if [ "$DOTNET_VERSION" -lt 7 ]; then
 	echo "FF .NET SDK requires .NET 7 or later to build. Aborting"
