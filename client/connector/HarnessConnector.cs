@@ -313,7 +313,6 @@ namespace io.harness.cfsdk.client.connector
         {
             if (string.IsNullOrWhiteSpace(apiKey)) {
                 var errorMsg = "SDKCODE(init:1002):The SDK has failed to initialize due to a missing or empty API key.";
-                logger.LogError(errorMsg);
                 throw new CfClientUnrecoverableException(errorMsg);
             }
 
