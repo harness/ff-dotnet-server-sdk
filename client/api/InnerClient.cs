@@ -151,6 +151,13 @@ namespace io.harness.cfsdk.client.api
             logger.LogInformation("SDKCODE(init:1000): The SDK has successfully initialized");
             logger.LogInformation("SDK version: " + Assembly.GetExecutingAssembly().GetName().Version);
         }
+        
+        public void OnAuthenticationFailure()
+        {
+            SdkInitialized = false;
+            // Auth has failed so we unblock the WaitForInitialization call 
+            sdkReadyLatch.Signal();
+        }
 
         /// <summary>
         /// SDK has authenticated and at least one poll of flags has happened

@@ -8,6 +8,7 @@ namespace io.harness.cfsdk.client.api
     interface IAuthCallback
     {
         void OnAuthenticationSuccess();
+        void OnAuthenticationFailure();
     }
     interface IAuthService
     {
@@ -69,6 +70,7 @@ namespace io.harness.cfsdk.client.api
             {
                 logger.LogError(ex.Message);
                 Stop();
+                callback.OnAuthenticationFailure();
             }
 
             catch (Exception ex)
@@ -76,8 +78,11 @@ namespace io.harness.cfsdk.client.api
                 // Exception thrown on Authentication. Timer will retry authentication.
                 if (retries++ >= config.MaxAuthRetries)
                 {
-                    logger.LogError(ex, "SDKCODE(auth:2001): Authentication failed. Max authentication retries reached {retries} - defaults will be served", retries);
+                    logger.LogError(ex,
+                        "SDKCODE(auth:2001): Authentication failed. Max authentication retries reached {retries} - defaults will be served",
+                        retries);
                     Stop();
+                    callback.OnAuthenticationFailure();
                 }
                 else
                 {
