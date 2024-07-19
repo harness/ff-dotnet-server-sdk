@@ -130,6 +130,9 @@ Use the appropriate method to fetch the desired Evaluation of a certain type.
 
 Library exposes two events for user to subscribe on getting internal notifications.
 
+**Note** if `WaitForInitialization` is used to initialise the SDK, these events must be registered before the `WaitForInitialization` call. 
+See our   [getting_started](https://github.com/harness/ff-dotnet-server-sdk/blob/main/examples/getting_started/Program.cs) application for an example of this.
+
 ```c#
 client.InitializationCompleted += (sender, e) =>
 {
