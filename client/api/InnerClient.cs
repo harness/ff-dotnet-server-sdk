@@ -461,7 +461,8 @@ namespace io.harness.cfsdk.client.api
             logger.LogWarning(
                 "SDK not initialized or failed to evaluate {Kind} variation for {TargetId}, flag {FeatureId}. Returning default variation {DefaultValue}", 
                 kind, target?.Identifier ?? "null target", key, defaultValue);
-            LogEvaluationFailureError(kind, key, target, defaultValue.ToString());
+            var defaultValueString = defaultValue?.ToString() ?? "null";
+            LogEvaluationFailureError(kind, key, target, defaultValueString);
             return defaultValue;
         }
 

@@ -65,6 +65,12 @@ namespace io.harness.cfsdk.client.api
                 Stop();
                 logger.LogDebug("Stopping authentication service");
             }
+            catch (CfClientUnrecoverableException ex)
+            {
+                logger.LogError(ex.Message);
+                Stop();
+            }
+
             catch (Exception ex)
             {
                 // Exception thrown on Authentication. Timer will retry authentication.

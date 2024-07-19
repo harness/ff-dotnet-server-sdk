@@ -314,7 +314,7 @@ namespace io.harness.cfsdk.client.connector
             if (string.IsNullOrWhiteSpace(apiKey)) {
                 var errorMsg = "SDKCODE(init:1002):The SDK has failed to initialize due to a missing or empty API key.";
                 logger.LogError(errorMsg);
-                throw new CfClientException(errorMsg);
+                throw new CfClientUnrecoverableException(errorMsg);
             }
 
             try
@@ -359,14 +359,13 @@ namespace io.harness.cfsdk.client.connector
             }
             catch (ApiException ex)
             {
-                logger.LogError(ex, "SDKCODE(init:1001):The SDK has failed to initialize due to the following authentication error: {reason}", ex.Message);
 
                 if (ex.StatusCode == (int)HttpStatusCode.Unauthorized || ex.StatusCode == (int)HttpStatusCode.Forbidden)
                 {
                     var errorMsg = "SDKCODE(init:1001):The SDK has failed to initialize due to the following authentication error: Invalid apiKey. Defaults will be served.";
-                    logger.LogError(errorMsg);
-                    throw new CfClientException(errorMsg);
+                    throw new CfClientUnrecoverableException(errorMsg);
                 }
+                logger.LogError(ex, "SDKCODE(init:1001):The SDK has failed to initialize due to the following authentication error: {reason}", ex.Message);
                 throw new CfClientException(ex.Message);
             }
         }
