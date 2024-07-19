@@ -465,22 +465,22 @@ namespace io.harness.cfsdk.client.api
         
         private T LogAndReturnDefault<T>(FeatureConfigKind kind, string key, Target target, T defaultValue)
         {
-            logger.LogWarning(
-                "SDK not initialized or failed to evaluate {Kind} variation for {TargetId}, flag {FeatureId}. Returning default variation {DefaultValue}", 
-                kind, target?.Identifier ?? "null target", key, defaultValue);
-            var defaultValueString = defaultValue?.ToString() ?? "null";
-            LogEvaluationFailureError(kind, key, target, defaultValueString);
+            LogEvaluationFailureError(kind, key, target, defaultValue?.ToString() ?? "null");
             return defaultValue;
         }
 
-        
-        public void LogEvaluationFailureError(FeatureConfigKind kind, string featureKey, dto.Target target,
+
+        private void LogEvaluationFailureError(FeatureConfigKind kind, string featureKey, Target target,
             string defaultValue)
         {
-            if (logger.IsEnabled(LogLevel.Warning))
-                logger.LogWarning(
-                    "SDKCODE(eval:6001): Failed to evaluate {Kind} variation for {TargetId}, flag {FeatureId} and the default variation {DefaultValue} is being returned",
-                    kind, target?.Identifier ?? "null target", featureKey, defaultValue);
+            if (!logger.IsEnabled(LogLevel.Warning)) return;
+
+            // Avoid string concatenation in critical path.
+            logger.LogWarning(
+                SdkInitialized
+                    ? "SDKCODE(eval:6001): Failed to evaluate {Kind} variation for {TargetId}, flag {FeatureId} and the default variation {DefaultValue} is being returned"
+                    : "SDKCODE(eval:6001): SDK Not initialized - Failed to evaluate {Kind} variation for {TargetId}, flag {FeatureId} and the default variation {DefaultValue} is being returned",
+                kind, target?.Identifier ?? "null target", featureKey, defaultValue);
         }
     }
 }
