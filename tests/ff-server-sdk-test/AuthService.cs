@@ -15,6 +15,10 @@ namespace ff_server_sdk_test
         {
             
         }
+
+        public void OnAuthenticationFailure()
+        {
+        }
     }
     [TestFixture]
     public class InnerClient
