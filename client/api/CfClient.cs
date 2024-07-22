@@ -1,6 +1,7 @@
 ﻿using io.harness.cfsdk.client.connector;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -64,6 +65,12 @@ namespace io.harness.cfsdk.client.api
         {
             add { client.EvaluationChanged += value; }
             remove { client.EvaluationChanged -= value; }
+        }
+        
+        public event EventHandler<IList<string>> FlagsLoaded
+        {
+            add { client.FlagsLoaded += value; }
+            remove { client.FlagsLoaded -= value; }
         }
 
         // alternative client creation

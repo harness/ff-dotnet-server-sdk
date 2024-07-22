@@ -14,6 +14,7 @@ namespace io.harness.cfsdk.client.api
     internal interface IRepositoryCallback
     {
         void OnFlagStored(string identifier);
+        void OnFlagsLoaded(IList<string> identifiers);
         void OnFlagDeleted(string identifier);
         void OnSegmentStored(string identifier);
         void OnSegmentDeleted(string identifier);
@@ -27,6 +28,8 @@ namespace io.harness.cfsdk.client.api
         void SetSegments(IEnumerable<Segment> segments);
 
         FeatureConfig GetFlag(string identifier);
+        IList<string> GetFlags();
+
         Segment GetSegment(string identifier);
         IEnumerable<string> FindFlagsBySegment(string identifier);
 
@@ -64,6 +67,12 @@ namespace io.harness.cfsdk.client.api
         {
             return GetFlag(identifier, true);
         }
+        
+        public IList<string> GetFlags()
+        {
+            return GetFlagIdentifiers();
+        }
+
         public Segment GetSegment(string identifier)
         {
             return GetSegment(identifier, true);
@@ -168,6 +177,31 @@ namespace io.harness.cfsdk.client.api
             string key = FlagKey(identifer);
             return GetCache<FeatureConfig>(key, updateCache);
         }
+        
+        
+        private IList<string> GetFlagIdentifiers()
+        {
+            rwLock.EnterReadLock();
+            try
+            {
+                IList<string> flagIdentifiers = new List<string>();
+                ICollection<string> keys = this.store != null ? this.store.Keys() : this.cache.Keys();
+                foreach (string key in keys)
+                {
+                    if (key.StartsWith("flags_"))
+                    {
+                        string identifier = key.Substring("flags_".Length);
+                        flagIdentifiers.Add(identifier);
+                    }
+                }
+                return flagIdentifiers;
+            }
+            finally
+            {
+                rwLock.ExitReadLock();
+            }
+        }
+        
         private Segment GetSegment(string identifer, bool updateCache)
         {
             string key = SegmentKey(identifer);

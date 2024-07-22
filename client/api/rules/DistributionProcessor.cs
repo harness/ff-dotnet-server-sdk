@@ -53,7 +53,7 @@ namespace io.harness.cfsdk.client.api.rules
                     return false;
                 }
 
-                logger.LogWarning("SDKCODE(eval:6002): BucketBy attribute not found in target attributes, falling back to 'identifier': missing={missing_attr}, using value={value}", oldBB, value);
+                logger.LogWarning("SDKCODE(eval:6002): BucketBy attribute not found in target attributes, falling back to 'identifier'");
             }
 
             Strategy strategy = new Strategy(value, bucketBy, loggerFactory);
@@ -61,10 +61,9 @@ namespace io.harness.cfsdk.client.api.rules
             if (logger.IsEnabled(LogLevel.Debug))
             {
                 logger.LogDebug(
-                    "MM3 percentage_check={percentage} bucket_by={bucket_by} value={value} bucket={bucket}",
+                    "MM3 percentage_check={percentage} bucket_by={bucket_by} bucket={bucket}",
                     percentage,
                     bucketBy,
-                    value ?? "",
                     bucketId);
             }
             return percentage > 0 && bucketId <= percentage;

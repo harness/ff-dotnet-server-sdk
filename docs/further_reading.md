@@ -130,16 +130,29 @@ Use the appropriate method to fetch the desired Evaluation of a certain type.
 
 Library exposes two events for user to subscribe on getting internal notifications.
 
+**Note** if `WaitForInitialization` is used to initialise the SDK, these events must be registered before the `WaitForInitialization` call. 
+See our   [getting_started](https://github.com/harness/ff-dotnet-server-sdk/blob/main/examples/getting_started/Program.cs) application for an example of this.
+
 ```c#
 client.InitializationCompleted += (sender, e) =>
 {
     // fired when authentication is completed and recent configuration is fetched from server
     Console.WriteLine("Notification Initialization Completed");
 };
-client.EvaluationChanged += (sender, identifier) =>
+client.EvaluationChanged += (sender, flagIdentifier) =>
 {
-    // Fired when flag value changes.
-    Console.WriteLine($"Flag changed for {identifier}");
+    // Fired when flag value changes from streaming events.
+    Console.WriteLine($"Flag changed for {flagIdentifier}");
+};
+
+client.FlagsLoaded += (sender, flagIdentifiers) =>
+{
+    // Fired once when the SDK has initiailized, and subsquently on each poll if streaming is disabled or has disconnected
+    // and fallen back to polling
+    foreach (var flagIdentifier in flagIdentifiers)
+    {
+        Console.WriteLine($"Flags loaded: Flag '{flagIdentifier}");
+    }
 };
 ```
 
