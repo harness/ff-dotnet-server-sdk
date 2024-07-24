@@ -264,6 +264,11 @@ namespace io.harness.cfsdk.client.api
             }
             catch(Exception ex)
             {
+                if (ex is TaskCanceledException)
+                {
+                    logger.LogDebug("Polling thread cancelled");
+                    return;
+                }
                 logger.LogWarning(ex,"Polling failed with error: {reason}. Will retry in {pollIntervalInSeconds}", ex.Message, config.pollIntervalInSeconds);
                 callback?.OnPollError(ex.Message);
             }
