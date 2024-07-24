@@ -17,12 +17,13 @@ namespace io.harness.cfsdk.client.connector
         private readonly string url;
         private readonly HttpClient httpClient;
         private readonly IUpdateCallback callback;
+        private readonly CancellationTokenSource cancellationTokenSource;
+        private static readonly Random Random = new();
+
         private const int InitialConnectionTimeoutMs = 10000;
         private const int ReadTimeoutMs = 35_000;
         private const int BaseDelayMs = 200; 
         private const int MaxDelayMs = 5000; 
-        private static readonly Random Random = new();
-        private CancellationTokenSource cancellationTokenSource;
 
         public EventSource(HttpClient httpClient, string url, IUpdateCallback callback, ILoggerFactory loggerFactory)
         {
@@ -88,13 +89,13 @@ namespace io.harness.cfsdk.client.connector
                     // We use this workaround instead to simulate a timeout for the initial request.
                     var initialTask = Task.Run(async () =>
                     {
-                        await Task.Delay(InitialConnectionTimeoutMs);
+                        await Task.Delay(InitialConnectionTimeoutMs, cancellationTokenSource.Token);
                         throw new TimeoutException("Initial connection timeout");
                     });
 
                     var requestTask = Task.Run(async () =>
                     {
-                        var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+                        var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationTokenSource.Token);
                         response.EnsureSuccessStatusCode();
                         return response;
                     });
@@ -112,7 +113,7 @@ namespace io.harness.cfsdk.client.connector
                         callback.OnStreamConnected();
 
                         string message;
-                        while ((message = ReadLine(stream, ReadTimeoutMs)) != null)
+                        while ((message = ReadLine(stream, ReadTimeoutMs)) != null && !cancellationTokenSource.Token.IsCancellationRequested)
                         {
                             if (!message.Contains("domain"))
                             {
@@ -140,6 +141,10 @@ namespace io.harness.cfsdk.client.connector
                 }
                 catch (Exception e)
                 {
+                    if (cancellationTokenSource.Token.IsCancellationRequested)
+                    {
+                       return;
+                    }
                     retryCount++;
 
                     int delay = Math.Min(BaseDelayMs * (int)Math.Pow(2, retryCount), MaxDelayMs);
