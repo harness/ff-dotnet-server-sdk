@@ -48,7 +48,6 @@ namespace io.harness.cfsdk.client.connector
         {
             logger.LogDebug("Stopping EventSource service.");
             cancellationTokenSource.Cancel();
-
         }
 
         private string ReadLine(Stream stream, int timeoutMs)
