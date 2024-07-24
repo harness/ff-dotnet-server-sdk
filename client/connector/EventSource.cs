@@ -159,7 +159,10 @@ namespace io.harness.cfsdk.client.connector
                 }
                 finally
                 {
-                    callback.OnStreamDisconnected();
+                    if (!cancellationTokenSource.Token.IsCancellationRequested)
+                    {
+                        callback.OnStreamDisconnected();
+                    }
                 }
             }
         }
