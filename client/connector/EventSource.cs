@@ -22,6 +22,7 @@ namespace io.harness.cfsdk.client.connector
         private const int BaseDelayMs = 200; 
         private const int MaxDelayMs = 5000; 
         private static readonly Random Random = new();
+        private CancellationTokenSource cancellationTokenSource;
 
         public EventSource(HttpClient httpClient, string url, IUpdateCallback callback, ILoggerFactory loggerFactory)
         {
@@ -29,6 +30,7 @@ namespace io.harness.cfsdk.client.connector
             this.url = url;
             this.callback = callback;
             this.logger = loggerFactory.CreateLogger<EventSource>();
+            this.cancellationTokenSource = new CancellationTokenSource();
         }
 
         public void Close()
@@ -44,6 +46,8 @@ namespace io.harness.cfsdk.client.connector
         public void Stop()
         {
             logger.LogDebug("Stopping EventSource service.");
+            cancellationTokenSource.Cancel();
+
         }
 
         private string ReadLine(Stream stream, int timeoutMs)
@@ -71,7 +75,7 @@ namespace io.harness.cfsdk.client.connector
         private async Task StartStreaming()
         {
             var retryCount = 0;
-            while (true)
+            while (!cancellationTokenSource.Token.IsCancellationRequested)
             {
                 try
                 {
