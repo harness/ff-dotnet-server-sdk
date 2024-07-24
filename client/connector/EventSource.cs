@@ -143,7 +143,8 @@ namespace io.harness.cfsdk.client.connector
                 {
                     if (cancellationTokenSource.Token.IsCancellationRequested)
                     {
-                       return;
+                        logger.LogInformation("SDKCODE(stream:5004): SSE thread exited");
+                        return;
                     }
                     retryCount++;
 
