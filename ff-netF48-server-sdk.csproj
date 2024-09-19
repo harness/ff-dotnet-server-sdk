@@ -33,6 +33,24 @@
         <None Remove="tests\**;examples\**" />
     </ItemGroup>
 
+    <!--
+        When updating a package to the latest version, order is important when linking the dependency library to a specific target .NET version. 
+        Newer versions should be referenced first in this file so that when the nuget package is built it will use the correct version for the target framework on build.
+
+        In this example I am updating System.IdentityModel.Tokens.Jwt to the latest version 9.0.0. During the build process it will pick up "9.0" first during the .NET 9 build pass,
+        then during the .NET 8 build pass it will pick up the 8.0.0 version. Then finally, for all other versions it will pick up the 6.0.0 version. When a later version of .NET is released
+        be sure the place that above the previous versions in the list.
+
+        Example:
+
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="9.0.0" Condition="'$(TargetFramework)' == 'net9.0'" />
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.0" Condition="'$(TargetFramework)' == 'net8.0'" />
+
+        The last one here is a catchall for the older versions not already specified above.
+
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.0.0" Condition="'$(TargetFramework)' != 'net8.0'" />            
+    -->
+
     <ItemGroup>
         <PackageReference Include="Disruptor" Version="4.0.0" />
         <PackageReference Include="murmurhash" Version="1.0.3" />
