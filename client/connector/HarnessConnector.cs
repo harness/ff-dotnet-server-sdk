@@ -51,10 +51,17 @@ namespace io.harness.cfsdk.client.connector
 
         private static HttpClient CreateHttpClientWithTls(Config config, ILoggerFactory loggerFactory)
         {
+#if NET8_0_OR_GREATER
+            if (config.TlsTrustedCAs == null || !config.TlsTrustedCAs.Any())
+            {
+                return new HttpClient();
+            }
+#else
             if (config.TlsTrustedCAs.IsNullOrEmpty())
             {
                 return new HttpClient();
             }
+#endif
 
 #if (NETSTANDARD || NET461 || NET48)
             throw new NotSupportedException("Custom TLS certificates require .net5.0 target or greater");
