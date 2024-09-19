@@ -48,7 +48,7 @@
 
         The last one here is a catchall for the older versions not already specified above.
 
-        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.0.0" Condition="'$(TargetFramework)' != 'net8.0'" />            
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.0.0" Condition="'$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'net461' Or '$(TargetFramework)' == 'net48' Or '$(TargetFramework)' == 'net5.0' Or '$(TargetFramework)' == 'net6.0' Or '$(TargetFramework)' == 'net7.0'" />
     -->
 
     <ItemGroup>
@@ -57,7 +57,7 @@
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.2" Condition="'$(TargetFramework)' == 'net8.0'" />
-        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.34.0" Condition="'$(TargetFramework)' != 'net8.0'" />
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.34.0" Condition="'$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'net461' Or '$(TargetFramework)' == 'net48' Or '$(TargetFramework)' == 'net5.0' Or '$(TargetFramework)' == 'net6.0' Or '$(TargetFramework)' == 'net7.0'" />
         <PackageReference Include="System.Net.Http" Version="4.3.4" Condition="'$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'net461' Or '$(TargetFramework)' == 'net48'" />
         <PackageReference Include="NSwag.ApiDescription.Client" Version="13.0.5">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
