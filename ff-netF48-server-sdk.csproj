@@ -7,7 +7,7 @@
         <LangVersion>9.0</LangVersion>
         <PackageId>ff-dotnet-server-sdk</PackageId>
         <RootNamespace>io.harness.cfsdk</RootNamespace>
-        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Version>1.7.2</Version>
         <PackOnBuild>true</PackOnBuild>
         <PackageVersion>1.7.2</PackageVersion>
@@ -38,8 +38,8 @@
         <PackageReference Include="murmurhash" Version="1.0.3" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
-        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.34.0" Condition="'$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'net461' Or '$(TargetFramework)' == 'net48' Or '$(TargetFramework)' == 'net5.0' Or '$(TargetFramework)' == 'net6.0' Or '$(TargetFramework)' == 'net7.0'" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.2" Condition="'$(TargetFramework)' == 'net8.0'" />
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.34.0" Condition="'$(TargetFramework)' != 'net8.0'" />
         <PackageReference Include="System.Net.Http" Version="4.3.4" Condition="'$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'net461' Or '$(TargetFramework)' == 'net48'" />
         <PackageReference Include="NSwag.ApiDescription.Client" Version="13.0.5">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
