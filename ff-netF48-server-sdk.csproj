@@ -42,7 +42,7 @@
     <ItemGroup>
         <!-- Unless proven otherwise, 4.0.0 catch all will not work, please add a specific reference for your FTFM package, preferably targeting latest. -->
         <PackageReference Include="Disruptor" Version="6.0.0" Condition="'$(TargetFramework)' == 'net8.0'" />
-        <PackageReference Include="Disruptor" Version="4.0.0" />
+        <PackageReference Include="Disruptor" Version="4.0.0" Condition="'$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'net461' Or '$(TargetFramework)' == 'net48' Or '$(TargetFramework)' == 'net5.0' Or '$(TargetFramework)' == 'net6.0'" />
 
         <PackageReference Include="murmurhash" Version="1.0.3" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
@@ -53,7 +53,7 @@
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.7.1" Condition="'$(TargetFramework)' == 'net7.0'" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.36.0" />
 
-        <PackageReference Include="System.Net.Http" Version="4.3.4" Condition="'$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'net461' Or '$(TargetFramework)' == 'net48'" />
+        <PackageReference Include="System.Net.Http" Version="4.3.4" Condition="'$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'net461' Or '$(TargetFramework)' == 'net48' Or '$(TargetFramework)' == 'net5.0' Or '$(TargetFramework)' == 'net6.0'" />
         <PackageReference Include="NSwag.ApiDescription.Client" Version="13.0.5">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
