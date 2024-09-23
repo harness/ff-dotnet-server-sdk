@@ -35,20 +35,16 @@
 
     <!--
         When updating a package to the latest version, order is important when linking the dependency library to a specific target .NET version and newer versions should be referenced first.
-
-        See "System.IdentityModel.Tokens.Jwt".
+        For an example of this ordering, See "System.IdentityModel.Tokens.Jwt".
     -->
 
     <ItemGroup>
-        <!-- Unless proven otherwise, 4.0.0 catch all will not work, please add a specific reference for your FTFM package, preferably targeting latest. -->
-        <PackageReference Include="Disruptor" Version="6.0.0" Condition="'$(TargetFramework)' == 'net8.0'" />
-        <PackageReference Include="Disruptor" Version="4.0.0" Condition="'$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'net461' Or '$(TargetFramework)' == 'net48' Or '$(TargetFramework)' == 'net5.0' Or '$(TargetFramework)' == 'net6.0'" />
-
         <PackageReference Include="murmurhash" Version="1.0.3" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
 
-        <!-- Unless proven otherwise, 6.36.0 catch all will not work, please add a specific reference for your FTFM package, preferably targeting latest. -->
+        <!-- Unless proven otherwise, 6.36.0 catch all will not work, so we need to list explicit versions for .NET 7.0 and greater. 
+        When adding a new TFM, specify the latest compatible version of System.IdentityModel.Tokens.Jwt for that TFM. -->
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.2" Condition="'$(TargetFramework)' == 'net8.0'" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.7.1" Condition="'$(TargetFramework)' == 'net7.0'" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.36.0" Condition="'$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'net461' Or '$(TargetFramework)' == 'net48' Or '$(TargetFramework)' == 'net5.0' Or '$(TargetFramework)' == 'net6.0'" />
