@@ -18,8 +18,8 @@ if [ "$DOTNET_VERSION" -lt 8 ]; then
     OS=$(uname)
     if [ "$OS" == "Linux" ]; then
         # For Ubuntu/Debian-based systems
-        sudo apt-get update
-        sudo apt-get install -y dotnet-sdk-8.0
+        apt-get update
+        apt-get install -y dotnet-sdk-8.0
     elif [ "$OS" == "Darwin" ]; then
         # For macOS
         brew install --cask dotnet-sdk
