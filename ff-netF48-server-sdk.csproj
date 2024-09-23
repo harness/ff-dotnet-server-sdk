@@ -1,17 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <!-- The SDK must be built with .NET 7 however we must also keep compatibility with .NET 5/6 hence SupportedOSPlatformVersion=9 below -->
-        <TargetFrameworks>netstandard2.0;net461;net48;net5.0;net6.0;net7.0</TargetFrameworks>
+        <!-- The SDK must be built with .NET 8 however we must also keep compatibility with .NET 5/6 hence SupportedOSPlatformVersion=9 below -->
+        <TargetFrameworks>netstandard2.0;net461;net48;net5.0;net6.0;net7.0;net8.0</TargetFrameworks>
         <SupportedOSPlatformVersion>9.0</SupportedOSPlatformVersion>
         <LangVersion>9.0</LangVersion>
         <PackageId>ff-dotnet-server-sdk</PackageId>
         <RootNamespace>io.harness.cfsdk</RootNamespace>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-        <Version>1.7.1</Version>
+        <Version>1.7.2</Version>
         <PackOnBuild>true</PackOnBuild>
-        <PackageVersion>1.7.1</PackageVersion>
-        <AssemblyVersion>1.7.1</AssemblyVersion>
+        <PackageVersion>1.7.2</PackageVersion>
+        <AssemblyVersion>1.7.2</AssemblyVersion>
         <Authors>support@harness.io</Authors>
         <Copyright>Copyright © 2024</Copyright>
         <PackageIconUrl>https://harness.io/icon-ff.svg</PackageIconUrl>
@@ -33,12 +33,22 @@
         <None Remove="tests\**;examples\**" />
     </ItemGroup>
 
+    <!--
+        When updating a package to the latest version, order is important when linking the dependency library to a specific target .NET version and newer versions should be referenced first.
+        For an example of this ordering, See "System.IdentityModel.Tokens.Jwt".
+    -->
+
     <ItemGroup>
-        <PackageReference Include="Disruptor" Version="4.0.0" />
         <PackageReference Include="murmurhash" Version="1.0.3" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
-        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.34.0" />
+
+        <!-- Unless proven otherwise, 6.36.0 catch all will not work, so we need to list explicit versions for .NET 7.0 and greater. 
+        When adding a new TFM, specify the latest compatible version of System.IdentityModel.Tokens.Jwt for that TFM. -->
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.2" Condition="'$(TargetFramework)' == 'net8.0'" />
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.7.1" Condition="'$(TargetFramework)' == 'net7.0'" />
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.36.0" Condition="'$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'net461' Or '$(TargetFramework)' == 'net48' Or '$(TargetFramework)' == 'net5.0' Or '$(TargetFramework)' == 'net6.0'" />
+
         <PackageReference Include="System.Net.Http" Version="4.3.4" Condition="'$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'net461' Or '$(TargetFramework)' == 'net48'" />
         <PackageReference Include="NSwag.ApiDescription.Client" Version="13.0.5">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
