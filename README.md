@@ -18,10 +18,10 @@ For a sample FF .NET SDK project, see our [test .NET project](examples/getting_s
 ![FeatureFlags](https://github.com/harness/ff-python-server-sdk/raw/main/docs/images/ff-gui.png)
 
 ## Requirements
-The library is packaged as multi-target supporting  `net461`,`netstandard2.0`, `net5.0`, `net6.0` and `net7.0`.
+The library is packaged as multi-target supporting  `net461`,`netstandard2.0`, `net5.0`, `net6.0`, `net7.0`, and `net8.0`.
 
 ## Build Requirements
-If building from source you will need [.Net 7.0.404](https://dotnet.microsoft.com/en-us/download/dotnet/7.0) or newer (dotnet --version)<br>
+If building from source you will need [.Net 8.0.0](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) or newer (dotnet --version)<br>
 
 ## Quickstart
 To follow along with our test code sample, make sure you’ve:
@@ -103,11 +103,11 @@ $ dotnet run --project examples/getting_started/
 ```
 
 ### Running the example with Docker
-If you dont have the right version of dotnet installed locally, or dont want to install the dependancies you can
-use docker to quicky get started
+If you don't have the right version of dotnet installed locally, or don't want to install the dependencies you can
+use docker to quickly get started
 
 ```bash
-docker run -v $(pwd):/app -w /app -e FF_API_KEY=$FF_API_KEY mcr.microsoft.com/dotnet/sdk:6.0 dotnet run --framework net6.0 --project examples/getting_started/
+docker run -v $(pwd):/app -w /app -e FF_API_KEY=$FF_API_KEY mcr.microsoft.com/dotnet/sdk:8.0 dotnet run --framework net8.0 --project examples/getting_started/
 ```
 
 ### Additional Reading
