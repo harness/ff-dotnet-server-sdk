@@ -42,3 +42,5 @@ chmod +x smtools-linux-x64/smctl
 dotnet run --file $PKG_PATH --fingerprint $FINGER_PRINT --pkcs11-lib smtools-linux-x64/smpkcs11.so
 
 rm -rf smtools-linux-x64
+
+dotnet nuget verify $PKG_PATH

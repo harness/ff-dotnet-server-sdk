@@ -115,8 +115,9 @@ var destFilePath = Path.GetRandomFileName();
 Console.WriteLine($"Signing package {pkgPath} with cert fingerprint {certFingerprint} [{timestampUrl}]...");
 var sigProvider = new Pkcs11SignatureProvider(certToSignWith, chain, new Rfc3161TimestampProvider(new Uri(timestampUrl)));
 var req = new AuthorSignPackageRequest(certToSignWith.Info.ParsedCertificate, sigHashAlgorithm, timestampHashAlgorithm);
-using var options = SigningOptions.CreateFromFilePaths(pkgPath, destFilePath, true, sigProvider, new SignLogger());
-await SigningUtility.SignAsync(options, req, CancellationToken.None);
-
+using (var options = SigningOptions.CreateFromFilePaths(pkgPath, destFilePath, true, sigProvider, new SignLogger()))
+{
+    await SigningUtility.SignAsync(options, req, CancellationToken.None);
+}
 File.Copy(destFilePath, pkgPath, overwrite: true);
 Console.WriteLine("Done.");
