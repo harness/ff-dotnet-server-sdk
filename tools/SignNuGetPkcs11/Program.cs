@@ -33,7 +33,7 @@ Pkcs11X509Certificate? GetCertAndChainForThumbprint(Pkcs11X509Store pkcs11Store,
 
     foreach (var slot in pkcs11Store.Slots)
     {
-        Console.WriteLine($"Pkcs11 Slot: label=[{slot.Token.Info.Label}] manufacturer=[{slot.Info.Manufacturer}] desc=[{slot.Info.Description}]");
+        Console.WriteLine($"Pkcs11 Slot: label=[{slot.Token?.Info.Label ?? ""}] manufacturer=[{slot.Info.Manufacturer}] desc=[{slot.Info.Description}]");
 
         if (slot.Token == null)
             continue;
@@ -98,7 +98,7 @@ if (!parseResult.GetRequiredValue(fileOption).Exists) throw new ArgumentExceptio
 
 var pkcs11Lib = parseResult.GetRequiredValue(pkcs11LibOption).FullName;
 var pkgPath = parseResult.GetRequiredValue(fileOption).FullName;
-var timestampUrl = parseResult.GetValue(timestampUrlOption);
+var timestampUrl = parseResult.GetRequiredValue(timestampUrlOption);
 var certFingerprint = parseResult.GetRequiredValue(fingerprintOption);
 
 using var pkcs11Store = new Pkcs11X509Store(pkcs11Lib, pinProvider);
