@@ -243,12 +243,32 @@ namespace io.harness.cfsdk.client.connector
                     logger.LogError("Initiate reauthentication");
                     callback.OnReauthenticateRequested();
                 }
+
+                logger.LogError(ex, "ApiException: {Message} StatusCode={StatusCode} Response={Response}", ex.Message, ex.StatusCode, ex.Response);
+                throw new CfClientException(ex.Message, ex);
+            }
+            catch (HttpRequestException ex)
+            {
+                LogHttpError("HttpRequestException", ex);
                 throw new CfClientException(ex.Message, ex);
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "Exception: {Message} ", ex.Message);
                 throw new CfClientException(ex.Message, ex);
             }
+        }
+
+        private void LogHttpError(String mainMessage, HttpRequestException ex)
+        {
+            // Log more details if we're on a newer version of .NET
+            #if (NET8_0_OR_GREATER)
+            logger.LogError(ex.InnerException, "{MainMessage}: {Message} StatusCode={StatusCode} HttpRequestError={HttpRequestError}", mainMessage, ex.Message, ex.StatusCode, ex.HttpRequestError);
+            #elif (NET5_0_OR_GREATER)
+            logger.LogError(ex.InnerException, "{MainMessage}: {Message} StatusCode={StatusCode}", mainMessage, ex.Message, ex.StatusCode);
+            #else
+            logger.LogError(ex.InnerException, "{MainMessage}: {Message}",  mainMessage, ex.Message);
+            #endif
         }
 
         public async Task<IEnumerable<FeatureConfig>> GetFlags()
