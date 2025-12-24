@@ -1,0 +1,230 @@
+pipeline:
+  name: ffDotnetServerSdk
+  identifier: ffDotnetServerSdk
+  projectIdentifier: Harness_Commons
+  orgIdentifier: PROD
+  allowStageExecutions: true
+  description: Migrated from https://app.harness.io/ng/account/vpCkHKsDSxK9_KYfjCTMKA/module/ci/orgs/Feature_Flag/projects/FFPipelines/pipelines/ffdotnetserversdk/pipeline-studio/?storeType=INLINE
+  tags:
+    Owner: FFM
+    TicketID: FFM-12559
+  stages:
+    - stage:
+        name: Build
+        identifier: Build
+        type: CI
+        spec:
+          cloneCodebase: true
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Init Submodule
+                  identifier: Init_Submodule
+                  spec:
+                    connectorRef: org.gcpgarsetup
+                    image: us-west1-docker.pkg.dev/gar-setup/docker/golang:1.22
+                    shell: Sh
+                    command: "ls -l \n\nmkdir -p ~/.ssh\nssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts\n\ncat <<EOF > .gitmodules\n[submodule \"tests/ff-server-sdk-test/ff-test-cases\"]\n\tpath = tests/ff-server-sdk-test/ff-test-cases\n\turl = https://github.com/drone/ff-test-cases.git\nEOF\n\ngit submodule update --init --recursive"
+              - step:
+                  type: Run
+                  name: Build
+                  identifier: Build
+                  spec:
+                    connectorRef: org.dockerhub
+                    image: mcr.microsoft.com/dotnet/sdk:7.0
+                    shell: Sh
+                    command: ./build.sh
+                    reports:
+                      type: JUnit
+                      spec:
+                        paths:
+                          - tests/ff-server-sdk-test/junit.xml
+                    imagePullPolicy: IfNotPresent
+                    resources:
+                      limits:
+                        memory: 8G
+                        cpu: 4000m
+              - step:
+                  type: Run
+                  name: Generate Test coverage
+                  identifier: Generate_Test_coverage
+                  spec:
+                    connectorRef: org.dockerhub
+                    image: mcr.microsoft.com/dotnet/sdk:7.0
+                    shell: Sh
+                    command: |-
+                      echo "Running Test Coverage"
+
+
+                      dotnet test tests/ff-server-sdk-test/ff-server-sdk-test.csproj /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
+                      ls -l tests/ff-server-sdk-test/
+                      echo "Done"
+                      echo "Create HTML Test Coverage"
+                      dotnet tool restore
+                      dotnet tool run reportgenerator -reports:./tests/ff-server-sdk-test/coverage.net7.0.cobertura.xml -targetdir:coverage
+                      echo "done"
+                    resources:
+                      limits:
+                        memory: 2G
+                        cpu: 1000m
+                  when:
+                    stageStatus: Success
+                    condition: "false"
+              - step:
+                  type: Run
+                  name: Publish
+                  identifier: Publish
+                  spec:
+                    connectorRef: org.dockerhub
+                    image: mcr.microsoft.com/dotnet/sdk:9.0
+                    shell: Sh
+                    command: |-
+                      rm -rf /harness/ff-sdk-testgrid/
+
+                      # The tool that Digicert provide to sign a Nuget package does not work on Linux (only Windows). So we have written a custom C# tool using their pkcs11 lib file to sign instead below
+                      # Sign package, note this codesign cert is valid until jun '26. it will need renewed then by SEGENG and these secrets updated. You can clone SECENG-406
+                      export SM_API_KEY=<+pipeline.variables.FF_DIGICERT_CODESIGN_SM_API_KEY>
+                      export SM_CLIENT_CERT_PASSWORD=<+pipeline.variables.FF_DIGICERT_CODESIGN_SM_CLIENT_CERT_PASSWORD>
+                      echo <+pipeline.variables.FF_DIGICERT_CODESIGN_SM_CLIENT_CERT> | base64 -d > /tmp/clientcert.p12
+                      export SM_CLIENT_CERT_FILE=/tmp/clientcert.p12
+
+                      # This fixes an dep issue in the dotnet docker image
+                      # see https://unix.stackexchange.com/questions/700097/unable-to-load-shared-library-libdl-so-or-one-of-its-dependencies/709036#709036
+                      ln -s /usr/lib/x86_64-linux-gnu/libdl.so.2 /usr/lib/x86_64-linux-gnu/libdl.so
+
+                      cd tools/SignNuGetPkcs11
+                      ./sign.sh /harness/bin/Release/ff-dotnet-server-sdk.<+pipeline.properties.ci.codebase.build.spec.tag>.nupkg <+pipeline.variables.FF_DIGICERT_CODESIGN_CERT_FINGERPRINT>
+
+
+                      # Pkg signing done, now publish
+                       dotnet nuget push /harness/bin/Release/ff-dotnet-server-sdk.<+pipeline.properties.ci.codebase.build.spec.tag>.nupkg --api-key <+pipeline.variables.nuget_token> --source https://api.nuget.org/v3/index.json
+                  when:
+                    stageStatus: Success
+                    condition: <+pipeline.variables.release>
+          sharedPaths:
+            - /root/.dotnet/tools/
+            - /var/run
+          caching:
+            enabled: false
+            paths: []
+          slsa_provenance:
+            enabled: false
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+        when:
+          pipelineStatus: Success
+        variables:
+          - name: FF_NVD_API_KEY
+            type: Secret
+            description: ""
+            required: false
+            value: FF_NVD_API_KEY
+    - stage:
+        name: Publish Release Notes
+        identifier: Publish_Release_Notes
+        description: ""
+        type: Approval
+        spec:
+          execution:
+            steps:
+              - step:
+                  name: Jira Create
+                  identifier: jiraCreate
+                  type: JiraCreate
+                  timeout: 5m
+                  spec:
+                    connectorRef: org.Bot_Jira_user
+                    projectKey: FFM
+                    issueType: Task
+                    fields:
+                      - name: Assignee
+                        value: austin.lai@harness.io
+                      - name: Components
+                        value: SDK,ff-documentation
+                      - name: Description
+                        value: <+pipeline.variables.jira_ticket_description>
+                      - name: Labels
+                        value: documentation, sdk-release
+                      - name: Release Notes Candidate
+                        value: "Yes"
+                      - name: Reporter
+                        value: jira-automation@harness.io
+                      - name: Summary
+                        value: <+pipeline.variables.jira_ticket_title>
+          serviceDependencies: []
+        tags: {}
+        when:
+          pipelineStatus: Success
+          condition: <+pipeline.variables.generate_jira_ticket>
+  variables:
+    - name: nuget_token
+      type: Secret
+      value: ffDotnetNugetApiKey
+    - name: release
+      type: String
+      value: <+input>.default(false).allowedValues(true,false)
+    - name: GCR_KEY_B64
+      type: Secret
+      description: ""
+      value: Platform_GCR_KEY_b64
+    - name: SONAR_TOKEN
+      type: Secret
+      description: ""
+      value: FF_SONARQUBE_TOKEN
+    - name: FF_DIGICERT_CODESIGN_SM_API_KEY
+      type: Secret
+      description: API key for smctl tool. see SECENG-406
+      required: false
+      value: ffDigicertCodesignSmApiKey
+    - name: FF_DIGICERT_CODESIGN_SM_CLIENT_CERT_PASSWORD
+      type: Secret
+      description: Password for pkcs12 client auth cert. See SECENG-406
+      required: false
+      value: ffDigicertCodesignSmClientCertPassword
+    - name: FF_DIGICERT_CODESIGN_SM_CLIENT_CERT
+      type: String
+      description: Encrypted PKCS12 cert file. Base64 encoded. See SECENG-406
+      required: false
+      value: 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
+    - name: FF_DIGICERT_CODESIGN_CERT_FINGERPRINT
+      type: Secret
+      description: Fingerprint/thumbprint of code signing cert we sign nuget package with. See SECENG-406
+      required: false
+      value: ffDigicertCodesignCertFingerprint
+    - name: generate_jira_ticket
+      type: String
+      description: ""
+      required: true
+      value: <+input>.default(false).allowedValues(true,false)
+    - name: jira_ticket_title
+      type: String
+      description: ""
+      required: false
+      value: Release Notes for ff-dotnet-server-sdk <+pipeline.properties.ci.codebase.build.spec.tag>
+    - name: jira_ticket_description
+      type: String
+      description: ""
+      required: false
+      value: https://harness0.harness.io/ng/account/l7B_kbSEQD2wjrM7PShm5w/module/code/orgs/PROD/projects/Harness_Commons/repos/ff-dotnet-server-sdk/summary/refs/tags/<+pipeline.properties.ci.codebase.build.spec.tag>
+  notificationRules:
+    - name: FailedPipeline
+      identifier: FailedPipeline
+      pipelineEvents:
+        - type: PipelineFailed
+      notificationMethod:
+        type: Slack
+        spec:
+          userGroups: []
+          webhookUrl: <+variable.FF_SDK_BUILDS_SLACK_URL>
+      enabled: true
+  properties:
+    ci:
+      codebase:
+        repoName: ff-dotnet-server-sdk
+        build: <+input>
+        sparseCheckout: []
