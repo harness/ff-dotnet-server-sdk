@@ -22,8 +22,6 @@ namespace io.harness.cfsdk.client.connector
 
         private const int InitialConnectionTimeoutMs = 10000;
         private const int ReadTimeoutMs = 35_000;
-        private const int BaseDelayMs = 200; 
-        private const int MaxDelayMs = 5000; 
 
         public EventSource(HttpClient httpClient, string url, IUpdateCallback callback, ILoggerFactory loggerFactory)
         {
@@ -134,15 +132,13 @@ namespace io.harness.cfsdk.client.connector
                     }
                     retryCount++;
 
-                    int delay = Math.Min(BaseDelayMs * (int)Math.Pow(2, retryCount), MaxDelayMs);
-                    var jitter = Random.Next(0, BaseDelayMs);
-                    delay += jitter;
-
+                    var delayTimeSpan = CalculateBackoffDelay(retryCount);
 
                     logger.LogError(e,
                         "EventSource service threw an error: {Reason}. Retrying in {Delay} seconds",
-                        e.Message, delay / 1000.0);
-                    await Task.Delay(delay);
+                        e.Message, delayTimeSpan.TotalSeconds);
+
+                    await Task.Delay(delayTimeSpan);
                 }
                 finally
                 {
@@ -152,6 +148,25 @@ namespace io.harness.cfsdk.client.connector
                     }
                 }
             }
+        }
+
+        private TimeSpan CalculateBackoffDelay(int retryCount)
+        {
+            const int BaseDelayMs = 200; 
+            const int MaxDelayMs = 5000;
+
+            // Force MaxDelayMs at 12 as a higher retry count would result in a delay over 5 seconds.
+            // Additionally, going over a retry count of 32 (with an int) will overflow the calculation of
+            // Math.Pow(2, retryCount) and cause an exception due to a large negative value.
+            var delay = retryCount > 12
+                ? MaxDelayMs
+                : Math.Min(BaseDelayMs * (int)Math.Pow(2, retryCount), MaxDelayMs);
+            var jitter = Random.Next(0, BaseDelayMs);
+            delay += jitter;
+
+            var delayTimeSpan = TimeSpan.FromMilliseconds(delay);
+
+            return delayTimeSpan;
         }
     }
 }
