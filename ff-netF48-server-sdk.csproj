@@ -8,10 +8,8 @@
         <PackageId>ff-dotnet-server-sdk</PackageId>
         <RootNamespace>io.harness.cfsdk</RootNamespace>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-        <Version>1.8.0</Version>
+        <VersionPrefix>1.8.0</VersionPrefix>
         <PackOnBuild>true</PackOnBuild>
-        <PackageVersion>$(Version)</PackageVersion>
-        <AssemblyVersion>$(Version)</AssemblyVersion>
         <Authors>support@harness.io</Authors>
         <Copyright>Copyright © 2026</Copyright>
         <PackageReadmeFile>README.md</PackageReadmeFile>
