@@ -8,13 +8,11 @@
         <PackageId>ff-dotnet-server-sdk</PackageId>
         <RootNamespace>io.harness.cfsdk</RootNamespace>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-        <Version>1.7.6</Version>
+        <VersionPrefix>1.8.0</VersionPrefix>
         <PackOnBuild>true</PackOnBuild>
-        <PackageVersion>1.7.6</PackageVersion>
-        <AssemblyVersion>1.7.6</AssemblyVersion>
         <Authors>support@harness.io</Authors>
         <Copyright>Copyright © 2026</Copyright>
-        <PackageIconUrl>https://harness.io/icon-ff.svg</PackageIconUrl>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
         <PackageProjectUrl>https://github.com/drone/ff-dotnet-server-sdk</PackageProjectUrl>
@@ -25,9 +23,16 @@
         <PackageReleaseNotes>.NET Server SDK for Harness Feature Flag platform</PackageReleaseNotes>
         <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
         <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(TargetFramework)' == 'net5.0'">
+        <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
     </PropertyGroup>
 
     <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\" />
+
         <Compile Remove="tests\**;examples\**;tools\**" />
         <EmbeddedResource Remove="tests\**;examples\**;tools\**" />
         <None Remove="tests\**;examples\**;tools\**" />

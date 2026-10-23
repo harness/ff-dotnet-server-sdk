@@ -8,8 +8,9 @@ using io.harness.cfsdk.HarnessOpenAPIService;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using Target = io.harness.cfsdk.client.dto.Target;
-using System.Collections.Generic;
 using Newtonsoft.Json;
+using System.Threading.Tasks;
+using System.Threading;
 
 [assembly: InternalsVisibleToAttribute("ff-server-sdk-test")]
 
@@ -20,14 +21,18 @@ namespace io.harness.cfsdk.client.api
         void EvaluationProcessed(FeatureConfig featureConfig, Target target, Variation variation);
     }
 
-    internal interface IEvaluator
+    internal interface IEvaluator: IDisposable
     {
         bool BoolVariation(string key, Target target, bool defaultValue);
+        Task<bool> BoolVariationAsync(string key, Target target, bool defaultValue, CancellationToken cancellationToken = default);
         string StringVariation(string key, Target target, string defaultValue);
+        Task<string> StringVariationAsync(string key, Target target, string defaultValue, CancellationToken cancellationToken = default);
         double NumberVariation(string key, Target target, double defaultValue);
-        JToken JsonVariationToken(string key, Target target, JToken defaultValue); 
+        Task<double> NumberVariationAsync(string key, Target target, double defaultValue, CancellationToken cancellationToken = default);
+        JToken JsonVariationToken(string key, Target target, JToken defaultValue);
+        Task<JToken> JsonVariationTokenAsync(string key, Target target, JToken defaultValue, CancellationToken cancellationToken = default);
         JObject JsonVariation(string key, Target target, JObject defaultValue);
-
+        Task<JObject> JsonVariationAsync(string key, Target target, JObject defaultValue, CancellationToken cancellationToken = default);
     }
 
     internal class Evaluator : IEvaluator
@@ -39,6 +44,7 @@ namespace io.harness.cfsdk.client.api
         private readonly IRepository repository;
         private readonly IPollingProcessor poller;
         private readonly Config config;
+        private bool isDisposed = false;
 
 
         public Evaluator(IRepository repository, IEvaluatorCallback callback, ILoggerFactory loggerFactory,
@@ -53,9 +59,40 @@ namespace io.harness.cfsdk.client.api
             this.config = config;
         }
 
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (isDisposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                poller?.Dispose();
+            }
+
+            isDisposed = true;
+        }
+
         public bool BoolVariation(string key, Target target, bool defaultValue)
         {
-            var variation = EvaluateVariation(key, target, FeatureConfigKind.Boolean);
+            return BoolVariationAsync(key, target, defaultValue, CancellationToken.None)
+                .ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        public async Task<bool> BoolVariationAsync(
+            string key,
+            Target target,
+            bool defaultValue,
+            CancellationToken cancellationToken = default)
+        {
+            var variation = await EvaluateVariationAsync(key, target, FeatureConfigKind.Boolean, cancellationToken);
             bool res;
             if (variation != null && bool.TryParse(variation.Value, out res)) return res;
 
@@ -65,13 +102,23 @@ namespace io.harness.cfsdk.client.api
 
         public JToken JsonVariationToken(string key, Target target, JToken defaultValue)
         {
-            var variation = EvaluateVariation(key, target, FeatureConfigKind.Json);
+            return JsonVariationTokenAsync(key, target, defaultValue, CancellationToken.None)
+                .ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        public async Task<JToken> JsonVariationTokenAsync(
+            string key,
+            Target target,
+            JToken defaultValue,
+            CancellationToken cancellationToken = default)
+        {
+            var variation = await EvaluateVariationAsync(key, target, FeatureConfigKind.Json, cancellationToken);
             if (variation == null)
             {
                 LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue);
                 return defaultValue;
             }
-            
+
             try
             {
                 return JToken.Parse(variation.Value);
@@ -80,24 +127,34 @@ namespace io.harness.cfsdk.client.api
             {
                 if (!logger.IsEnabled(LogLevel.Warning)) return defaultValue;
 
-                LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue);
+                LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue, ex);
                 return defaultValue;
             }
 
         }
-        
+
         public JObject JsonVariation(string key, Target target, JObject defaultValue)
         {
-            var variation = EvaluateVariation(key, target, FeatureConfigKind.Json);
+            return JsonVariationAsync(key, target, defaultValue, CancellationToken.None)
+                .ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        public async Task<JObject> JsonVariationAsync(
+            string key,
+            Target target,
+            JObject defaultValue,
+            CancellationToken cancellationToken = default)
+        {
+            var variation = await EvaluateVariationAsync(key, target, FeatureConfigKind.Json, cancellationToken);
             if (variation != null)
             {
                 try
                 {
                     var token = JToken.Parse(variation.Value);
                     if (token.Type == JTokenType.Object) return (JObject)token;
-                    
+
                     if (!logger.IsEnabled(LogLevel.Warning)) return defaultValue;
-                    
+
                     logger.LogWarning("JSON variation is not an object. Returning default value. Use JsonVariationToken(string key, Target target, JToken defaultValue) which is available since version 1.7.0");
                     LogEvaluationFailureError(FeatureConfigKind.Json, key, target, defaultValue);
                     return defaultValue;
@@ -105,7 +162,7 @@ namespace io.harness.cfsdk.client.api
                 catch (JsonReaderException ex)
                 {
                     // Log the error if parsing fails
-                    LogEvaluationFailureError(FeatureConfigKind.Json, key, target, ex.Message);
+                    LogEvaluationFailureError(FeatureConfigKind.Json, key, target, ex.Message, ex);
                     return defaultValue;
                 }
             }
@@ -116,7 +173,17 @@ namespace io.harness.cfsdk.client.api
 
         public double NumberVariation(string key, Target target, double defaultValue)
         {
-            var variation = EvaluateVariation(key, target, FeatureConfigKind.Int);
+            return NumberVariationAsync(key, target, defaultValue, CancellationToken.None)
+                .ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        public async Task<double> NumberVariationAsync(
+            string key,
+            Target target,
+            double defaultValue,
+            CancellationToken cancellationToken = default)
+        {
+            var variation = await EvaluateVariationAsync(key, target, FeatureConfigKind.Int, cancellationToken);
             double res;
             if (variation != null && double.TryParse(variation.Value, out res)) return res;
 
@@ -126,14 +193,28 @@ namespace io.harness.cfsdk.client.api
 
         public string StringVariation(string key, Target target, string defaultValue)
         {
-            var variation = EvaluateVariation(key, target, FeatureConfigKind.String);
+            return StringVariationAsync(key, target, defaultValue, CancellationToken.None)
+                .ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        public async Task<string> StringVariationAsync(
+            string key,
+            Target target,
+            string defaultValue,
+            CancellationToken cancellationToken = default)
+        {
+            var variation = await EvaluateVariationAsync(key, target, FeatureConfigKind.String, cancellationToken);
             if (variation != null) return variation.Value;
 
             LogEvaluationFailureError(FeatureConfigKind.String, key, target, defaultValue);
             return defaultValue;
         }
 
-        private Variation EvaluateVariation(string key, Target target, FeatureConfigKind kind)
+        private async Task<Variation> EvaluateVariationAsync(
+            string key,
+            Target target,
+            FeatureConfigKind kind,
+            CancellationToken cancellationToken = default)
         {
             var featureConfig = repository.GetFlag(key);
             if (featureConfig == null)
@@ -145,7 +226,9 @@ namespace io.harness.cfsdk.client.api
 
                 if (poller != null)
                 {
-                    var refreshResult = poller.RefreshFlags(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
+                    var refreshResult = await poller.RefreshFlagsAsync(
+                        TimeSpan.FromMilliseconds(config.CacheRecoveryTimeoutInMs),
+                        cancellationToken);
 
                     if (refreshResult != RefreshOutcome.Success)
                         return null;
@@ -187,11 +270,12 @@ namespace io.harness.cfsdk.client.api
             return var;
         }
 
-        private void LogEvaluationFailureError<T>(FeatureConfigKind kind, string featureKey, Target target, T defaultValue)
+        private void LogEvaluationFailureError<T>(FeatureConfigKind kind, string featureKey, Target target, T defaultValue, Exception ex = null)
         {
             if (logger.IsEnabled(LogLevel.Warning))
             {
                 logger.LogWarning(
+                    ex,
                     "SDKCODE(eval:6001): Failed to evaluate {Kind} variation for {TargetId}, flag {FeatureId} and the default variation {DefaultValue} is being returned",
                     kind, target?.Identifier ?? "null target", featureKey, defaultValue?.ToString() ?? "null");
             }
@@ -342,7 +426,7 @@ namespace io.harness.cfsdk.client.api
                         logger.LogDebug(
                             "Percentage rollout applies to group rule, evaluating distribution: Target({@Target}) Flag({@Flag})",
                             new { Target = target}, new { Flag = featureConfig});
-                            
+
 
                     var distributionProcessor = new DistributionProcessor(servingRule.Serve, loggerFactory);
                     return distributionProcessor.loadKeyName(target);
@@ -354,7 +438,7 @@ namespace io.harness.cfsdk.client.api
                     if (logger.IsEnabled(LogLevel.Warning))
                         logger.LogWarning("Serve.Variation is null for a rule in Flag({@FeatureConfig})",
                              new { Flag = featureConfig});
-                        
+
                     return null;
                 }
 
@@ -367,7 +451,7 @@ namespace io.harness.cfsdk.client.api
                     new { Target = target}, new { Flag = featureConfig});
             return null;
         }
-        
+
         private bool IsTargetIncludedOrExcludedInSegment(ICollection<string> segmentList, Target target)
         {
             foreach (var segmentIdentifier in segmentList)

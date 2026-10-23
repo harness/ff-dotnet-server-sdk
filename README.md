@@ -2,11 +2,11 @@
 ========================
 
 ## Table of Contents
-**[Intro](#Intro)**<br>
-**[Requirements](#Requirements)**<br>
-**[Quickstart](#Quickstart)**<br>
-**[Further Reading](docs/further_reading.md)**<br>
-**[Build Instructions](docs/build.md)**<br>
+**[Intro](#Intro)**
+**[Requirements](#Requirements)**
+**[Quickstart](#Quickstart)**
+**[Further Reading](docs/further_reading.md)**
+**[Build Instructions](docs/build.md)**
 
 
 ## Intro

@@ -75,9 +75,11 @@ namespace io.harness.cfsdk.client.dto
 
         public override string ToString()
         {
+#pragma warning disable CS0618 // Suppress warnings for using obsolete properties
             var attributesStr = string.Join(", ", Attributes.Select(kv => $"{kv.Key}: {(IsPrivate && PrivateAttributes.Contains(kv.Key) ? "Private" : kv.Value)}"));
             var privateAttributesStr = IsPrivate ? $"Private Attributes: {string.Join(", ", PrivateAttributes)}" : string.Empty;
             return $"Identifier: {Identifier}, Name: {Name}, Attributes: {attributesStr}, IsPrivate: {IsPrivate}, {privateAttributesStr}".TrimEnd(',', ' ');
+#pragma warning restore CS0618 // Restore warnings for using obsolete properties
         }
 
 
@@ -175,7 +177,9 @@ namespace io.harness.cfsdk.client.dto
 
         public Target build()
         {
+#pragma warning disable CS0618 // Suppress warnings for using obsolete constructor
             return new Target(identifier, name, attributes, isPrivate, privateAttributes);
+#pragma warning restore CS0618 // Restore warnings
         }
     }
 }

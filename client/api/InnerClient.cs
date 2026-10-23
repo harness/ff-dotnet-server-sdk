@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Target = io.harness.cfsdk.client.dto.Target;
 
@@ -20,7 +21,8 @@ namespace io.harness.cfsdk.client.api
         IPollCallback,
         IUpdateCallback,
         IEvaluatorCallback,
-        IConnectionCallback
+        IConnectionCallback,
+        IDisposable
     {
         private ILoggerFactory loggerFactory;
         private ILogger logger;
@@ -34,6 +36,7 @@ namespace io.harness.cfsdk.client.api
         private MetricsProcessor metric;
         private IConnector connector;
         private Config config;
+        private bool isDisposed = false;
 
         public event EventHandler InitializationCompleted;
         public event EventHandler<string> EvaluationChanged;
@@ -41,12 +44,12 @@ namespace io.harness.cfsdk.client.api
 
         private readonly CfClient parent;
         private readonly CountdownEvent sdkReadyLatch = new(1);
-        
+
         // Use property SdkInitialized for thread-safe access 
         private int sdkInitialized;
 
-        private bool SdkInitialized 
-        { 
+        private bool SdkInitialized
+        {
             get => Interlocked.CompareExchange(ref sdkInitialized, 0, 0) == 1;
             set => Interlocked.Exchange(ref sdkInitialized, value ? 1 : 0);
         }
@@ -151,7 +154,7 @@ namespace io.harness.cfsdk.client.api
             logger.LogInformation("SDKCODE(init:1000): The SDK has successfully initialized");
             logger.LogInformation("SDK version: " + Assembly.GetExecutingAssembly().GetName().Version);
         }
-        
+
         public void OnAuthenticationFailure()
         {
             SdkInitialized = false;
@@ -223,7 +226,7 @@ namespace io.harness.cfsdk.client.api
         {
             OnNotifyFlagsLoaded(identifiers);
         }
-        
+
         public void OnFlagDeleted(string identifier)
         {
             OnNotifyEvaluationChanged(identifier);
@@ -252,202 +255,181 @@ namespace io.harness.cfsdk.client.api
         {
             EvaluationChanged?.Invoke(parent, identifier);
         }
-        
+
         private void OnNotifyFlagsLoaded(IList<string> identifiers)
         {
             FlagsLoaded?.Invoke(parent, identifiers);
         }
 
-        public bool BoolVariation(string key, Target target, bool defaultValue)
+        /// <summary>
+        /// Centralized method to handle variation retrieval with cache state validation and recovery logic.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the variation value.</typeparam>
+        /// <param name="variationFunc">The function to retrieve the variation value.</param>
+        /// <param name="kind">The kind of feature flag.</param>
+        /// <param name="key">The key of the feature flag.</param>
+        /// <param name="target">The target for which the variation is evaluated.</param>
+        /// <param name="defaultValue">The default value to return if evaluation fails.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The evaluated variation value or the default value if evaluation fails.</returns>
+        private async Task<TValue> RetrieveValue<TValue>(
+            Func<Task<TValue>> variationFunc,
+            FeatureConfigKind kind,
+            string key,
+            Target target,
+            TValue defaultValue,
+            CancellationToken cancellationToken)
         {
-            if (!SdkInitialized) return LogAndReturnDefault(FeatureConfigKind.Boolean, key, target, defaultValue);
+            if (!SdkInitialized) return LogAndReturnDefault(kind, key, target, defaultValue);
 
             try
             {
-                return evaluator.BoolVariation(key, target, defaultValue);
+                return await variationFunc();
             }
             catch (InvalidCacheStateException ex)
             {
                 logger.LogWarning(ex,
-                    "Invalid cache state detected when evaluating boolean variation for flag {Key}, refreshing cache and retrying evaluation ",
-                    key);
+                    "Invalid cache state detected when evaluating {Kind} variation for flag {Key}, refreshing cache and retrying evaluation",
+                    kind, key);
 
-                var result = polling.RefreshFlagsAndSegments(TimeSpan.FromMilliseconds(2000));
+                var timeout = TimeSpan.FromMilliseconds(config.CacheRecoveryTimeoutInMs);
+                var result = await polling.RefreshFlagsAndSegmentsAsync(timeout, cancellationToken);
 
                 if (result != RefreshOutcome.Success)
                 {
                     logger.LogError(ex,
-                        "Refreshing cache for boolean variation for flag {Key} failed, returning default variation ",
-                        key);
-                    return LogAndReturnDefault(FeatureConfigKind.Boolean, key, target, defaultValue);
+                        "Refreshing cache for {Kind} variation for flag {Key} failed, returning default variation",
+                        kind, key);
+                    return LogAndReturnDefault(kind, key, target, defaultValue);
                 }
 
                 try
                 {
-                    return evaluator.BoolVariation(key, target, defaultValue);
+                    return await variationFunc();
                 }
-                catch (InvalidCacheStateException)
+                catch (InvalidCacheStateException cex)
                 {
-                    logger.LogWarning(
-                        "Attempted re-evaluation of boolean variation for flag {Key} after refreshing cache failed due to invalid cache state, returning default variation",
-                        key);
-                    return LogAndReturnDefault(FeatureConfigKind.Boolean, key, target, defaultValue);
+                    logger.LogWarning(cex,
+                        "Attempted re-evaluation of {Kind} variation for flag {Key} after refreshing cache failed due to invalid cache state, returning default variation",
+                        kind, key);
+                    return LogAndReturnDefault(kind, key, target, defaultValue);
                 }
             }
+        }
+
+        public bool BoolVariation(string key, Target target, bool defaultValue)
+        {
+            return BoolVariationAsync(key, target, defaultValue, CancellationToken.None)
+                .ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        public async Task<bool> BoolVariationAsync(string key, Target target, bool defaultValue, CancellationToken cancellationToken)
+        {
+            return await RetrieveValue(
+                async () => await evaluator.BoolVariationAsync(key, target, defaultValue, cancellationToken),
+                FeatureConfigKind.Boolean,
+                key,
+                target,
+                defaultValue,
+                cancellationToken);
         }
 
         public string StringVariation(string key, Target target, string defaultValue)
         {
-            if (!SdkInitialized) return LogAndReturnDefault(FeatureConfigKind.String, key, target, defaultValue);
+            return StringVariationAsync(key, target, defaultValue, CancellationToken.None)
+                .ConfigureAwait(false).GetAwaiter().GetResult();
+        }
 
-            try
-            {
-                return evaluator.StringVariation(key, target, defaultValue);
-            }
-            catch (InvalidCacheStateException ex)
-            {
-                logger.LogWarning(ex,
-                    "Invalid cache state detected when evaluating string variation for flag {Key}, refreshing cache and retrying evaluation",
-                    key);
-
-                var result = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
-                if (result != RefreshOutcome.Success)
-                {
-                    logger.LogError(
-                        "Refreshing cache for string variation for flag {Key} failed, returning default variation",
-                        key);
-                    return LogAndReturnDefault(FeatureConfigKind.String, key, target, defaultValue);
-                }
-
-                try
-                {
-                    return evaluator.StringVariation(key, target, defaultValue);
-                }
-                catch (InvalidCacheStateException)
-                {
-                    logger.LogWarning(
-                        "Attempted re-evaluation of string variation for flag {Key} after refreshing cache failed due to invalid cache state, returning default variation",
-                        key);
-                    return LogAndReturnDefault(FeatureConfigKind.String, key, target, defaultValue);
-                }
-            }
+        public async Task<string> StringVariationAsync(string key, Target target, string defaultValue, CancellationToken cancellationToken)
+        {
+            return await RetrieveValue(
+                async () => await evaluator.StringVariationAsync(key, target, defaultValue, cancellationToken),
+                FeatureConfigKind.String,
+                key,
+                target,
+                defaultValue,
+                cancellationToken);
         }
 
         public double NumberVariation(string key, Target target, double defaultValue)
         {
-            if (!SdkInitialized) return LogAndReturnDefault(FeatureConfigKind.Int, key, target, defaultValue);
+            return NumberVariationAsync(key, target, defaultValue, CancellationToken.None)
+                .ConfigureAwait(false).GetAwaiter().GetResult();
+        }
 
-            try
-            {
-                return evaluator.NumberVariation(key, target, defaultValue);
-            }
-            catch (InvalidCacheStateException ex)
-            {
-                logger.LogWarning(ex,
-                    "Invalid cache state detected when evaluating number variation for flag {Key}, refreshing cache and retrying evaluation",
-                    key);
-                var result = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
-                if (result != RefreshOutcome.Success)
-                {
-                    logger.LogError(
-                        "Refreshing cache for number variation for flag {Key} failed, returning default variation",
-                        key);
-                    return LogAndReturnDefault(FeatureConfigKind.Int, key, target, defaultValue);
-                }
-
-                try
-                {
-                    return evaluator.NumberVariation(key, target, defaultValue);
-                }
-                catch (InvalidCacheStateException)
-                {
-                    logger.LogWarning(
-                        "Attempted re-evaluation of number variation for flag {Key} after refreshing cache failed due to invalid cache state, returning default variation",
-                        key);
-                    return LogAndReturnDefault(FeatureConfigKind.Int, key, target, defaultValue);
-                }
-            }
+        public async Task<double> NumberVariationAsync(string key, Target target, double defaultValue, CancellationToken cancellationToken)
+        {
+            return await RetrieveValue(
+                async () => await evaluator.NumberVariationAsync(key, target, defaultValue, cancellationToken),
+                FeatureConfigKind.Int,
+                key,
+                target,
+                defaultValue,
+                cancellationToken);
         }
 
         public JToken JsonVariationToken(string key, Target target, JToken defaultValue)
         {
-            if (!SdkInitialized) return LogAndReturnDefault(FeatureConfigKind.Json, key, target, defaultValue);
+            return JsonVariationTokenAsync(key, target, defaultValue, CancellationToken.None)
+                .ConfigureAwait(false).GetAwaiter().GetResult();
+        }
 
-            try
-            {
-                return evaluator.JsonVariationToken(key, target, defaultValue);
-            }
-            catch (InvalidCacheStateException ex)
-            {
-                logger.LogWarning(ex,
-                    "Invalid cache state detected when evaluating json variation for flag {Key}, refreshing cache and retrying evaluation",
-                    key);
-                var result = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
-                if (result != RefreshOutcome.Success)
-                {
-                    logger.LogError(
-                        "Refreshing cache for json variation for flag {Key} failed, returning default variation",
-                        key);
-                    return LogAndReturnDefault(FeatureConfigKind.Json, key, target, defaultValue);
-                }
-
-                try
-                {
-                    return evaluator.JsonVariationToken(key, target, defaultValue);
-                }
-                catch (InvalidCacheStateException)
-                {
-                    logger.LogWarning(
-                        "Attempted re-evaluation of json variation for flag {Key} after refreshing cache failed due to invalid cache state, returning default variation",
-                        key);
-                    return LogAndReturnDefault(FeatureConfigKind.Json, key, target, defaultValue);
-                }
-            }
+        public async Task<JToken> JsonVariationTokenAsync(string key, Target target, JToken defaultValue, CancellationToken cancellationToken)
+        {
+            return await RetrieveValue(
+                async () => await evaluator.JsonVariationTokenAsync(key, target, defaultValue, cancellationToken),
+                FeatureConfigKind.Json,
+                key,
+                target,
+                defaultValue,
+                cancellationToken);
         }
 
         public JObject JsonVariation(string key, Target target, JObject defaultValue)
         {
-            if (!SdkInitialized) return LogAndReturnDefault(FeatureConfigKind.Json, key, target, defaultValue);
-
-            try
-            {
-                return evaluator.JsonVariation(key, target, defaultValue);
-            }
-            catch (InvalidCacheStateException ex)
-            {
-                logger.LogWarning(ex,
-                    "Invalid cache state detected when evaluating json variation for flag {Key}, refreshing cache and retrying evaluation",
-                    key);
-                var result = polling.RefreshFlagsAndSegments(TimeSpan.FromSeconds(config.CacheRecoveryTimeoutInMs));
-                if (result != RefreshOutcome.Success)
-                {
-                    logger.LogError(
-                        "Refreshing cache for json variation for flag {Key} failed, returning default variation",
-                        key);
-                    return LogAndReturnDefault(FeatureConfigKind.Json, key, target, defaultValue);
-                }
-
-                try
-                {
-                    return evaluator.JsonVariation(key, target, defaultValue);
-                }
-                catch (InvalidCacheStateException)
-                {
-                    logger.LogWarning(
-                        "Attempted re-evaluation of json variation for flag {Key} after refreshing cache failed due to invalid cache state, returning default variation",
-                        key);
-                    return LogAndReturnDefault(FeatureConfigKind.Json, key, target, defaultValue);
-                }
-            }
+            return JsonVariationAsync(key, target, defaultValue, CancellationToken.None)
+                .ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
+        public async Task<JObject> JsonVariationAsync(string key, Target target, JObject defaultValue, CancellationToken cancellationToken)
+        {
+            return await RetrieveValue(
+                async () => await evaluator.JsonVariationAsync(key, target, defaultValue, cancellationToken),
+                FeatureConfigKind.Json,
+                key,
+                target,
+                defaultValue,
+                cancellationToken);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (isDisposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                Close();
+            }
+
+            isDisposed = true;
+        }
 
         public void Close()
         {
             this.connector?.Close();
             this.authService?.Stop();
             this.repository?.Close();
-            this.polling?.Stop();
+            this.evaluator?.Dispose();
+            this.polling?.Dispose();
             this.update?.Stop();
             this.metric?.Stop();
             this.SdkInitialized = false;
@@ -462,7 +444,7 @@ namespace io.harness.cfsdk.client.api
         {
             this.metric.PushToCache(target, featureConfig, variation);
         }
-        
+
         private T LogAndReturnDefault<T>(FeatureConfigKind kind, string key, Target target, T defaultValue)
         {
             LogEvaluationFailureError(kind, key, target, defaultValue?.ToString() ?? "null");

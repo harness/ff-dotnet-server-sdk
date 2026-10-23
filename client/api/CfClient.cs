@@ -2,12 +2,13 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
 namespace io.harness.cfsdk.client.api
 {
-    public interface ICfClient
+    public interface ICfClient : IDisposable
     {
         Task Initialize(string apiKey);
         Task Initialize(string apiKey, Config config);
@@ -20,9 +21,14 @@ namespace io.harness.cfsdk.client.api
         bool WaitForInitialization(int timeoutMs);
 
         bool boolVariation(string key, dto.Target target, bool defaultValue);
+        Task<bool> boolVariationAsync(string key, dto.Target target, bool defaultValue, CancellationToken cancellationToken = default);
         string stringVariation(string key, dto.Target target, string defaultValue);
+        Task<string> stringVariationAsync(string key, dto.Target target, string defaultValue, CancellationToken cancellationToken = default);
         double numberVariation(string key, dto.Target target, double defaultValue);
+        Task<double> numberVariationAsync(string key, dto.Target target, double defaultValue, CancellationToken cancellationToken = default);
         JToken jsonVariationToken(string key, dto.Target target, JToken defaultValue);
+        Task<JToken> jsonVariationTokenAsync(string key, dto.Target target, JToken defaultValue, CancellationToken cancellationToken = default);
+        [Obsolete("This method only supports JSON objects. If a JSON array variation is returned it will result in a warning being logged and the default variation being returned. Use jsonVariationToken(string key, Target target, JToken defaultValue) since version 1.7.0 for support of both JSON objects and arrays.")]
         JObject jsonVariation(string key, dto.Target target, JObject defaultValue);
 
 
@@ -36,7 +42,10 @@ namespace io.harness.cfsdk.client.api
     public class CfClient : ICfClient
     {
         // Singleton implementation
+#pragma warning disable CS0618 // Suppress warnings for using obsolete constructor
         private static readonly Lazy<CfClient> lazy = new Lazy<CfClient>(() => new CfClient());
+#pragma warning restore CS0618 // Restore warnings
+        private bool isDisposed = false;
 
         /// <summary>
         /// Returns a <c>CfClient()</c> instance. Subsequent calls to <c>Instance</c> will return the same instance.
@@ -66,7 +75,7 @@ namespace io.harness.cfsdk.client.api
             add { client.EvaluationChanged += value; }
             remove { client.EvaluationChanged -= value; }
         }
-        
+
         public event EventHandler<IList<string>> FlagsLoaded
         {
             add { client.FlagsLoaded += value; }
@@ -108,10 +117,10 @@ namespace io.harness.cfsdk.client.api
             // Default logging is to console
             return LoggerFactory.Create(builder =>
             {
-                 builder
-                    .AddFilter("Microsoft", LogLevel.Warning)
-                    .AddFilter("System", LogLevel.Warning)
-                    .AddConsole();
+                builder
+                   .AddFilter("Microsoft", LogLevel.Warning)
+                   .AddFilter("System", LogLevel.Warning)
+                   .AddConsole();
             });
         }
 
@@ -188,7 +197,7 @@ namespace io.harness.cfsdk.client.api
         /// <param name="connector">A concrete class implementing IConnector for custom connections</param>
         public async Task Initialize(IConnector connector)
         {
-           await Initialize(connector, Config.Builder().Build());
+            await Initialize(connector, Config.Builder().Build());
         }
 
         /// <summary>
@@ -217,15 +226,40 @@ namespace io.harness.cfsdk.client.api
 
         // read values
         public bool boolVariation(string key, dto.Target target, bool defaultValue) { return client.BoolVariation(key, target, defaultValue);  }
+        public async Task<bool> boolVariationAsync(string key, dto.Target target, bool defaultValue, CancellationToken cancellationToken = default) { return await client.BoolVariationAsync(key, target, defaultValue, cancellationToken); }
         public string stringVariation(string key, dto.Target target, string defaultValue) { return client.StringVariation(key, target, defaultValue); }
+        public async Task<string> stringVariationAsync(string key, dto.Target target, string defaultValue, CancellationToken cancellationToken = default) { return await client.StringVariationAsync(key, target, defaultValue, cancellationToken); }
         public double numberVariation(string key, dto.Target target, double defaultValue) { return client.NumberVariation(key, target, defaultValue); }
+        public async Task<double> numberVariationAsync(string key, dto.Target target, double defaultValue, CancellationToken cancellationToken = default) { return await client.NumberVariationAsync(key, target, defaultValue, cancellationToken); }
         public JToken jsonVariationToken(string key, dto.Target target, JToken defaultValue) {  return client.JsonVariationToken(key, target, defaultValue); }
+        public async Task<JToken> jsonVariationTokenAsync(string key, dto.Target target, JToken defaultValue, CancellationToken cancellationToken = default) { return await client.JsonVariationTokenAsync(key, target, defaultValue, cancellationToken); }
         [Obsolete("This method only supports JSON objects. If a JSON array variation is returned it will result in a warning being logged and the default variation being returned. Use jsonVariationToken(string key, Target target, JToken defaultValue) since version 1.7.0 for support of both JSON objects and arrays.")]
         public JObject jsonVariation(string key, dto.Target target, JObject defaultValue) {  return client.JsonVariation(key, target, defaultValue); }
 
 
         // force message
-        public void Update(Message msg) { client.Update(msg, true);  }
+        public void Update(Message msg) { client.Update(msg, true); }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (isDisposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                Close();
+            }
+
+            isDisposed = true;
+        }
 
         public void Close()
         {

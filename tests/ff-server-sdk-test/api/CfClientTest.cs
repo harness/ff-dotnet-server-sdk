@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using io.harness.cfsdk.client.api;
 using io.harness.cfsdk.client.dto;
 using WireMock.RequestBuilders;
@@ -8,7 +9,6 @@ using WireMock.ResponseBuilders;
 using WireMock.Server;
 using WireMock.Settings;
 using NUnit.Framework;
-using WireMock;
 using WireMock.Logging;
 
 
@@ -93,7 +93,7 @@ namespace ff_server_sdk_test.api
 
 
         [Test]
-        public void PerformanceTestInClauseWithManyValues()
+        public async Task PerformanceTestInClauseWithManyValues()
         {
             server
                 .Given(Request.Create().WithPath("/api/1.0/client/auth").UsingPost())
@@ -104,7 +104,7 @@ namespace ff_server_sdk_test.api
                     .WithPath("/api/1.0/client/env/00000000-0000-0000-0000-000000000000/feature-configs").UsingGet())
                 .RespondWith(Response.Create()
                     .WithStatusCode(200)
-                    .WithBody(MakeFeatureConfigBody(MakeVariationMap( "inRule", "on"))));
+                    .WithBody(MakeFeatureConfigBody(MakeVariationMap("inRule", "on"))));
 
             server
                 .Given(Request.Create()
@@ -146,10 +146,13 @@ namespace ff_server_sdk_test.api
 
             var result = client.boolVariation("Feature", target, false);
             Assert.That(result, Is.EqualTo(true), "did not get correct flag state");
+
+            result = await client.boolVariationAsync("Feature", target, false);
+            Assert.That(result, Is.EqualTo(true), "did not get correct flag state");
         }
 
         [Test]
-        public void ShouldNotThrowErrorIfTargetToVariationMapNotPopulated()
+        public async Task ShouldNotThrowErrorIfTargetToVariationMapNotPopulated()
         {
             server
                 .Given(Request.Create().WithPath("/api/1.0/client/auth").UsingPost())
@@ -200,6 +203,9 @@ namespace ff_server_sdk_test.api
             Assert.That(ok, Is.True, "failed to init in time");
 
             var result = client.stringVariation("FeatureWithVariationToTargetMapSetAsNull", target, "failed");
+            Assert.That(result, Is.EqualTo("on"), "did not get correct flag state");
+
+            result = await client.stringVariationAsync("FeatureWithVariationToTargetMapSetAsNull", target, "failed");
             Assert.That(result, Is.EqualTo("on"), "did not get correct flag state");
         }
 
