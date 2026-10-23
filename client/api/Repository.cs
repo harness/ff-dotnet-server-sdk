@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using io.harness.cfsdk.client.cache;
 using io.harness.cfsdk.HarnessOpenAPIService;
 using Microsoft.Extensions.Logging;
-
-[assembly: InternalsVisibleToAttribute("ff-server-sdk-test")]
 
 namespace io.harness.cfsdk.client.api
 {

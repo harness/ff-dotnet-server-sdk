@@ -25,9 +25,18 @@
         <PackageReleaseNotes>.NET Server SDK for Harness Feature Flag platform</PackageReleaseNotes>
         <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
         <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+        <InternalsVisibleToValue>ff-server-sdk-test</InternalsVisibleToValue>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'net461' Or '$(TargetFramework)' == 'net48'">
+        <!-- Enables assembly signing to allow for strongly named assemblies to reference this library -->
+        <SignAssembly>true</SignAssembly>
+        <AssemblyOriginatorKeyFile>ff-dotnet-server-sdk.snk</AssemblyOriginatorKeyFile>
+        <InternalsVisibleToValue>$(InternalsVisibleToValue), PublicKey=0024000004800000940000000602000000240000525341310004000001000100d723d64aa6bad3dcc21ee1d997476a0edfbf6261b55c5fc768b052970e47b0fde4b6a1fe91bc699894cd6f0f620243611782fafc9433ba8638d891a53c2a6782112d2ebd54b593c264faa7b91f7b8f177947d9ae71ba7dedbd00cfa5bcaa789d4de2abf9079306c51e3ea08d647ee6ff58350dd1fd3e9d42bfc58cab27d887e2</InternalsVisibleToValue>
     </PropertyGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="$(InternalsVisibleToValue)" />
         <Compile Remove="tests\**;examples\**;tools\**" />
         <EmbeddedResource Remove="tests\**;examples\**;tools\**" />
         <None Remove="tests\**;examples\**;tools\**" />
